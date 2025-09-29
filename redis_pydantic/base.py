@@ -211,7 +211,7 @@ class RedisModel(BaseModel):
 
     @classmethod
     async def update_from_id(
-        cls, redis_id: str, ignore_if_deleted: bool = False, **kwargs
+        cls, redis_id: str, ignore_if_deleted: bool = True, **kwargs
     ):
         redis_client = cls.Meta.redis
         cls.validate_fields(**kwargs)
@@ -230,13 +230,15 @@ class RedisModel(BaseModel):
             if field_name in self.model_fields:
                 setattr(self, field_name, value)
 
-        await self.update_from_id(self.key, ignore_if_deleted=True, **kwargs)
+        await self.update_from_id(self.key, **kwargs)
         return self
 
     async def save(self) -> Self:
         # Get only the actual model fields, excluding computed fields
-        dump_data = {k: v for k, v in self.model_dump().items() if k in self.model_fields}
-        await self.update_from_id(self.key, **dump_data)
+        dump_data = {
+            k: v for k, v in self.model_dump().items() if k in self.model_fields
+        }
+        await self.update_from_id(self.key, ignore_if_deleted=False, **dump_data)
         return self
 
     @classmethod
@@ -297,3 +299,4 @@ class RedisModel(BaseModel):
 # TODO - create wrapper for each supported type
 # TODO - add flag to put multiple fields in one key
 # TODO - allow foreign keys
+# TODO - how to handle list of models?
