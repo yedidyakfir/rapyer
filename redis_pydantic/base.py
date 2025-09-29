@@ -143,7 +143,7 @@ class RedisModel(BaseModel):
         if redis_type == "list":
             pipe.delete(key)
             if serialized_value:
-                pipe.lpush(key, *serialized_value)
+                pipe.lpush(key, *reversed(serialized_value))
         elif redis_type == "json":
             pipe.set(key, serialized_value)
         elif redis_type == "string":
