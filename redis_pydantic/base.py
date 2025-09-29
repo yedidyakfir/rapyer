@@ -215,6 +215,13 @@ class RedisModel(BaseModel):
 
     async def append_to_list(self, list_name: str, value: Any):
         await self.append_to_list_from_key(self.key, list_name, value)
+        
+        if hasattr(self, list_name):
+            current_list = getattr(self, list_name, [])
+            if current_list is None:
+                current_list = []
+            current_list.insert(0, value)
+            setattr(self, list_name, current_list)
 
     @classmethod
     async def increase_counter_from_key(
@@ -227,3 +234,10 @@ class RedisModel(BaseModel):
 
     async def increase_counter(self, counter_name: str, value: int = 1):
         await self.increase_counter_from_key(self.key, counter_name, value)
+        
+        if hasattr(self, counter_name):
+            current_value = getattr(self, counter_name, 0)
+            if current_value is None:
+                current_value = 0
+            new_value = int(current_value) + value
+            setattr(self, counter_name, new_value)
