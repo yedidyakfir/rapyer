@@ -1,6 +1,8 @@
 import asyncio
 import json
 import uuid
+from datetime import datetime
+from decimal import Decimal
 from typing import Any, get_origin, Self
 
 import redis
@@ -17,7 +19,7 @@ def create_field_key(key: str, field_name: str) -> str:
 class RedisModel(BaseModel):
     pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
-    class Config:
+    class Meta:
         redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
 
     @property
@@ -26,7 +28,7 @@ class RedisModel(BaseModel):
 
     @classmethod
     async def get(cls, key: str) -> Self:
-        redis_client = cls.Config.redis
+        redis_client = cls.Meta.redis
 
         async def load_field(field_name: str) -> tuple[str, Any]:
             field_key = f"{key}/{field_name}"
@@ -167,7 +169,7 @@ class RedisModel(BaseModel):
     async def update_from_id(
         cls, redis_id: str, ignore_if_deleted: bool = False, **kwargs
     ):
-        redis_client = cls.Config.redis
+        redis_client = cls.Meta.redis
         cls.validate_fields(**kwargs)
 
         async with redis_client.pipeline(transaction=True) as pipe:
@@ -194,7 +196,7 @@ class RedisModel(BaseModel):
 
     @classmethod
     async def delete_from_key(cls, key: str):
-        redis_client = cls.Config.redis
+        redis_client = cls.Meta.redis
 
         async with redis_client.pipeline(transaction=True) as pipe:
             for field_name in cls.model_fields:
@@ -208,14 +210,14 @@ class RedisModel(BaseModel):
 
     @classmethod
     async def append_to_list_from_key(cls, key: str, list_name: str, value: Any):
-        redis_client = cls.Config.redis
+        redis_client = cls.Meta.redis
         field_key = create_field_key(key, list_name)
 
         await redis_client.lpush(field_key, value)
 
     async def append_to_list(self, list_name: str, value: Any):
         await self.append_to_list_from_key(self.key, list_name, value)
-        
+
         if hasattr(self, list_name):
             current_list = getattr(self, list_name, [])
             if current_list is None:
@@ -227,14 +229,14 @@ class RedisModel(BaseModel):
     async def increase_counter_from_key(
         cls, key: str, counter_name: str, value: int = 1
     ):
-        redis_client = cls.Config.redis
+        redis_client = cls.Meta.redis
         field_key = create_field_key(key, counter_name)
 
         await redis_client.incrby(field_key, value)
 
     async def increase_counter(self, counter_name: str, value: int = 1):
         await self.increase_counter_from_key(self.key, counter_name, value)
-        
+
         if hasattr(self, counter_name):
             current_value = getattr(self, counter_name, 0)
             if current_value is None:
