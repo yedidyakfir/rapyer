@@ -58,6 +58,9 @@ class RedisModel(BaseModel):
                         value.decode() if isinstance(value, bytes) else value
                     )
                 return field_name, None
+            elif model_field_type == bytes:
+                value = await redis_client.get(field_key)
+                return field_name, value
             else:
                 value = await redis_client.get(field_key)
                 if value:
@@ -92,6 +95,10 @@ class RedisModel(BaseModel):
                     field_data[field_name] = await instance._deserialize_field_value(
                         field_name, "json", raw_value
                     )
+                elif field_type == bytes:
+                    field_data[field_name] = await instance._deserialize_field_value(
+                        field_name, "bytes", raw_value
+                    )
                 else:
                     field_data[field_name] = await instance._deserialize_field_value(
                         field_name, "string", raw_value
@@ -107,10 +114,18 @@ class RedisModel(BaseModel):
             return "json", json.dumps(value)
         elif isinstance(value, list):
             return "list", value
+        elif isinstance(value, datetime):
+            return "string", value.isoformat()
+        elif isinstance(value, bytes):
+            return "bytes", value
+        elif isinstance(value, Decimal):
+            return "string", str(value)
         elif isinstance(value, (str, int, float, bool)):
             return "string", str(value)
+        elif value is None:
+            return "string", ""
         else:
-            raise ValueError(f"Unsupported field type for {type(value)}")
+            return "json", json.dumps(value)
 
     async def _deserialize_field_value(
         self, field_name: str, redis_type: str, value: Any
@@ -131,13 +146,21 @@ class RedisModel(BaseModel):
                 return json.loads(value)
         elif redis_type == "list":
             return value
+        elif redis_type == "bytes":
+            return value
         elif redis_type == "string":
-            if field_type == int:
+            if not value:
+                return None
+            elif field_type == int:
                 return int(value)
             elif field_type == float:
                 return float(value)
             elif field_type == bool:
                 return value.lower() == "true"
+            elif field_type == datetime:
+                return datetime.fromisoformat(value)
+            elif field_type == Decimal:
+                return Decimal(value)
             else:
                 return value
         else:
@@ -156,6 +179,8 @@ class RedisModel(BaseModel):
         elif redis_type == "json":
             pipe.set(key, serialized_value, xx=xx)
         elif redis_type == "string":
+            pipe.set(key, serialized_value, xx=xx)
+        elif redis_type == "bytes":
             pipe.set(key, serialized_value, xx=xx)
         return pipe
 
