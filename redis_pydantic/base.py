@@ -6,14 +6,14 @@ from typing import Any, get_origin, Self
 import redis
 from pydantic import BaseModel, Field
 
-from redis_pydantic.config import settings
+DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 
 class RedisModel(BaseModel):
     pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     class Config:
-        redis = redis.asyncio.from_url(settings.redis.url)
+        redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
 
     @property
     def key(self):
