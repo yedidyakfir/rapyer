@@ -19,4 +19,5 @@ dynaconf = "^3.2.8"
 [tool.poetry.group.tests.dependencies]
 fakeredis = {version = "^2.31.3", extras = ["json", "lua"]}
 pytest = "^8.4.2"
+pytest-asyncio = "^0.25.0"
 
