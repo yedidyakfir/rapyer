@@ -1,3 +1,4 @@
+import asyncio
 import json
 import uuid
 from typing import Any, get_origin, Self
@@ -17,6 +18,79 @@ class RedisModel(BaseModel):
     @property
     def key(self):
         return f"{self.__class__.__name__}:{self.pk}"
+
+    @classmethod
+    async def get(cls, key: str) -> Self:
+        redis_client = cls.Config.redis
+
+        async def load_field(field_name: str) -> tuple[str, Any]:
+            field_key = f"{key}/{field_name}"
+            model_field_info = cls.model_fields[field_name]
+            model_field_type = model_field_info.annotation
+
+            if get_origin(model_field_type) is list or (
+                isinstance(model_field_type, type)
+                and issubclass(model_field_type, list)
+            ):
+                value = await redis_client.lrange(field_key, 0, -1)
+                return field_name, value
+            elif (
+                get_origin(model_field_type) is dict
+                or (
+                    isinstance(model_field_type, type)
+                    and issubclass(model_field_type, dict)
+                )
+                or (
+                    isinstance(model_field_type, type)
+                    and issubclass(model_field_type, BaseModel)
+                )
+            ):
+                value = await redis_client.get(field_key)
+                if value:
+                    return field_name, (
+                        value.decode() if isinstance(value, bytes) else value
+                    )
+                return field_name, None
+            else:
+                value = await redis_client.get(field_key)
+                if value:
+                    return field_name, (
+                        value.decode() if isinstance(value, bytes) else value
+                    )
+                return field_name, None
+
+        tasks = [load_field(field_name) for field_name in cls.model_fields]
+        results = await asyncio.gather(*tasks)
+
+        field_data = {}
+        instance = cls.__new__(cls)
+
+        for field_name, raw_value in results:
+            if raw_value is not None:
+                field_info = cls.model_fields[field_name]
+                field_type = field_info.annotation
+
+                if get_origin(field_type) is list:
+                    field_data[field_name] = await instance._deserialize_field_value(
+                        field_name, "list", raw_value
+                    )
+                elif (
+                    get_origin(field_type) is dict
+                    or (isinstance(field_type, type) and issubclass(field_type, dict))
+                    or (
+                        isinstance(field_type, type)
+                        and issubclass(field_type, BaseModel)
+                    )
+                ):
+                    field_data[field_name] = await instance._deserialize_field_value(
+                        field_name, "json", raw_value
+                    )
+                else:
+                    field_data[field_name] = await instance._deserialize_field_value(
+                        field_name, "string", raw_value
+                    )
+
+        return cls(**field_data)
 
     @classmethod
     def _serialize_field_value(cls, value: Any) -> tuple[str, Any]:
@@ -104,4 +178,4 @@ class RedisModel(BaseModel):
         return self
 
     async def save(self) -> Self:
-        return self.update(**self.model_dump())
+        return await self.update(**self.model_dump())
