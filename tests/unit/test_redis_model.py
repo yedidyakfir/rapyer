@@ -51,3 +51,22 @@ async def test_redis_keys_created_sanity(redis_client):
 
     for expected_key in expected_keys:
         assert expected_key in decoded_keys
+
+
+@pytest.mark.asyncio
+async def test_update_model_sanity(redis_client):
+    # Arrange
+    user = UserModel(
+        name="Alice", age=28, tags=["manager"], metadata={"role": "team_lead"}
+    )
+    await user.save()
+
+    # Act
+    await user.update(name="Alice Smith", age=29, tags=["manager", "senior"])
+
+    # Assert
+    retrieved_user = await UserModel.get(user.key)
+    assert retrieved_user.name == "Alice Smith"
+    assert retrieved_user.age == 29
+    assert retrieved_user.tags == ["manager", "senior"]
+    assert retrieved_user.metadata == {"role": "team_lead"}
