@@ -205,3 +205,25 @@ class RedisModel(BaseModel):
 
     async def delete(self):
         await self.delete_from_key(self.key)
+
+    @classmethod
+    async def append_to_list_from_key(cls, key: str, list_name: str, value: Any):
+        redis_client = cls.Config.redis
+        field_key = create_field_key(key, list_name)
+
+        await redis_client.lpush(field_key, value)
+
+    async def append_to_list(self, list_name: str, value: Any):
+        await self.append_to_list_from_key(self.key, list_name, value)
+
+    @classmethod
+    async def increase_counter_from_key(
+        cls, key: str, counter_name: str, value: int = 1
+    ):
+        redis_client = cls.Config.redis
+        field_key = create_field_key(key, counter_name)
+
+        await redis_client.incrby(field_key, value)
+
+    async def increase_counter(self, counter_name: str, value: int = 1):
+        await self.increase_counter_from_key(self.key, counter_name, value)
