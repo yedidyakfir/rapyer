@@ -3,7 +3,7 @@ import json
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, get_origin, Self
+from typing import Any, get_origin, get_args, Self, Union
 
 import redis
 from pydantic import BaseModel, Field
@@ -14,6 +14,19 @@ DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 def create_field_key(key: str, field_name: str) -> str:
     return f"{key}/{field_name}"
+
+
+def get_actual_type(annotation: Any) -> Any:
+    """Extract the actual type from Optional/Union types."""
+    origin = get_origin(annotation)
+    if origin is Union:
+        args = get_args(annotation)
+        # Handle Optional[T] which is Union[T, None]
+        non_none_args = [arg for arg in args if arg is not type(None)]
+        if len(non_none_args) == 1:
+            return non_none_args[0]
+        return annotation  # Return as-is for complex Union types
+    return annotation
 
 
 class RedisModel(BaseModel):
@@ -34,22 +47,23 @@ class RedisModel(BaseModel):
             field_key = f"{key}/{field_name}"
             model_field_info = cls.model_fields[field_name]
             model_field_type = model_field_info.annotation
+            model_actual_type = get_actual_type(model_field_type)
 
-            if get_origin(model_field_type) is list or (
-                isinstance(model_field_type, type)
-                and issubclass(model_field_type, list)
+            if get_origin(model_actual_type) is list or (
+                isinstance(model_actual_type, type)
+                and issubclass(model_actual_type, list)
             ):
                 value = await redis_client.lrange(field_key, 0, -1)
                 return field_name, value
             elif (
-                get_origin(model_field_type) is dict
+                get_origin(model_actual_type) is dict
                 or (
-                    isinstance(model_field_type, type)
-                    and issubclass(model_field_type, dict)
+                    isinstance(model_actual_type, type)
+                    and issubclass(model_actual_type, dict)
                 )
                 or (
-                    isinstance(model_field_type, type)
-                    and issubclass(model_field_type, BaseModel)
+                    isinstance(model_actual_type, type)
+                    and issubclass(model_actual_type, BaseModel)
                 )
             ):
                 value = await redis_client.get(field_key)
@@ -58,7 +72,7 @@ class RedisModel(BaseModel):
                         value.decode() if isinstance(value, bytes) else value
                     )
                 return field_name, None
-            elif model_field_type == bytes:
+            elif model_actual_type == bytes:
                 value = await redis_client.get(field_key)
                 return field_name, value
             else:
@@ -79,23 +93,24 @@ class RedisModel(BaseModel):
             if raw_value is not None:
                 field_info = cls.model_fields[field_name]
                 field_type = field_info.annotation
+                actual_type = get_actual_type(field_type)
 
-                if get_origin(field_type) is list:
+                if get_origin(actual_type) is list:
                     field_data[field_name] = await instance._deserialize_field_value(
                         field_name, "list", raw_value
                     )
                 elif (
-                    get_origin(field_type) is dict
-                    or (isinstance(field_type, type) and issubclass(field_type, dict))
+                    get_origin(actual_type) is dict
+                    or (isinstance(actual_type, type) and issubclass(actual_type, dict))
                     or (
-                        isinstance(field_type, type)
-                        and issubclass(field_type, BaseModel)
+                        isinstance(actual_type, type)
+                        and issubclass(actual_type, BaseModel)
                     )
                 ):
                     field_data[field_name] = await instance._deserialize_field_value(
                         field_name, "json", raw_value
                     )
-                elif field_type == bytes:
+                elif actual_type == bytes:
                     field_data[field_name] = await instance._deserialize_field_value(
                         field_name, "bytes", raw_value
                     )
@@ -132,34 +147,38 @@ class RedisModel(BaseModel):
     ) -> Any:
         field_info = self.model_fields[field_name]
         field_type = field_info.annotation
+        actual_type = get_actual_type(field_type)
 
         if redis_type == "json":
             if (
-                get_origin(field_type) is dict
-                or isinstance(field_type, type)
-                and issubclass(field_type, dict)
+                get_origin(actual_type) is dict
+                or isinstance(actual_type, type)
+                and issubclass(actual_type, dict)
             ):
                 return json.loads(value)
-            elif isinstance(field_type, type) and issubclass(field_type, BaseModel):
-                return field_type.model_validate_json(value)
+            elif isinstance(actual_type, type) and issubclass(actual_type, BaseModel):
+                return actual_type.model_validate_json(value)
             else:
                 return json.loads(value)
         elif redis_type == "list":
             return value
         elif redis_type == "bytes":
+            # Check if the field is optional and value is empty
+            if value == b"" and get_origin(field_type) is Union:
+                return None
             return value
         elif redis_type == "string":
-            if not value:
+            if not value and get_origin(field_type) is Union:
                 return None
-            elif field_type == int:
+            elif actual_type == int:
                 return int(value)
-            elif field_type == float:
+            elif actual_type == float:
                 return float(value)
-            elif field_type == bool:
+            elif actual_type == bool:
                 return value.lower() == "true"
-            elif field_type == datetime:
+            elif actual_type == datetime:
                 return datetime.fromisoformat(value)
-            elif field_type == Decimal:
+            elif actual_type == Decimal:
                 return Decimal(value)
             else:
                 return value
@@ -199,7 +218,6 @@ class RedisModel(BaseModel):
 
         async with redis_client.pipeline(transaction=True) as pipe:
             for field_name, value in kwargs.items():
-
                 field_key = create_field_key(redis_id, field_name)
                 pipe = cls._update_field_in_redis(
                     pipe, field_key, value, xx=ignore_if_deleted
@@ -216,7 +234,9 @@ class RedisModel(BaseModel):
         return self
 
     async def save(self) -> Self:
-        await self.update_from_id(self.key, **self.model_dump())
+        # Get only the actual model fields, excluding computed fields
+        dump_data = {k: v for k, v in self.model_dump().items() if k in self.model_fields}
+        await self.update_from_id(self.key, **dump_data)
         return self
 
     @classmethod
@@ -268,3 +288,12 @@ class RedisModel(BaseModel):
                 current_value = 0
             new_value = int(current_value) + value
             setattr(self, counter_name, new_value)
+
+
+# TODO - return if update was successful
+# TODO - get the values after incrby and after lpush to store it
+# TODO - imporve get
+# TODO - move to metaclass
+# TODO - create wrapper for each supported type
+# TODO - add flag to put multiple fields in one key
+# TODO - allow foreign keys
