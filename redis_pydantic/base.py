@@ -178,5 +178,5 @@ class RedisModel(BaseModel):
         return self
 
     async def save(self) -> Self:
-        await self.update_from_id(**self.model_dump())
+        await self.update_from_id(self.key, **self.model_dump())
         return self
