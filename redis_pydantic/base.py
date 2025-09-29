@@ -212,7 +212,7 @@ class RedisModel(BaseModel):
     @classmethod
     async def update_from_id(
         cls, redis_id: str, ignore_if_deleted: bool = True, **kwargs
-    ):
+    ) -> bool:
         redis_client = cls.Meta.redis
         cls.validate_fields(**kwargs)
 
@@ -224,14 +224,14 @@ class RedisModel(BaseModel):
                 )
 
             await pipe.execute()
+        return True
 
-    async def update(self, **kwargs) -> Self:
+    async def update(self, **kwargs) -> bool:
         for field_name, value in kwargs.items():
             if field_name in self.model_fields:
                 setattr(self, field_name, value)
 
-        await self.update_from_id(self.key, **kwargs)
-        return self
+        return await self.update_from_id(self.key, **kwargs)
 
     async def save(self) -> Self:
         # Get only the actual model fields, excluding computed fields
