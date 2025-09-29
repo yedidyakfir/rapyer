@@ -1,0 +1,18 @@
+[default]
+redis_url = "redis://localhost:6379/0"
+redis_decode_responses = true
+redis_socket_connect_timeout = 5
+redis_socket_timeout = 5
+redis_retry_on_timeout = true
+redis_health_check_interval = 30
+
+[development]
+redis_url = "redis://localhost:6379/1"
+
+[testing]
+redis_url = "redis://localhost:6379/2"
+
+[production]
+redis_url = "redis://production-host:6379/0"
+redis_ssl = true
+redis_ssl_cert_reqs = "required"

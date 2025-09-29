@@ -1,16 +1,17 @@
-[project]
-name = "redis-pydatnic"
+[tool.poetry]
+name = "redis-pydantic"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "YedidyaHKfir",email = "Yedidya@dono.ai"}
-]
+description = "A Python package pydatnic models for redis"
+authors = ["YedidyaHKfir"]
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-]
+license = "MIT"
+repository = "https://github.com/redis-pydantic"
+packages = [{include = "redis_pydantic"}]
+keywords = ["redis", "pydantic"]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+redis = { version = "^6.4.0" , extras= ["async"]}
+pydantic = "^2.11.9"
+black = "^25.9.0"
+dynaconf = "^3.2.8"
