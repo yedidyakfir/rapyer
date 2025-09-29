@@ -1,18 +1,36 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "redis-pydantic"
 version = "0.1.0"
-description = "A Python package pydatnic models for redis"
-authors = ["YedidyaHKfir"]
+description = "Pydantic models with Redis as the backend"
+authors = ["YedidyaHKfir <your.email@example.com>"]
 readme = "README.md"
 license = "MIT"
-repository = "https://github.com/redis-pydantic"
+homepage = "https://github.com/YedidyaHKfir/redis-pydantic"
+repository = "https://github.com/YedidyaHKfir/redis-pydantic"
+documentation = "https://github.com/YedidyaHKfir/redis-pydantic"
 packages = [{include = "redis_pydantic"}]
-keywords = ["redis", "pydantic"]
+keywords = ["redis", "pydantic", "orm", "database", "async"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
-redis = { version = "^6.4.0",  extras= ["async"]}
+redis = { version = "^6.4.0", extras = ["async"] }
 pydantic = "^2.11.9"
+
+[tool.poetry.group.dev.dependencies]
 black = "^25.9.0"
 dynaconf = "^3.2.8"
 
