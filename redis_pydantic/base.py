@@ -10,6 +10,10 @@ from redis.asyncio.client import Pipeline
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 
+def create_field_key(key: str, field_name: str) -> str:
+    return f"{key}/{field_name}"
+
+
 class RedisModel(BaseModel):
     pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -169,7 +173,7 @@ class RedisModel(BaseModel):
         async with redis_client.pipeline(transaction=True) as pipe:
             for field_name, value in kwargs.items():
 
-                field_key = f"{redis_id}/{field_name}"
+                field_key = create_field_key(redis_id, field_name)
                 pipe = cls._update_field_in_redis(
                     pipe, field_key, value, xx=ignore_if_deleted
                 )
@@ -187,3 +191,17 @@ class RedisModel(BaseModel):
     async def save(self) -> Self:
         await self.update_from_id(self.key, **self.model_dump())
         return self
+
+    @classmethod
+    async def delete_from_key(cls, key: str):
+        redis_client = cls.Config.redis
+
+        async with redis_client.pipeline(transaction=True) as pipe:
+            for field_name in cls.model_fields:
+                field_key = create_field_key(key, field_name)
+                pipe.delete(field_key)
+
+            await pipe.execute()
+
+    async def delete(self):
+        await self.delete_from_key(self.key)
