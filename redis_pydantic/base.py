@@ -5,6 +5,7 @@ from typing import Any, get_origin, Self
 
 import redis
 from pydantic import BaseModel, Field
+from redis.asyncio.client import Pipeline
 
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
@@ -137,7 +138,9 @@ class RedisModel(BaseModel):
             return value
 
     @classmethod
-    def _update_field_in_redis(cls, pipe: Any, key: str, value: Any):
+    def _update_field_in_redis(
+        cls, pipe: Pipeline, key: str, value: Any, xx: bool = False
+    ) -> Pipeline:
         redis_type, serialized_value = cls._serialize_field_value(value)
 
         if redis_type == "list":
@@ -145,9 +148,9 @@ class RedisModel(BaseModel):
             if serialized_value:
                 pipe.lpush(key, *reversed(serialized_value))
         elif redis_type == "json":
-            pipe.set(key, serialized_value)
+            pipe.set(key, serialized_value, xx=xx)
         elif redis_type == "string":
-            pipe.set(key, serialized_value)
+            pipe.set(key, serialized_value, xx=xx)
         return pipe
 
     @classmethod
@@ -157,7 +160,9 @@ class RedisModel(BaseModel):
                 raise ValueError(f"Field {field_name} not found in {cls.__name__}")
 
     @classmethod
-    async def update_from_id(cls, redis_id: str, **kwargs) -> None:
+    async def update_from_id(
+        cls, redis_id: str, ignore_if_deleted: bool = False, **kwargs
+    ):
         redis_client = cls.Config.redis
         cls.validate_fields(**kwargs)
 
@@ -165,7 +170,9 @@ class RedisModel(BaseModel):
             for field_name, value in kwargs.items():
 
                 field_key = f"{redis_id}/{field_name}"
-                pipe = cls._update_field_in_redis(pipe, field_key, value)
+                pipe = cls._update_field_in_redis(
+                    pipe, field_key, value, xx=ignore_if_deleted
+                )
 
             await pipe.execute()
 
@@ -174,7 +181,7 @@ class RedisModel(BaseModel):
             if field_name in self.model_fields:
                 setattr(self, field_name, value)
 
-        await self.update_from_id(self.key, **kwargs)
+        await self.update_from_id(self.key, ignore_if_deleted=True, **kwargs)
         return self
 
     async def save(self) -> Self:
