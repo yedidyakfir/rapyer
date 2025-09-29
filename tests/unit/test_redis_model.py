@@ -1,5 +1,6 @@
 import pytest
-from typing import List, Dict
+from pydantic import Field
+
 from redis_pydantic.base import RedisModel
 
 
@@ -7,8 +8,8 @@ class UserModel(RedisModel):
     name: str
     age: int
     is_active: bool = True
-    tags: List[str] = []
-    metadata: Dict[str, str] = {}
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, str] = Field(default_factory=dict)
 
 
 @pytest.mark.asyncio
@@ -23,13 +24,7 @@ async def test_save_and_get_sanity(redis_client):
     retrieved_user = await UserModel.get(user.key)
 
     # Assert
-    assert saved_user == user
-    assert retrieved_user.name == user.name
-    assert retrieved_user.age == user.age
-    assert retrieved_user.is_active == user.is_active
-    assert set(retrieved_user.tags) == set(user.tags)
-    assert retrieved_user.metadata == user.metadata
-    assert retrieved_user.pk == user.pk
+    assert saved_user == retrieved_user
 
 
 @pytest.mark.asyncio
