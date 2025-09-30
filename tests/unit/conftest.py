@@ -1,5 +1,6 @@
-import pytest_asyncio
 import fakeredis.aioredis
+import pytest_asyncio
+
 from redis_pydantic.base import RedisModel
 
 

@@ -95,9 +95,11 @@ async def test_delete_from_key_sanity(redis_client):
         name="John", age=30, tags=["developer", "python"], metadata={"role": "admin"}
     )
     await user.save()
-    
+
     all_keys_before = await redis_client.keys("*")
-    user_keys_before = [key for key in all_keys_before if key.decode().startswith(user.key)]
+    user_keys_before = [
+        key for key in all_keys_before if key.decode().startswith(user.key)
+    ]
     assert len(user_keys_before) > 0
 
     # Act
@@ -105,7 +107,9 @@ async def test_delete_from_key_sanity(redis_client):
 
     # Assert
     all_keys_after = await redis_client.keys("*")
-    user_keys_after = [key for key in all_keys_after if key.decode().startswith(user.key)]
+    user_keys_after = [
+        key for key in all_keys_after if key.decode().startswith(user.key)
+    ]
     assert len(user_keys_after) == 0
 
 
@@ -113,12 +117,17 @@ async def test_delete_from_key_sanity(redis_client):
 async def test_delete_model_sanity(redis_client):
     # Arrange
     user = UserModel(
-        name="Sarah", age=32, tags=["manager", "team_lead"], metadata={"department": "engineering"}
+        name="Sarah",
+        age=32,
+        tags=["manager", "team_lead"],
+        metadata={"department": "engineering"},
     )
     await user.save()
-    
+
     all_keys_before = await redis_client.keys("*")
-    user_keys_before = [key for key in all_keys_before if key.decode().startswith(user.key)]
+    user_keys_before = [
+        key for key in all_keys_before if key.decode().startswith(user.key)
+    ]
     assert len(user_keys_before) > 0
 
     # Act
@@ -126,7 +135,9 @@ async def test_delete_model_sanity(redis_client):
 
     # Assert
     all_keys_after = await redis_client.keys("*")
-    decoded_keys = [key.decode() if isinstance(key, bytes) else key for key in all_keys_after]
+    decoded_keys = [
+        key.decode() if isinstance(key, bytes) else key for key in all_keys_after
+    ]
     user_keys_after = [key for key in decoded_keys if key.startswith(user.key)]
     assert len(user_keys_after) == 0
 
@@ -148,11 +159,10 @@ async def test_increase_counter_sanity(redis_client, counter_value, increment):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("initial_tags, new_tag", [
-    ([], "first_tag"),
-    (["existing"], "new_tag"),
-    (["one", "two"], "three")
-])
+@pytest.mark.parametrize(
+    "initial_tags, new_tag",
+    [([], "first_tag"), (["existing"], "new_tag"), (["one", "two"], "three")],
+)
 async def test_append_to_list_sanity(redis_client, initial_tags, new_tag):
     # Arrange
     user = UserModel(name="List Test", age=25, tags=initial_tags)
@@ -173,11 +183,11 @@ async def test_increase_counter_race_condition(redis_client):
     # Arrange
     user = UserModel(name="Race Test", age=25, counter=10)
     await user.save()
-    
+
     # Act - simulate race condition: modify local model but not in Redis
     user.counter = 100  # Local change not reflected in Redis
     await user.increase_counter("counter", 5)
-    
+
     # Assert
     retrieved_user = await UserModel.get(user.key)
     assert retrieved_user.counter == 15  # Redis value (10) + increment (5)
@@ -189,11 +199,11 @@ async def test_append_to_list_race_condition(redis_client):
     # Arrange
     user = UserModel(name="Race Test", age=25, tags=["initial"])
     await user.save()
-    
+
     # Act - simulate race condition: modify local model but not in Redis
     user.tags = ["local_change"]  # Local change not reflected in Redis
     await user.append_to_list("tags", "new_item")
-    
+
     # Assert
     retrieved_user = await UserModel.get(user.key)
     assert retrieved_user.tags == ["new_item", "initial"]  # Redis value + new item
