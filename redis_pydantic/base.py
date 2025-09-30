@@ -489,10 +489,6 @@ class RedisModel(BaseModel):
         return popped_value
 
 
-async def pop(model_instance: RedisModel, field_name: str) -> Any:
-    return await model_instance.pop(field_name)
-
-
 # TODO - return if update was successful
 # TODO - get the values after incrby and after lpush to store it
 # TODO - imporve get

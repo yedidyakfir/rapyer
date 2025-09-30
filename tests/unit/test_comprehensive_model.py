@@ -13,7 +13,7 @@ from pydantic import (
     ValidationError,
 )
 
-from redis_pydantic.base import RedisModel, pop
+from redis_pydantic.base import RedisModel
 
 
 def normalize_name(value: str) -> str:
@@ -647,7 +647,9 @@ async def test_load_fields_by_type_groups_sanity(redis_client, field_type_group)
         ("scores", [42], 42),
     ],
 )
-async def test_pop_from_key_sanity(redis_client, field_name, initial_list, expected_popped):
+async def test_pop_from_key_sanity(
+    redis_client, field_name, initial_list, expected_popped
+):
     # Arrange
     address = Address(street="123 Test St", city="Test City", country="USA")
     model_data = {
@@ -669,12 +671,14 @@ async def test_pop_from_key_sanity(redis_client, field_name, initial_list, expec
 
     # Assert
     assert popped_value == expected_popped
-    
+
     # Verify the value was removed from Redis
     retrieved = await ComprehensiveModel.get(model.key)
     current_list = getattr(retrieved, field_name)
     assert len(current_list) == len(initial_list) - 1
-    assert expected_popped not in current_list or current_list.count(expected_popped) < initial_list.count(expected_popped)
+    assert expected_popped not in current_list or current_list.count(
+        expected_popped
+    ) < initial_list.count(expected_popped)
 
 
 @pytest.mark.asyncio
@@ -687,7 +691,9 @@ async def test_pop_from_key_sanity(redis_client, field_name, initial_list, expec
         ("scores", [42], 42),
     ],
 )
-async def test_pop_method_sanity(redis_client, field_name, initial_list, expected_popped):
+async def test_pop_method_sanity(
+    redis_client, field_name, initial_list, expected_popped
+):
     # Arrange
     address = Address(street="123 Test St", city="Test City", country="USA")
     model_data = {
@@ -709,16 +715,18 @@ async def test_pop_method_sanity(redis_client, field_name, initial_list, expecte
 
     # Assert
     assert popped_value == expected_popped
-    
+
     # Check that both Redis and local object are updated
     retrieved = await ComprehensiveModel.get(model.key)
     local_list = getattr(model, field_name)
     redis_list = getattr(retrieved, field_name)
-    
+
     assert len(local_list) == len(initial_list) - 1
     assert len(redis_list) == len(initial_list) - 1
     assert local_list == redis_list
-    assert expected_popped not in local_list or local_list.count(expected_popped) < initial_list.count(expected_popped)
+    assert expected_popped not in local_list or local_list.count(
+        expected_popped
+    ) < initial_list.count(expected_popped)
 
 
 @pytest.mark.asyncio
@@ -729,7 +737,9 @@ async def test_pop_method_sanity(redis_client, field_name, initial_list, expecte
         ("scores", [10, 20, 30], 10),
     ],
 )
-async def test_standalone_pop_function_sanity(redis_client, field_name, initial_list, expected_popped):
+async def test_standalone_pop_function_sanity(
+    redis_client, field_name, initial_list, expected_popped
+):
     # Arrange
     address = Address(street="123 Test St", city="Test City", country="USA")
     model_data = {
@@ -747,16 +757,16 @@ async def test_standalone_pop_function_sanity(redis_client, field_name, initial_
     await model.save()
 
     # Act
-    popped_value = await pop(model, field_name)
+    popped_value = await model.pop(field_name)
 
     # Assert
     assert popped_value == expected_popped
-    
+
     # Check that both Redis and local object are updated
     retrieved = await ComprehensiveModel.get(model.key)
     local_list = getattr(model, field_name)
     redis_list = getattr(retrieved, field_name)
-    
+
     assert len(local_list) == len(initial_list) - 1
     assert len(redis_list) == len(initial_list) - 1
     assert local_list == redis_list
@@ -783,7 +793,7 @@ async def test_pop_empty_list_edge_case(redis_client):
 
     # Assert
     assert popped_value is None
-    
+
     # Verify lists remain empty
     retrieved = await ComprehensiveModel.get(model.key)
     assert getattr(model, "tags") == []
