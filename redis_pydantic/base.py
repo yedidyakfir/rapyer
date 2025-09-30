@@ -414,6 +414,84 @@ class RedisModel(BaseModel):
             new_value = int(current_value) + value
             setattr(self, counter_name, new_value)
 
+    @classmethod
+    async def pop_from_key(cls, key: str, field_name: str) -> Any:
+        redis_client = cls.Meta.redis
+        field_key = create_field_key(key, field_name)
+
+        if field_name not in cls.model_fields:
+            raise ValueError(f"Field {field_name} not found in {cls.__name__}")
+
+        field_info = cls.model_fields[field_name]
+        field_type = field_info.annotation
+        actual_type = get_actual_type(field_type)
+
+        if get_origin(actual_type) is list or (
+            isinstance(actual_type, type) and issubclass(actual_type, list)
+        ):
+            value = await redis_client.lpop(field_key)
+            if value is None:
+                return None
+
+            # Handle type conversion for list items
+            list_args = get_args(actual_type)
+            if list_args:
+                item_type = list_args[0]
+                actual_item_type = get_actual_type(item_type)
+
+                # Handle Annotated types
+                from typing import _AnnotatedAlias
+
+                if (
+                    isinstance(item_type, _AnnotatedAlias)
+                    or get_origin(item_type) is Annotated
+                ):
+                    actual_item_type = get_args(item_type)[0]
+
+                # Decode bytes to string first if needed
+                if isinstance(value, bytes):
+                    value = value.decode()
+
+                # Convert to the appropriate type
+                if actual_item_type == int:
+                    return int(value)
+                elif actual_item_type == float:
+                    return float(value)
+                elif actual_item_type == bool:
+                    return (
+                        value.lower() == "true"
+                        if isinstance(value, str)
+                        else bool(value)
+                    )
+                elif actual_item_type == datetime:
+                    return datetime.fromisoformat(value)
+                elif actual_item_type == Decimal:
+                    return Decimal(value)
+                else:
+                    return value
+            else:
+                # No type info, decode bytes to string
+                return value.decode() if isinstance(value, bytes) else value
+        else:
+            raise ValueError(f"Field {field_name} is not a list type")
+
+    async def pop(self, field_name: str) -> Any:
+        popped_value = await self.pop_from_key(self.key, field_name)
+
+        # Update the local object by removing the popped value
+        if hasattr(self, field_name):
+            current_list = getattr(self, field_name, [])
+            if current_list and len(current_list) > 0:
+                # Remove the first element (LPOP removes from the left/head)
+                current_list.pop(0)
+                setattr(self, field_name, current_list)
+
+        return popped_value
+
+
+async def pop(model_instance: RedisModel, field_name: str) -> Any:
+    return await model_instance.pop(field_name)
+
 
 # TODO - return if update was successful
 # TODO - get the values after incrby and after lpush to store it

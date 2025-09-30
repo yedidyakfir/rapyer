@@ -13,7 +13,7 @@ from pydantic import (
     ValidationError,
 )
 
-from redis_pydantic.base import RedisModel
+from redis_pydantic.base import RedisModel, pop
 
 
 def normalize_name(value: str) -> str:
@@ -635,3 +635,196 @@ async def test_load_fields_by_type_groups_sanity(redis_client, field_type_group)
 
     # Verify only requested fields are returned
     assert set(loaded_fields.keys()) == set(field_type_group)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field_name,initial_list,expected_popped",
+    [
+        ("tags", ["FIRST", "SECOND", "THIRD"], "FIRST"),
+        ("scores", [10, 20, 30], 10),
+        ("tags", ["ONLY"], "ONLY"),
+        ("scores", [42], 42),
+    ],
+)
+async def test_pop_from_key_sanity(redis_client, field_name, initial_list, expected_popped):
+    # Arrange
+    address = Address(street="123 Test St", city="Test City", country="USA")
+    model_data = {
+        "name": "Pop Test",
+        "age": 30,
+        "height": 170.0,
+        "balance": Decimal("100.00"),
+        "created_at": datetime(2023, 1, 1, 12, 0, 0),
+        "profile_image": b"test_image",
+        "address": address,
+        field_name: initial_list,
+    }
+
+    model = ComprehensiveModel(**model_data)
+    await model.save()
+
+    # Act
+    popped_value = await ComprehensiveModel.pop_from_key(model.key, field_name)
+
+    # Assert
+    assert popped_value == expected_popped
+    
+    # Verify the value was removed from Redis
+    retrieved = await ComprehensiveModel.get(model.key)
+    current_list = getattr(retrieved, field_name)
+    assert len(current_list) == len(initial_list) - 1
+    assert expected_popped not in current_list or current_list.count(expected_popped) < initial_list.count(expected_popped)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field_name,initial_list,expected_popped",
+    [
+        ("tags", ["FIRST", "SECOND", "THIRD"], "FIRST"),
+        ("scores", [10, 20, 30], 10),
+        ("tags", ["ONLY"], "ONLY"),
+        ("scores", [42], 42),
+    ],
+)
+async def test_pop_method_sanity(redis_client, field_name, initial_list, expected_popped):
+    # Arrange
+    address = Address(street="123 Test St", city="Test City", country="USA")
+    model_data = {
+        "name": "Pop Test",
+        "age": 30,
+        "height": 170.0,
+        "balance": Decimal("100.00"),
+        "created_at": datetime(2023, 1, 1, 12, 0, 0),
+        "profile_image": b"test_image",
+        "address": address,
+        field_name: initial_list,
+    }
+
+    model = ComprehensiveModel(**model_data)
+    await model.save()
+
+    # Act
+    popped_value = await model.pop(field_name)
+
+    # Assert
+    assert popped_value == expected_popped
+    
+    # Check that both Redis and local object are updated
+    retrieved = await ComprehensiveModel.get(model.key)
+    local_list = getattr(model, field_name)
+    redis_list = getattr(retrieved, field_name)
+    
+    assert len(local_list) == len(initial_list) - 1
+    assert len(redis_list) == len(initial_list) - 1
+    assert local_list == redis_list
+    assert expected_popped not in local_list or local_list.count(expected_popped) < initial_list.count(expected_popped)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field_name,initial_list,expected_popped",
+    [
+        ("tags", ["FIRST", "SECOND", "THIRD"], "FIRST"),
+        ("scores", [10, 20, 30], 10),
+    ],
+)
+async def test_standalone_pop_function_sanity(redis_client, field_name, initial_list, expected_popped):
+    # Arrange
+    address = Address(street="123 Test St", city="Test City", country="USA")
+    model_data = {
+        "name": "Pop Test",
+        "age": 30,
+        "height": 170.0,
+        "balance": Decimal("100.00"),
+        "created_at": datetime(2023, 1, 1, 12, 0, 0),
+        "profile_image": b"test_image",
+        "address": address,
+        field_name: initial_list,
+    }
+
+    model = ComprehensiveModel(**model_data)
+    await model.save()
+
+    # Act
+    popped_value = await pop(model, field_name)
+
+    # Assert
+    assert popped_value == expected_popped
+    
+    # Check that both Redis and local object are updated
+    retrieved = await ComprehensiveModel.get(model.key)
+    local_list = getattr(model, field_name)
+    redis_list = getattr(retrieved, field_name)
+    
+    assert len(local_list) == len(initial_list) - 1
+    assert len(redis_list) == len(initial_list) - 1
+    assert local_list == redis_list
+
+
+@pytest.mark.asyncio
+async def test_pop_empty_list_edge_case(redis_client):
+    # Arrange
+    address = Address(street="123 Test St", city="Test City", country="USA")
+    model = ComprehensiveModel(
+        name="Empty Pop Test",
+        age=30,
+        height=170.0,
+        balance=Decimal("100.00"),
+        created_at=datetime(2023, 1, 1, 12, 0, 0),
+        profile_image=b"test_image",
+        address=address,
+        tags=[],  # Empty list
+    )
+    await model.save()
+
+    # Act
+    popped_value = await model.pop("tags")
+
+    # Assert
+    assert popped_value is None
+    
+    # Verify lists remain empty
+    retrieved = await ComprehensiveModel.get(model.key)
+    assert getattr(model, "tags") == []
+    assert getattr(retrieved, "tags") == []
+
+
+@pytest.mark.asyncio
+async def test_pop_invalid_field_edge_case(redis_client):
+    # Arrange
+    address = Address(street="123 Test St", city="Test City", country="USA")
+    model = ComprehensiveModel(
+        name="Invalid Field Test",
+        age=30,
+        height=170.0,
+        balance=Decimal("100.00"),
+        created_at=datetime(2023, 1, 1, 12, 0, 0),
+        profile_image=b"test_image",
+        address=address,
+    )
+    await model.save()
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="Field nonexistent_field not found"):
+        await model.pop("nonexistent_field")
+
+
+@pytest.mark.asyncio
+async def test_pop_non_list_field_edge_case(redis_client):
+    # Arrange
+    address = Address(street="123 Test St", city="Test City", country="USA")
+    model = ComprehensiveModel(
+        name="Non List Test",
+        age=30,
+        height=170.0,
+        balance=Decimal("100.00"),
+        created_at=datetime(2023, 1, 1, 12, 0, 0),
+        profile_image=b"test_image",
+        address=address,
+    )
+    await model.save()
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="Field name is not a list type"):
+        await model.pop("name")  # name is a string, not a list
