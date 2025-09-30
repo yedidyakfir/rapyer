@@ -3,7 +3,7 @@ import json
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, get_origin, get_args, Self, Union
+from typing import Any, get_origin, get_args, Self, Union, Annotated
 
 import redis
 from pydantic import BaseModel, Field
@@ -40,50 +40,111 @@ class RedisModel(BaseModel):
         return f"{self.__class__.__name__}:{self.pk}"
 
     @classmethod
+    async def load_fields(cls, key: str, *field_names: str) -> dict[str, Any]:
+        """Load only selected fields from Redis for a model instance."""
+        redis_client = cls.Meta.redis
+
+        # Validate field names
+        invalid_fields = [name for name in field_names if name not in cls.model_fields]
+        if invalid_fields:
+            raise ValueError(f"Invalid field names: {invalid_fields}")
+
+        tasks = [
+            cls.load_field(key, field_name, redis_client) for field_name in field_names
+        ]
+        results = await asyncio.gather(*tasks)
+
+        field_data = {}
+        temp_instance = cls.__new__(cls)
+
+        for field_name, raw_value in results:
+            if raw_value is not None:
+                field_info = cls.model_fields[field_name]
+                field_type = field_info.annotation
+                actual_type = get_actual_type(field_type)
+
+                if get_origin(actual_type) is list:
+                    field_data[field_name] = (
+                        await temp_instance._deserialize_list_for_load_fields(
+                            field_name, raw_value
+                        )
+                    )
+                elif (
+                    get_origin(actual_type) is dict
+                    or (isinstance(actual_type, type) and issubclass(actual_type, dict))
+                    or (
+                        isinstance(actual_type, type)
+                        and issubclass(actual_type, BaseModel)
+                    )
+                ):
+                    field_data[field_name] = (
+                        await temp_instance._deserialize_field_value(
+                            field_name, "json", raw_value
+                        )
+                    )
+                elif actual_type == bytes:
+                    field_data[field_name] = (
+                        await temp_instance._deserialize_field_value(
+                            field_name, "bytes", raw_value
+                        )
+                    )
+                else:
+                    field_data[field_name] = (
+                        await temp_instance._deserialize_field_value(
+                            field_name, "string", raw_value
+                        )
+                    )
+
+        return field_data
+
+    @classmethod
+    async def load_field(cls, key, field_name: str, redis_client) -> tuple[str, Any]:
+        field_key = f"{key}/{field_name}"
+        model_field_info = cls.model_fields[field_name]
+        model_field_type = model_field_info.annotation
+        model_actual_type = get_actual_type(model_field_type)
+
+        if get_origin(model_actual_type) is list or (
+            isinstance(model_actual_type, type) and issubclass(model_actual_type, list)
+        ):
+            value = await redis_client.lrange(field_key, 0, -1)
+            return field_name, value
+        elif (
+            get_origin(model_actual_type) is dict
+            or (
+                isinstance(model_actual_type, type)
+                and issubclass(model_actual_type, dict)
+            )
+            or (
+                isinstance(model_actual_type, type)
+                and issubclass(model_actual_type, BaseModel)
+            )
+        ):
+            value = await redis_client.get(field_key)
+            if value:
+                return field_name, (
+                    value.decode() if isinstance(value, bytes) else value
+                )
+            return field_name, None
+        elif model_actual_type == bytes:
+            value = await redis_client.get(field_key)
+            return field_name, value
+        else:
+            value = await redis_client.get(field_key)
+            if value:
+                return field_name, (
+                    value.decode() if isinstance(value, bytes) else value
+                )
+            return field_name, None
+
+    @classmethod
     async def get(cls, key: str) -> Self:
         redis_client = cls.Meta.redis
 
-        async def load_field(field_name: str) -> tuple[str, Any]:
-            field_key = f"{key}/{field_name}"
-            model_field_info = cls.model_fields[field_name]
-            model_field_type = model_field_info.annotation
-            model_actual_type = get_actual_type(model_field_type)
-
-            if get_origin(model_actual_type) is list or (
-                isinstance(model_actual_type, type)
-                and issubclass(model_actual_type, list)
-            ):
-                value = await redis_client.lrange(field_key, 0, -1)
-                return field_name, value
-            elif (
-                get_origin(model_actual_type) is dict
-                or (
-                    isinstance(model_actual_type, type)
-                    and issubclass(model_actual_type, dict)
-                )
-                or (
-                    isinstance(model_actual_type, type)
-                    and issubclass(model_actual_type, BaseModel)
-                )
-            ):
-                value = await redis_client.get(field_key)
-                if value:
-                    return field_name, (
-                        value.decode() if isinstance(value, bytes) else value
-                    )
-                return field_name, None
-            elif model_actual_type == bytes:
-                value = await redis_client.get(field_key)
-                return field_name, value
-            else:
-                value = await redis_client.get(field_key)
-                if value:
-                    return field_name, (
-                        value.decode() if isinstance(value, bytes) else value
-                    )
-                return field_name, None
-
-        tasks = [load_field(field_name) for field_name in cls.model_fields]
+        tasks = [
+            cls.load_field(key, field_name, redis_client)
+            for field_name in cls.model_fields
+        ]
         results = await asyncio.gather(*tasks)
 
         field_data = {}
@@ -141,6 +202,61 @@ class RedisModel(BaseModel):
             return "string", ""
         else:
             return "json", json.dumps(value)
+
+    async def _deserialize_list_for_load_fields(
+        self, field_name: str, value: Any
+    ) -> Any:
+        """Special deserialization for lists in load_fields to handle type conversion properly."""
+        field_info = self.model_fields[field_name]
+        field_type = field_info.annotation
+        actual_type = get_actual_type(field_type)
+
+        if not value:
+            return value
+
+        list_args = get_args(actual_type)
+        if list_args:
+            item_type = list_args[0]
+            actual_item_type = get_actual_type(item_type)
+
+            # Handle Annotated types
+            from typing import _AnnotatedAlias
+
+            if (
+                isinstance(item_type, _AnnotatedAlias)
+                or get_origin(item_type) is Annotated
+            ):
+                # For Annotated[int, ...] we want the actual int type
+                actual_item_type = get_args(item_type)[0]
+
+            converted_items = []
+            for item in value:
+                # Decode bytes to string first if needed
+                if isinstance(item, bytes):
+                    item = item.decode()
+
+                # Convert to the appropriate type
+                if actual_item_type == int:
+                    converted_items.append(int(item))
+                elif actual_item_type == float:
+                    converted_items.append(float(item))
+                elif actual_item_type == bool:
+                    converted_items.append(
+                        item.lower() == "true" if isinstance(item, str) else bool(item)
+                    )
+                elif actual_item_type == datetime:
+                    converted_items.append(datetime.fromisoformat(item))
+                elif actual_item_type == Decimal:
+                    converted_items.append(Decimal(item))
+                else:
+                    converted_items.append(item)
+
+            return converted_items
+        else:
+            # No type info, decode bytes to strings
+            return [
+                item.decode() if isinstance(item, bytes) else item for item in value
+            ]
 
     async def _deserialize_field_value(
         self, field_name: str, redis_type: str, value: Any
@@ -300,3 +416,4 @@ class RedisModel(BaseModel):
 # TODO - add flag to put multiple fields in one key
 # TODO - allow foreign keys
 # TODO - how to handle list of models?
+# TODO - create a lock as context manager, with updated self

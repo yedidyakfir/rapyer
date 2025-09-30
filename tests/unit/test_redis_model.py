@@ -208,3 +208,101 @@ async def test_append_to_list_race_condition(redis_client):
     retrieved_user = await UserModel.get(user.key)
     assert retrieved_user.tags == ["new_item", "initial"]  # Redis value + new item
     assert user.tags == ["new_item", "local_change"]  # Local value + new item
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field_names",
+    [
+        ["name"],
+        ["name", "age"],
+        ["name", "age", "is_active"],
+        ["tags", "metadata"],
+        ["counter"],
+    ],
+)
+async def test_load_fields_simple_model_sanity(redis_client, field_names):
+    # Arrange
+    original_user = UserModel(
+        name="John Doe",
+        age=30,
+        is_active=True,
+        tags=["developer", "python"],
+        metadata={"role": "admin", "department": "engineering"},
+        counter=5,
+    )
+    await original_user.save()
+
+    # Change the model locally to verify we're loading from Redis
+    original_user.name = "Changed Name"
+    original_user.age = 999
+    original_user.is_active = False
+    original_user.tags = ["changed"]
+    original_user.metadata = {"changed": "value"}
+    original_user.counter = 999
+
+    # Act
+    loaded_fields = await UserModel.load_fields(original_user.key, *field_names)
+
+    # Assert
+    expected_values = {
+        "name": "John Doe",
+        "age": 30,
+        "is_active": True,
+        "tags": ["developer", "python"],
+        "metadata": {"role": "admin", "department": "engineering"},
+        "counter": 5,
+    }
+
+    for field_name in field_names:
+        assert field_name in loaded_fields
+        assert loaded_fields[field_name] == expected_values[field_name]
+
+    # Verify only requested fields are returned
+    assert set(loaded_fields.keys()) == set(field_names)
+
+
+@pytest.mark.asyncio
+async def test_load_fields_nonexistent_fields_edge_case(redis_client):
+    # Arrange
+    user = UserModel(name="Test User", age=25)
+    await user.save()
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="Invalid field names: \\['nonexistent'\\]"):
+        await UserModel.load_fields(user.key, "name", "nonexistent")
+
+
+@pytest.mark.asyncio
+async def test_load_fields_partial_update_verification_sanity(redis_client):
+    # Arrange
+    user = UserModel(
+        name="Original Name",
+        age=25,
+        is_active=True,
+        tags=["original", "tags"],
+        metadata={"original": "data"},
+        counter=10,
+    )
+    await user.save()
+
+    # Act - Update only some fields
+    await user.update(name="Updated Name", age=30, tags=["updated", "tags"])
+
+    # Load only the updated fields
+    updated_fields = await UserModel.load_fields(user.key, "name", "age", "tags")
+
+    # Load the unchanged fields
+    unchanged_fields = await UserModel.load_fields(
+        user.key, "is_active", "metadata", "counter"
+    )
+
+    # Assert - Updated fields have new values
+    assert updated_fields["name"] == "Updated Name"
+    assert updated_fields["age"] == 30
+    assert updated_fields["tags"] == ["updated", "tags"]
+
+    # Assert - Unchanged fields have original values
+    assert unchanged_fields["is_active"] == True
+    assert unchanged_fields["metadata"] == {"original": "data"}
+    assert unchanged_fields["counter"] == 10

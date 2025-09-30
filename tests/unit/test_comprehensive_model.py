@@ -380,3 +380,258 @@ async def test_field_validator_constraints_sanity(redis_client):
             address=address,
             points=15000,  # Should fail Field constraint
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field_names",
+    [
+        ["name", "age"],
+        ["balance", "created_at"],
+        ["address", "tags"],
+        ["profile_image", "signature"],
+        ["scores", "metadata"],
+        ["is_active", "is_verified"],
+        ["login_count", "points"],
+    ],
+)
+async def test_load_fields_comprehensive_model_sanity(redis_client, field_names):
+    # Arrange
+    test_datetime = datetime(2023, 5, 15, 10, 30, 45)
+    test_bytes = b"profile_image_data"
+    address = Address(
+        street="123 Main St", city="Boston", country="USA", zip_code="02101"
+    )
+
+    original_model = ComprehensiveModel(
+        name="john doe",
+        description="Test user",
+        age=30,
+        height=175.5,
+        balance=Decimal("1234.56"),
+        is_active=True,
+        is_verified=False,
+        created_at=test_datetime,
+        last_login=test_datetime,
+        profile_image=test_bytes,
+        signature=b"signature_data",
+        tags=["developer", "python"],
+        scores=[85, 91, 78],
+        metadata={"role": "admin", "department": "engineering"},
+        settings={"theme": 1, "notifications": 0},
+        address=address,
+        backup_address=address,
+        login_count=5,
+        points=1000,
+    )
+    await original_model.save()
+
+    # Change the model locally to verify we're loading from Redis
+    original_model.name = "Changed Name"
+    original_model.age = 999
+    original_model.balance = Decimal("999.99")
+    original_model.created_at = datetime(2000, 1, 1)
+    original_model.address = Address(
+        street="Changed", city="Changed", country="Changed"
+    )
+    original_model.tags = ["changed"]
+    original_model.profile_image = b"changed"
+    original_model.signature = b"changed"
+    original_model.scores = [999]
+    original_model.metadata = {"changed": "value"}
+    original_model.is_active = False
+    original_model.is_verified = True
+    original_model.login_count = 999
+    original_model.points = 999
+
+    # Act
+    loaded_fields = await ComprehensiveModel.load_fields(
+        original_model.key, *field_names
+    )
+
+    # Assert
+    expected_values = {
+        "name": "John Doe",  # Normalized by validator
+        "age": 30,
+        "balance": Decimal("1234.56"),
+        "created_at": test_datetime,
+        "address": address,
+        "tags": ["DEVELOPER", "PYTHON"],  # Uppercase by validator
+        "profile_image": test_bytes,
+        "signature": b"signature_data",
+        "scores": [86, 92, 78],  # Made even by validator
+        "metadata": {"role": "admin", "department": "engineering"},
+        "is_active": True,
+        "is_verified": False,
+        "login_count": 5,
+        "points": 1000,
+    }
+
+    for field_name in field_names:
+        assert field_name in loaded_fields
+        assert loaded_fields[field_name] == expected_values[field_name]
+
+    # Verify only requested fields are returned
+    assert set(loaded_fields.keys()) == set(field_names)
+
+
+@pytest.mark.asyncio
+async def test_load_fields_complex_partial_update_verification_sanity(redis_client):
+    # Arrange
+    original_address = Address(street="Original St", city="Old City", country="USA")
+    original_datetime = datetime(2023, 8, 1, 16, 0, 0)
+
+    model = ComprehensiveModel(
+        name="Original Name",
+        age=35,
+        height=180.0,
+        balance=Decimal("2000.00"),
+        created_at=original_datetime,
+        profile_image=b"original_image",
+        address=original_address,
+        tags=["old_tag"],
+        scores=[10, 20],
+        metadata={"old_key": "old_value"},
+        settings={"old_setting": 1},
+        login_count=100,
+        points=500,
+    )
+    await model.save()
+
+    # Act - Update some fields
+    new_address = Address(
+        street="New St", city="New City", country="Canada", zip_code="K1A0A6"
+    )
+    new_datetime = datetime(2023, 8, 15, 10, 0, 0)
+    await model.update(
+        name="Updated Name",
+        age=36,
+        last_login=new_datetime,
+        signature=b"new_signature",
+        address=new_address,
+        tags=["updated_tag", "another_tag"],
+        scores=[30, 40, 50],
+        metadata={"new_key": "new_value", "role": "updated"},
+        points=750,
+    )
+
+    # Load updated fields
+    updated_fields = await ComprehensiveModel.load_fields(
+        model.key,
+        "name",
+        "age",
+        "address",
+        "tags",
+        "scores",
+        "metadata",
+        "points",
+        "last_login",
+        "signature",
+    )
+
+    # Load unchanged fields
+    unchanged_fields = await ComprehensiveModel.load_fields(
+        model.key,
+        "height",
+        "balance",
+        "created_at",
+        "profile_image",
+        "settings",
+        "login_count",
+    )
+
+    # Assert - Updated fields have new values
+    assert updated_fields["name"] == "Updated Name"
+    assert updated_fields["age"] == 36
+    assert updated_fields["address"] == new_address
+    assert updated_fields["tags"] == ["updated_tag", "another_tag"]
+    assert updated_fields["scores"] == [30, 40, 50]
+    assert updated_fields["metadata"] == {"new_key": "new_value", "role": "updated"}
+    assert updated_fields["points"] == 750
+    assert updated_fields["last_login"] == new_datetime
+    assert updated_fields["signature"] == b"new_signature"
+
+    # Assert - Unchanged fields have original values
+    assert unchanged_fields["height"] == 180.0
+    assert unchanged_fields["balance"] == Decimal("2000.00")
+    assert unchanged_fields["created_at"] == original_datetime
+    assert unchanged_fields["profile_image"] == b"original_image"
+    assert unchanged_fields["settings"] == {"old_setting": 1}
+    assert unchanged_fields["login_count"] == 100
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "field_type_group",
+    [
+        ["name", "description"],  # String types
+        ["age", "height", "balance"],  # Numeric types
+        ["is_active", "is_verified"],  # Boolean types
+        ["created_at", "last_login"],  # DateTime types
+        ["profile_image", "signature"],  # Bytes types
+        ["tags", "scores"],  # List types
+        ["metadata", "settings"],  # Dict types
+        ["address", "backup_address"],  # Nested model types
+        ["login_count", "points"],  # Constrained fields
+    ],
+)
+async def test_load_fields_by_type_groups_sanity(redis_client, field_type_group):
+    # Arrange
+    address = Address(street="456 Oak Ave", city="Seattle", country="USA")
+    test_datetime = datetime(2023, 1, 1, 12, 0, 0)
+
+    model = ComprehensiveModel(
+        name="Type Test",
+        description="Testing different field types",
+        age=25,
+        height=165.0,
+        balance=Decimal("500.00"),
+        is_active=True,
+        is_verified=False,
+        created_at=test_datetime,
+        last_login=test_datetime,
+        profile_image=b"minimal_image",
+        signature=b"test_signature",
+        tags=["test", "type"],
+        scores=[10, 20, 30],
+        metadata={"test": "value"},
+        settings={"setting": 1},
+        address=address,
+        backup_address=address,
+        login_count=10,
+        points=100,
+    )
+    await model.save()
+
+    # Act
+    loaded_fields = await ComprehensiveModel.load_fields(model.key, *field_type_group)
+
+    # Assert
+    expected_values = {
+        "name": "Type Test",
+        "description": "Testing different field types",
+        "age": 25,
+        "height": 165.0,
+        "balance": Decimal("500.00"),
+        "is_active": True,
+        "is_verified": False,
+        "created_at": test_datetime,
+        "last_login": test_datetime,
+        "profile_image": b"minimal_image",
+        "signature": b"test_signature",
+        "tags": ["TEST", "TYPE"],  # Uppercase by validator
+        "scores": [10, 20, 30],
+        "metadata": {"test": "value"},
+        "settings": {"setting": 1},
+        "address": address,
+        "backup_address": address,
+        "login_count": 10,
+        "points": 100,
+    }
+
+    for field_name in field_type_group:
+        assert field_name in loaded_fields
+        assert loaded_fields[field_name] == expected_values[field_name]
+
+    # Verify only requested fields are returned
+    assert set(loaded_fields.keys()) == set(field_type_group)
