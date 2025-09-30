@@ -3,6 +3,7 @@ import json
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import Any, get_origin, get_args, Self, Union, Annotated
 
 import redis
@@ -203,6 +204,8 @@ class RedisModel(BaseModel):
             return "bytes", value
         elif isinstance(value, Decimal):
             return "string", str(value)
+        elif isinstance(value, Enum):
+            return "string", value.value
         elif isinstance(value, (str, int, float, bool)):
             return "string", str(value)
         elif value is None:
@@ -303,6 +306,8 @@ class RedisModel(BaseModel):
                 return datetime.fromisoformat(value)
             elif actual_type == Decimal:
                 return Decimal(value)
+            elif isinstance(actual_type, type) and issubclass(actual_type, Enum):
+                return actual_type(value)
             else:
                 return value
         else:

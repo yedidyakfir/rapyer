@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import List, Dict, Optional, Annotated
 
 import pytest
@@ -44,6 +45,13 @@ def ensure_even_score(value: int) -> int:
     return value
 
 
+class UserStatus(Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    PENDING = "pending"
+    SUSPENDED = "suspended"
+
+
 class Address(BaseModel):
     street: str
     city: str
@@ -64,6 +72,9 @@ class ComprehensiveModel(RedisModel):
     # Boolean
     is_active: bool = True
     is_verified: Optional[bool] = None
+
+    # Enum
+    status: UserStatus = UserStatus.ACTIVE
 
     # DateTime
     created_at: datetime
@@ -123,6 +134,7 @@ async def test_comprehensive_model_all_types_sanity(redis_client):
         balance=Decimal("1234.56"),
         is_active=True,
         is_verified=False,
+        status=UserStatus.PENDING,
         created_at=test_datetime,
         last_login=test_datetime,
         profile_image=test_bytes,
@@ -463,6 +475,7 @@ async def test_load_fields_comprehensive_model_sanity(redis_client, field_names)
         "metadata": {"role": "admin", "department": "engineering"},
         "is_active": True,
         "is_verified": False,
+        "status": UserStatus.PENDING,
         "login_count": 5,
         "points": 1000,
     }
@@ -566,7 +579,7 @@ async def test_load_fields_complex_partial_update_verification_sanity(redis_clie
     [
         ["name", "description"],  # String types
         ["age", "height", "balance"],  # Numeric types
-        ["is_active", "is_verified"],  # Boolean types
+        ["is_active", "is_verified", "status"],  # Boolean and Enum types
         ["created_at", "last_login"],  # DateTime types
         ["profile_image", "signature"],  # Bytes types
         ["tags", "scores"],  # List types
@@ -588,6 +601,7 @@ async def test_load_fields_by_type_groups_sanity(redis_client, field_type_group)
         balance=Decimal("500.00"),
         is_active=True,
         is_verified=False,
+        status=UserStatus.INACTIVE,
         created_at=test_datetime,
         last_login=test_datetime,
         profile_image=b"minimal_image",
@@ -615,6 +629,7 @@ async def test_load_fields_by_type_groups_sanity(redis_client, field_type_group)
         "balance": Decimal("500.00"),
         "is_active": True,
         "is_verified": False,
+        "status": UserStatus.INACTIVE,
         "created_at": test_datetime,
         "last_login": test_datetime,
         "profile_image": b"minimal_image",
@@ -818,6 +833,90 @@ async def test_pop_invalid_field_edge_case(redis_client):
     # Act & Assert
     with pytest.raises(ValueError, match="Field nonexistent_field not found"):
         await model.pop("nonexistent_field")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "status_value",
+    [
+        UserStatus.ACTIVE,
+        UserStatus.INACTIVE,
+        UserStatus.PENDING,
+        UserStatus.SUSPENDED,
+    ],
+)
+async def test_enum_field_support_sanity(redis_client, status_value):
+    # Arrange
+    address = Address(street="123 Enum St", city="Test City", country="USA")
+    model = ComprehensiveModel(
+        name="Enum Test",
+        age=30,
+        height=170.0,
+        balance=Decimal("100.00"),
+        created_at=datetime(2023, 1, 1, 12, 0, 0),
+        profile_image=b"test_image",
+        address=address,
+        status=status_value,
+    )
+
+    # Act
+    await model.save()
+    retrieved = await ComprehensiveModel.get(model.key)
+
+    # Assert
+    assert retrieved.status == status_value
+    assert retrieved.status.value == status_value.value
+    assert retrieved == model
+
+
+@pytest.mark.asyncio
+async def test_enum_field_update_sanity(redis_client):
+    # Arrange
+    address = Address(street="123 Enum Update St", city="Test City", country="USA")
+    model = ComprehensiveModel(
+        name="Enum Update Test",
+        age=30,
+        height=170.0,
+        balance=Decimal("100.00"),
+        created_at=datetime(2023, 1, 1, 12, 0, 0),
+        profile_image=b"test_image",
+        address=address,
+        status=UserStatus.ACTIVE,
+    )
+    await model.save()
+
+    # Act
+    await model.update(status=UserStatus.SUSPENDED)
+
+    # Assert
+    retrieved = await ComprehensiveModel.get(model.key)
+    assert retrieved.status == UserStatus.SUSPENDED
+    assert model.status == UserStatus.SUSPENDED
+    assert retrieved == model
+
+
+@pytest.mark.asyncio
+async def test_enum_field_load_fields_sanity(redis_client):
+    # Arrange
+    address = Address(street="123 Enum Load St", city="Test City", country="USA")
+    model = ComprehensiveModel(
+        name="Enum Load Test",
+        age=30,
+        height=170.0,
+        balance=Decimal("100.00"),
+        created_at=datetime(2023, 1, 1, 12, 0, 0),
+        profile_image=b"test_image",
+        address=address,
+        status=UserStatus.PENDING,
+    )
+    await model.save()
+
+    # Act
+    loaded_fields = await ComprehensiveModel.load_fields(model.key, "status", "name")
+
+    # Assert
+    assert loaded_fields["status"] == UserStatus.PENDING
+    assert loaded_fields["name"] == "Enum Load Test"
 
 
 @pytest.mark.asyncio
