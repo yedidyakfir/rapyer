@@ -73,7 +73,7 @@ class RedisModel(BaseModel):
 
                 if get_origin(actual_type) is list:
                     field_data[field_name] = (
-                        await temp_instance._deserialize_list_for_load_fields(
+                        temp_instance._deserialize_list_for_load_fields(
                             field_name, raw_value
                         )
                     )
@@ -213,9 +213,7 @@ class RedisModel(BaseModel):
         else:
             return "json", json.dumps(value)
 
-    async def _deserialize_list_for_load_fields(
-        self, field_name: str, value: Any
-    ) -> Any:
+    def _deserialize_list_for_load_fields(self, field_name: str, value: Any) -> Any:
         """Special deserialization for lists in load_fields to handle type conversion properly."""
         field_info = self.model_fields[field_name]
         field_type = field_info.annotation
@@ -502,4 +500,4 @@ class RedisModel(BaseModel):
 # TODO - add flag to put multiple fields in one key
 # TODO - allow foreign keys
 # TODO - how to handle list of models?
-# TODO - create a lock as context manager, with updated self
+# TODO - create a lock as context manager, with updated self - also it should accept different actions
