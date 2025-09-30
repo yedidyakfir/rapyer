@@ -39,6 +39,13 @@ class RedisModel(BaseModel):
     def key(self):
         return f"{self.__class__.__name__}:{self.pk}"
 
+    async def load(self, *field_names: str) -> Self:
+        fields = await self.load_fields(self.key, *field_names)
+        # Update only the selected fields on this instance
+        for name, value in fields.items():
+            setattr(self, name, value)
+        return self
+
     @classmethod
     async def load_fields(cls, key: str, *field_names: str) -> dict[str, Any]:
         """Load only selected fields from Redis for a model instance."""
