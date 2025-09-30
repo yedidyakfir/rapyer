@@ -13,6 +13,30 @@ from redis.asyncio.client import Pipeline
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 
+class RedisModelMeta(type(BaseModel)):
+    def __new__(mcs, name: str, bases: tuple, namespace: dict, **kwargs):
+        # Get the Meta class if it exists
+        meta = namespace.get('Meta')
+        redis_type_mapping = {}
+        
+        if meta and hasattr(meta, 'redis_type'):
+            redis_type_mapping = meta.redis_type
+        
+        # Process annotations to reassign types based on redis_type mapping
+        if '__annotations__' in namespace:
+            new_annotations = {}
+            for field_name, field_type in namespace['__annotations__'].items():
+                if field_name in redis_type_mapping:
+                    new_annotations[field_name] = redis_type_mapping[field_name]
+                else:
+                    new_annotations[field_name] = field_type
+            namespace['__annotations__'] = new_annotations
+        
+        # Create the class using BaseModel's metaclass
+        cls = super().__new__(mcs, name, bases, namespace, **kwargs)
+        return cls
+
+
 def create_field_key(key: str, field_name: str) -> str:
     return f"{key}/{field_name}"
 
@@ -30,11 +54,12 @@ def get_actual_type(annotation: Any) -> Any:
     return annotation
 
 
-class RedisModel(BaseModel):
+class RedisModel(BaseModel, metaclass=RedisModelMeta):
     pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     class Meta:
         redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
+        redis_type: dict[str, type] = {}
 
     @property
     def key(self):
