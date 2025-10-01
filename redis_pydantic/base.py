@@ -32,6 +32,56 @@ def get_actual_type(annotation: Any) -> Any:
     return annotation
 
 
+class RedisFieldDescriptor:
+    """Descriptor that creates Redis type instances with proper parameters."""
+
+    def __init__(self, redis_type_class, field_name, default_value=None):
+        self.redis_type_class = redis_type_class
+        self.field_name = field_name
+        self.default_value = default_value
+        self.private_name = f"_redis_{field_name}"
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+
+        # Get or create the Redis type instance
+        if not hasattr(obj, self.private_name):
+            # Prepare initial value
+            initial_value = []
+            if self.default_value is not None:
+                if callable(self.default_value):
+                    initial_value = self.default_value()
+                else:
+                    initial_value = self.default_value
+
+            # Create instance with current parameters and initial value
+            redis_instance = self.redis_type_class(
+                initial_value,
+                redis_key=obj.key,
+                field_path=self.field_name,
+                redis=obj.Meta.redis,
+            )
+            setattr(obj, self.private_name, redis_instance)
+
+        return getattr(obj, self.private_name)
+
+    def __set__(self, obj, value):
+        # Create new Redis type instance with the value
+        initial_value = value if value is not None else []
+        redis_instance = self.redis_type_class(
+            initial_value,
+            redis_key=obj.key,
+            field_path=self.field_name,
+            redis=obj.Meta.redis,
+        )
+        setattr(obj, self.private_name, redis_instance)
+
+    def __delete__(self, obj):
+        if hasattr(obj, self.private_name):
+            delattr(obj, self.private_name)
+
+
 class BaseRedisModel(BaseModel):
     pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -43,16 +93,55 @@ class BaseRedisModel(BaseModel):
     def key(self):
         return f"{self.__class__.__name__}:{self.pk}"
 
+    def _update_redis_field_parameters(self):
+        """Update Redis field parameters when key or redis connection changes."""
+        for field_name in getattr(self.__class__, "_redis_field_mapping", {}):
+            if hasattr(self, field_name):
+                redis_instance = getattr(self, field_name)
+                if hasattr(redis_instance, "redis_key") and hasattr(
+                    redis_instance, "redis"
+                ):
+                    redis_instance.redis_key = self.key
+                    redis_instance.redis = self.Meta.redis
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
-        new_annotations = {}
+        # Store Redis field mappings for later use
+        cls._redis_field_mapping = {}
+
+        # Replace field types with Redis types and create descriptors
         for field_name, field_type in cls.__annotations__.items():
-            if field_name in cls.Meta.redis_type:
-                new_annotations[field_name] = cls.Meta.redis_type[field_name]
-            else:
-                new_annotations[field_name] = field_type
-        cls.__annotations__ = new_annotations
+            actual_type = get_actual_type(field_type)
+
+            # Handle generic types like list[str] by checking the origin
+            origin_type = get_origin(actual_type) or actual_type
+
+            # Check if this type should be replaced with a Redis type
+            if origin_type in cls.Meta.redis_type:
+                redis_type_class = cls.Meta.redis_type[origin_type]
+                cls._redis_field_mapping[field_name] = redis_type_class
+
+    def __init__(self, **data):
+        super().__init__(**data)
+
+        # Initialize Redis fields after Pydantic initialization
+        for field_name, redis_type_class in getattr(
+            self.__class__, "_redis_field_mapping", {}
+        ).items():
+            # Get the current value (from Pydantic initialization)
+            current_value = getattr(self, field_name, [])
+
+            # Create Redis type instance
+            redis_instance = redis_type_class(
+                current_value,
+                redis_key=self.key,
+                field_path=field_name,
+                redis=self.Meta.redis,
+            )
+
+            # Set it directly on the instance
+            object.__setattr__(self, field_name, redis_instance)
 
 
 class RedisModel(BaseModel):
