@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, get_origin, get_args, Self, Union, Annotated
 
 import redis
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 from redis.asyncio.client import Pipeline
 
 from redis_pydantic.types import ALL_TYPES
@@ -83,11 +83,20 @@ class RedisFieldDescriptor:
 
 
 class BaseRedisModel(BaseModel):
-    pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
 
     class Meta:
         redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
         redis_type: dict[str, type] = ALL_TYPES
+
+    @property
+    def pk(self):
+        return self._pk
+
+    @pk.setter
+    def pk(self, value: str):
+        self._pk = value
+        self._update_redis_field_parameters()
 
     @property
     def key(self):
