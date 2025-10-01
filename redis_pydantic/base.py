@@ -10,6 +10,8 @@ import redis
 from pydantic import BaseModel, Field
 from redis.asyncio.client import Pipeline
 
+from redis_pydantic.types import ALL_TYPES
+
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 
@@ -35,7 +37,7 @@ class BaseRedisModel(BaseModel):
 
     class Meta:
         redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
-        redis_type: dict[str, type] = {}
+        redis_type: dict[str, type] = ALL_TYPES
 
     @property
     def key(self):
@@ -58,7 +60,6 @@ class RedisModel(BaseModel):
 
     class Meta:
         redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
-        redis_type: dict[str, type] = {}
 
     @property
     def key(self):
