@@ -30,7 +30,7 @@ def get_actual_type(annotation: Any) -> Any:
     return annotation
 
 
-class RedisModel(BaseModel):
+class BaseRedisModel(BaseModel):
     pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     class Meta:
@@ -51,6 +51,18 @@ class RedisModel(BaseModel):
             else:
                 new_annotations[field_name] = field_type
         cls.__annotations__ = new_annotations
+
+
+class RedisModel(BaseModel):
+    pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+    class Meta:
+        redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
+        redis_type: dict[str, type] = {}
+
+    @property
+    def key(self):
+        return f"{self.__class__.__name__}:{self.pk}"
 
     async def load(self, *field_names: str) -> Self:
         fields = await self.load_fields(self.key, *field_names)
