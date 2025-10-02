@@ -1,24 +1,11 @@
-from redis.asyncio.client import Redis
-
 from redis_pydantic.types.base import RedisType
-from redis_pydantic.context import _context_var
 from redis_pydantic.types.utils import noop
 
 
 class RedisList(list, RedisType):
-    def __init__(self, *args, redis_key: str, field_path: str, redis: Redis, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.redis_key = redis_key
-        self.field_path = field_path
-        self.redis = redis
-
-    @property
-    def pipeline(self):
-        return _context_var.get() or self.redis
-
-    @property
-    def json_path(self):
-        return f"$.{self.field_path}"
+    def __init__(self, *args, **kwargs):
+        RedisType.__init__(self, **kwargs)
+        super().__init__(*args)
 
     async def load(self):
         # Get all items from Redis list
