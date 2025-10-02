@@ -2,34 +2,72 @@ from redis.asyncio.client import Redis
 
 from redis_pydantic.types.base import RedisType
 from redis_pydantic.context import _context_var
+from redis_pydantic.types.utils import noop
 
 
 class RedisList(list, RedisType):
     def __init__(self, *args, redis_key: str, field_path: str, redis: Redis, **kwargs):
-        super(list, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.redis_key = redis_key
         self.field_path = field_path
         self.redis = redis
 
-    def load(self):
-        pass
+    @property
+    def pipeline(self):
+        return _context_var.get() or self.redis
+
+    @property
+    def json_path(self):
+        return f"$.{self.field_path}"
+
+    async def load(self):
+        # Get all items from Redis list
+        redis_items = await self.pipeline.json().get(self.redis_key, self.field_path)
+
+        # Decode bytes to strings if needed
+        decoded_items = [
+            item.decode() if isinstance(item, bytes) else item for item in redis_items
+        ]
+
+        # Clear local list and populate with Redis data
+        super().clear()
+        super().extend(decoded_items)
 
     def append(self, __object):
-        redis = _context_var.get() or self.redis
-        redis.json().arrappend(self.redis_key, self.field_path, __object)
-        super(list, self).append(__object)
+        super().insert(0, __object)
+
+        # Add to Redis (lpush adds to the left/beginning)
+        return self.pipeline.json().arrappend(
+            self.redis_key, self.field_path, str(__object)
+        )
 
     def extend(self, __iterable):
-        pass
+        items = list(__iterable)
+        super().extend(items)
 
-    def pop(self, *args, **kwargs):
-        pass
+        # Convert iterable to list and reverse for correct order with lpush
+        if items:
+            # Add all items to Redis in reverse order (lpush adds to front)
+            return self.pipeline.json().arrappend(
+                self.redis_key,
+                self.field_path,
+                *[str(item) for item in reversed(items)],
+            )
+        return noop()
 
-    def remove(self, __value):
-        pass
+    def pop(self, index=-1):
+        super().pop(index)
+        return self.pipeline.json().arrpop(self.redis_key, self.field_path, index)[0]
 
-    def reverse(self, *args, **kwargs):
-        pass
+    def insert(self, index, __object):
+        super().insert(index, __object)
+        return self.pipeline.json().arrinsert(
+            self.redis_key, self.field_path, index, str(__object)
+        )
 
-    def sort(self, *args, **kwargs):
-        pass
+    def clear(self):
+        # Clear local list
+        super().clear()
+
+        # Clear Redis list
+        return self.pipeline.json().delete(self.redis_key, self.field_path)
