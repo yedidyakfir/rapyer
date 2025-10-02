@@ -30,3 +30,7 @@ class RedisType(ABC):
     @abc.abstractmethod
     def load(self):
         pass
+
+    @abc.abstractmethod
+    def clone(self):
+        pass

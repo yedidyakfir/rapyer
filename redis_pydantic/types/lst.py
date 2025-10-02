@@ -57,3 +57,6 @@ class RedisList(list, RedisType):
 
         # Clear Redis list
         return self.pipeline.json().delete(self.redis_key, self.json_path)
+
+    def clone(self):
+        return list.copy(self)
