@@ -7,7 +7,14 @@ from redis_pydantic.context import _context_var
 
 
 class RedisType(ABC):
-    def __init__(self, redis_key: str = "", field_path: str = "", redis: Redis = None):
+    def __init__(
+        self,
+        *args,
+        redis_key: str = "",
+        field_path: str = "",
+        redis: Redis = None,
+        **kwargs,
+    ):
         self.redis_key = redis_key
         self.field_path = field_path
         self.redis = redis
