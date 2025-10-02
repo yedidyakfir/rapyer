@@ -29,15 +29,19 @@ class RedisDict(dict, RedisType):
 
         return self.pipeline.json().delete(self.redis_key, f"{self.json_path}.{key}")
 
-    def update(self, **kwargs):
-        super().update(kwargs)
-        redis_kwargs = {f"{self.json_path}.{k}": v for k, v in kwargs.items()}
-        return self.pipeline.json().mset(
-            [
-                (self.redis_key, field_name, value)
-                for field_name, value in redis_kwargs.items()
-            ]
-        )
+    def update(self, *args, **kwargs):
+        # Handle different ways update can be called
+        if args:
+            other = args[0]
+            if hasattr(other, "items"):
+                for key, value in other.items():
+                    self[key] = value
+            else:
+                for key, value in other:
+                    self[key] = value
+
+        for key, value in kwargs.items():
+            self[key] = value
 
     async def pop(self, key, default=None):
         # Redis Lua script for atomic get-and-delete operation
@@ -49,7 +53,7 @@ class RedisDict(dict, RedisType):
         -- Get the value from the JSON object
         local value = redis.call('JSON.GET', key, path .. '.' .. target_key)
         
-        if value then
+        if value and value ~= '[]' and value ~= 'null' then
             -- Delete the key from the JSON object
             redis.call('JSON.DEL', key, path .. '.' .. target_key)
             return value
@@ -62,41 +66,75 @@ class RedisDict(dict, RedisType):
         result = await self.pipeline.eval(
             pop_script, 1, self.redis_key, self.json_path, key
         )
-        if result is None and default is not None:
-            return default
 
-        # Pop from local dict and return the local value
-        super().pop(key, None)
+        if result is None:
+            # Key doesn't exist in Redis
+            if default is not None:
+                return default
+            else:
+                raise KeyError(key)
+
+        # Key exists in Redis, pop from local dict (it should exist there too)
+        super().pop(
+            key, None
+        )  # Use None default to avoid KeyError if local is out of sync
+
+        # Parse Redis value if it's JSON-encoded
+        if isinstance(result, bytes):
+            result = result.decode()
+        if result.startswith('["') and result.endswith('"]'):
+            # Remove JSON array wrapping for single values
+            result = result[2:-2]
+
         return result
 
     async def popitem(self):
-        # Check if dict is empty first
-        if len(self) == 0:
-            raise KeyError("popitem(): dictionary is empty")
-
-        # Get an arbitrary key from local dict
-        local_key = next(iter(self))
-        local_value = self[local_key]
-
-        # Redis Lua script for atomic delete operation using the specific key
+        # Redis Lua script for atomic get-arbitrary-key-and-delete operation
         popitem_script = """
         local key = KEYS[1]
         local path = ARGV[1]
-        local target_key = ARGV[2]
         
-        -- Delete the key from the JSON object
-        local result = redis.call('JSON.DEL', key, path .. '.' .. target_key)
-        return result
+        -- Get all the keys from the JSON object
+        local keys_result = redis.call('JSON.OBJKEYS', key, path)
+        
+        if keys_result and type(keys_result) == 'table' and #keys_result > 0 then
+            -- Get the first key from the result
+            local keys = keys_result
+            if type(keys[1]) == 'table' then
+                keys = keys[1]  -- Sometimes Redis returns nested arrays
+            end
+            
+            if #keys > 0 then
+                local first_key = tostring(keys[1])
+                -- Get the value for this key
+                local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
+                
+                if value then
+                    -- Delete the key from the JSON object
+                    redis.call('JSON.DEL', key, path .. '.' .. first_key)
+                    return {first_key, value}
+                end
+            end
+        end
+        
+        return nil
         """
 
-        # Execute the script atomically to delete from Redis
-        await self.pipeline.eval(
-            popitem_script, 1, self.redis_key, self.json_path, local_key
+        # Execute the script atomically
+        result = await self.pipeline.eval(
+            popitem_script, 1, self.redis_key, self.json_path
         )
 
-        # Pop the same key from local dict
-        super().pop(local_key)
-        return local_key, local_value
+        if result is not None:
+            redis_key, redis_value = result
+            # Pop the same key from local dict
+            super().pop(
+                redis_key.decode() if isinstance(redis_key, bytes) else redis_key
+            )
+            return redis_value
+        else:
+            # If Redis is empty but local dict has items, raise error for consistency
+            raise KeyError("popitem(): dictionary is empty")
 
     def clear(self):
         # Clear local dict
