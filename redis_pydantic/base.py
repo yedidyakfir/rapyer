@@ -152,6 +152,11 @@ class BaseRedisModel(BaseModel):
             # Set it directly on the instance
             object.__setattr__(self, field_name, redis_instance)
 
+    async def save(self) -> Self:
+        model_dump = self.model_dump(exclude=["_pk"])
+        await self.Meta.redis.json().set(self.key, "$", model_dump)
+        return self
+
 
 class RedisModel(BaseModel):
     pk: str = Field(default_factory=lambda: str(uuid.uuid4()))
