@@ -34,11 +34,10 @@ class RedisList(list, RedisType):
         super().extend(decoded_items)
 
     def append(self, __object):
-        super().insert(0, __object)
+        super().append(__object)
 
-        # Add to Redis (lpush adds to the left/beginning)
         return self.pipeline.json().arrappend(
-            self.redis_key, self.field_path, str(__object)
+            self.redis_key, self.json_path, str(__object)
         )
 
     def extend(self, __iterable):
@@ -50,19 +49,19 @@ class RedisList(list, RedisType):
             # Add all items to Redis in reverse order (lpush adds to front)
             return self.pipeline.json().arrappend(
                 self.redis_key,
-                self.field_path,
+                self.json_path,
                 *[str(item) for item in reversed(items)],
             )
         return noop()
 
     def pop(self, index=-1):
         super().pop(index)
-        return self.pipeline.json().arrpop(self.redis_key, self.field_path, index)[0]
+        return self.pipeline.json().arrpop(self.redis_key, self.json_path, index)[0]
 
     def insert(self, index, __object):
         super().insert(index, __object)
         return self.pipeline.json().arrinsert(
-            self.redis_key, self.field_path, index, str(__object)
+            self.redis_key, self.json_path, index, str(__object)
         )
 
     def clear(self):
@@ -70,4 +69,4 @@ class RedisList(list, RedisType):
         super().clear()
 
         # Clear Redis list
-        return self.pipeline.json().delete(self.redis_key, self.field_path)
+        return self.pipeline.json().delete(self.redis_key, self.json_path)
