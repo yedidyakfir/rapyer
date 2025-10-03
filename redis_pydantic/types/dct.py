@@ -29,6 +29,15 @@ class RedisDict(dict, RedisType):
 
         return self.pipeline.json().delete(self.redis_key, f"{self.json_path}.{key}")
 
+    def _parse_redis_json_value(self, result):
+        """Parse JSON-encoded value returned from Redis Lua scripts."""
+        if isinstance(result, bytes):
+            result = result.decode()
+        if result.startswith('["') and result.endswith('"]'):
+            # Remove JSON array wrapping for single values
+            result = result[2:-2]
+        return result
+
     def update(self, *args, **kwargs):
         # Handle different ways update can be called
         if args:
