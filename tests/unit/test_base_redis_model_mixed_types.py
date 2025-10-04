@@ -27,7 +27,7 @@ class MixedTypesModel(BaseRedisModel):
 
 @pytest_asyncio.fixture
 async def real_redis_client():
-    redis = await redis_pydantic.RedisModel.Meta.redis.from_url(
+    redis = await redis_pydantic.BaseRedisModel.Meta.redis.from_url(
         "redis://localhost:6371/0"
     )
     MixedTypesModel.Meta.redis = redis

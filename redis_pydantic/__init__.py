@@ -1,6 +1,6 @@
 """Redis Pydantic - Pydantic models with Redis as the backend."""
 
-from .base import RedisModel
+from .base import BaseRedisModel
 
 __version__ = "0.1.0"
-__all__ = ["RedisModel"]
+__all__ = ["BaseRedisModel"]
