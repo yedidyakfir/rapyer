@@ -7,7 +7,6 @@ class RedisBool(int, RedisType):
 
     def __init__(self, value=False, **kwargs):
         RedisType.__init__(self, **kwargs)
-        super().__init__()
 
     async def load(self):
         redis_value = await self.pipeline.json().get(self.redis_key, self.field_path)

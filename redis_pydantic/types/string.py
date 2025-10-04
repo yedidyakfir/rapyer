@@ -2,9 +2,11 @@ from redis_pydantic.types.base import RedisType
 
 
 class RedisStr(str, RedisType):
-    def __init__(self, *args, **kwargs):
+    def __new__(cls, value="", **kwargs):
+        return super().__new__(cls, value)
+    
+    def __init__(self, value="", **kwargs):
         RedisType.__init__(self, **kwargs)
-        super().__init__(*args)
 
     async def load(self):
         redis_value = await self.pipeline.json().get(self.redis_key, self.field_path)

@@ -3,9 +3,15 @@ from redis_pydantic.types.base import RedisType
 
 
 class RedisBytes(bytes, RedisType):
-    def __init__(self, *args, **kwargs):
+    def __new__(cls, value=b"", **kwargs):
+        if isinstance(value, str):
+            value = value.encode()
+        elif not isinstance(value, bytes):
+            value = b""
+        return super().__new__(cls, value)
+
+    def __init__(self, value=b"", **kwargs):
         RedisType.__init__(self, **kwargs)
-        super().__init__(*args)
 
     async def load(self):
         redis_value = await self.pipeline.json().get(self.redis_key, self.field_path)
