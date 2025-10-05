@@ -26,7 +26,7 @@ class RedisInt(int, RedisType):
         if not isinstance(value, int):
             raise TypeError("Value must be int")
 
-        return await self.pipeline.json().set(self.redis_key, self.json_path, value)
+        return await self.client.json().set(self.redis_key, self.json_path, value)
 
     def clone(self):
         return int(self)
