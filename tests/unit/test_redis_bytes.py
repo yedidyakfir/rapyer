@@ -23,14 +23,17 @@ async def real_redis_client(redis_client):
     await redis_client.aclose()
 
 
-@pytest.mark.parametrize("test_values", [
-    b"hello", 
-    b"world", 
-    b"", 
-    b"\x00\x01\x02\x03", 
-    b"\xff\xfe\xfd", 
-    b"unicode bytes: \xc4\x85\xc4\x99"
-])
+@pytest.mark.parametrize(
+    "test_values",
+    [
+        b"hello",
+        b"world",
+        b"",
+        b"\x00\x01\x02\x03",
+        b"\xff\xfe\xfd",
+        b"unicode bytes: \xc4\x85\xc4\x99",
+    ],
+)
 @pytest.mark.asyncio
 async def test_redis_bytes_set_functionality_sanity(real_redis_client, test_values):
     # Arrange
@@ -45,13 +48,9 @@ async def test_redis_bytes_set_functionality_sanity(real_redis_client, test_valu
     assert redis_value == expected_encoded
 
 
-@pytest.mark.parametrize("test_values", [
-    b"hello", 
-    b"world", 
-    b"", 
-    b"\x00\x01\x02\x03", 
-    b"\xff\xfe\xfd"
-])
+@pytest.mark.parametrize(
+    "test_values", [b"hello", b"world", b"", b"\x00\x01\x02\x03", b"\xff\xfe\xfd"]
+)
 @pytest.mark.asyncio
 async def test_redis_bytes_load_functionality_sanity(real_redis_client, test_values):
     # Arrange
@@ -78,13 +77,18 @@ async def test_redis_bytes_load_with_none_value_edge_case(real_redis_client):
     assert loaded_value == b""
 
 
-@pytest.mark.parametrize("redis_values", [
-    ("string_value", b"string_value"),
-    (b"actual_bytes", b"actual_bytes"),
-    (42, b"42")
-])
+@pytest.mark.parametrize(
+    "redis_values",
+    [
+        ("string_value", b"string_value"),
+        (b"actual_bytes", b"actual_bytes"),
+        (42, b"42"),
+    ],
+)
 @pytest.mark.asyncio
-async def test_redis_bytes_load_type_conversion_edge_case(real_redis_client, redis_values):
+async def test_redis_bytes_load_type_conversion_edge_case(
+    real_redis_client, redis_values
+):
     # Arrange
     redis_value, expected = redis_values
     model = BytesModel()
@@ -101,7 +105,9 @@ async def test_redis_bytes_load_type_conversion_edge_case(real_redis_client, red
 async def test_redis_bytes_load_invalid_base64_edge_case(real_redis_client):
     # Arrange
     model = BytesModel()
-    await real_redis_client.json().set(model.key, model.data.json_path, "invalid_base64!")
+    await real_redis_client.json().set(
+        model.key, model.data.json_path, "invalid_base64!"
+    )
 
     # Act
     loaded_value = await model.data.load()
@@ -127,6 +133,7 @@ async def test_redis_bytes_inheritance_sanity(real_redis_client):
 
     # Assert
     from redis_pydantic.types.byte import RedisBytes
+
     assert isinstance(model.data, RedisBytes)
     assert isinstance(model.data, bytes)
     assert model.data == b"hello"
@@ -155,6 +162,7 @@ async def test_redis_bytes_model_creation_functionality_sanity(real_redis_client
 
     # Assert
     from redis_pydantic.types.byte import RedisBytes
+
     assert isinstance(model.data, RedisBytes)
     assert hasattr(model.data, "redis_key")
     assert hasattr(model.data, "field_path")
@@ -181,15 +189,18 @@ async def test_redis_bytes_persistence_across_instances_edge_case(real_redis_cli
     assert loaded_value == b"modified"
 
 
-@pytest.mark.parametrize("operations", [
-    (lambda x: len(x), 5),
-    (lambda x: x[1:3], b"el"),
-    (lambda x: x + b" world", b"hello world"),
-    (lambda x: b"ell" in x, True),
-    (lambda x: x.decode(), "hello"),
-    (lambda x: x.upper(), b"HELLO"),
-    (lambda x: x.replace(b"l", b"x"), b"hexxo")
-])
+@pytest.mark.parametrize(
+    "operations",
+    [
+        (lambda x: len(x), 5),
+        (lambda x: x[1:3], b"el"),
+        (lambda x: x + b" world", b"hello world"),
+        (lambda x: b"ell" in x, True),
+        (lambda x: x.decode(), "hello"),
+        (lambda x: x.upper(), b"HELLO"),
+        (lambda x: x.replace(b"l", b"x"), b"hexxo"),
+    ],
+)
 @pytest.mark.asyncio
 async def test_redis_bytes_operations_sanity(real_redis_client, operations):
     # Arrange
@@ -244,7 +255,9 @@ async def test_redis_bytes_binary_data_functionality_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_bytes_creation_from_string_functionality_edge_case(real_redis_client):
+async def test_redis_bytes_creation_from_string_functionality_edge_case(
+    real_redis_client,
+):
     # Arrange & Act
     model = BytesModel(data="string")  # This should be converted to bytes
 

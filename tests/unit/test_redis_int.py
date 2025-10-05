@@ -63,7 +63,9 @@ async def test_redis_int_load_with_none_value_edge_case(real_redis_client):
 
 @pytest.mark.parametrize("redis_values", ["42", 42.5, "invalid"])
 @pytest.mark.asyncio
-async def test_redis_int_load_type_conversion_edge_case(real_redis_client, redis_values):
+async def test_redis_int_load_type_conversion_edge_case(
+    real_redis_client, redis_values
+):
     # Arrange
     model = IntModel()
     await real_redis_client.json().set(model.key, model.count.json_path, redis_values)
@@ -97,6 +99,7 @@ async def test_redis_int_inheritance_sanity(real_redis_client):
 
     # Assert
     from redis_pydantic.types.integer import RedisInt
+
     assert isinstance(model.count, RedisInt)
     assert isinstance(model.count, int)
     assert model.count == 42
@@ -125,6 +128,7 @@ async def test_redis_int_model_creation_functionality_sanity(real_redis_client):
 
     # Assert
     from redis_pydantic.types.integer import RedisInt
+
     assert isinstance(model.count, RedisInt)
     assert hasattr(model.count, "redis_key")
     assert hasattr(model.count, "field_path")
@@ -151,14 +155,17 @@ async def test_redis_int_persistence_across_instances_edge_case(real_redis_clien
     assert loaded_value == 100
 
 
-@pytest.mark.parametrize("operations", [
-    (lambda x: x + 10, 52),
-    (lambda x: x - 8, 34),
-    (lambda x: x * 2, 84),
-    (lambda x: x == 42, True),
-    (lambda x: x > 40, True),
-    (lambda x: x < 40, False)
-])
+@pytest.mark.parametrize(
+    "operations",
+    [
+        (lambda x: x + 10, 52),
+        (lambda x: x - 8, 34),
+        (lambda x: x * 2, 84),
+        (lambda x: x == 42, True),
+        (lambda x: x > 40, True),
+        (lambda x: x < 40, False),
+    ],
+)
 @pytest.mark.asyncio
 async def test_redis_int_arithmetic_operations_sanity(real_redis_client, operations):
     # Arrange

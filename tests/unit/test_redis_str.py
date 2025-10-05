@@ -21,7 +21,9 @@ async def real_redis_client(redis_client):
     await redis_client.aclose()
 
 
-@pytest.mark.parametrize("test_values", ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"])
+@pytest.mark.parametrize(
+    "test_values", ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"]
+)
 @pytest.mark.asyncio
 async def test_redis_str_set_functionality_sanity(real_redis_client, test_values):
     # Arrange
@@ -35,7 +37,9 @@ async def test_redis_str_set_functionality_sanity(real_redis_client, test_values
     assert redis_value == test_values
 
 
-@pytest.mark.parametrize("test_values", ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"])
+@pytest.mark.parametrize(
+    "test_values", ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"]
+)
 @pytest.mark.asyncio
 async def test_redis_str_load_functionality_sanity(real_redis_client, test_values):
     # Arrange
@@ -63,7 +67,9 @@ async def test_redis_str_load_with_none_value_edge_case(real_redis_client):
 
 @pytest.mark.parametrize("redis_values", [b"bytes_value", 42, True, None])
 @pytest.mark.asyncio
-async def test_redis_str_load_type_conversion_edge_case(real_redis_client, redis_values):
+async def test_redis_str_load_type_conversion_edge_case(
+    real_redis_client, redis_values
+):
     # Arrange
     model = StrModel()
     await real_redis_client.json().set(model.key, model.name.json_path, redis_values)
@@ -99,6 +105,7 @@ async def test_redis_str_inheritance_sanity(real_redis_client):
 
     # Assert
     from redis_pydantic.types.string import RedisStr
+
     assert isinstance(model.name, RedisStr)
     assert isinstance(model.name, str)
     assert model.name == "hello"
@@ -127,6 +134,7 @@ async def test_redis_str_model_creation_functionality_sanity(real_redis_client):
 
     # Assert
     from redis_pydantic.types.string import RedisStr
+
     assert isinstance(model.name, RedisStr)
     assert hasattr(model.name, "redis_key")
     assert hasattr(model.name, "field_path")
@@ -153,15 +161,18 @@ async def test_redis_str_persistence_across_instances_edge_case(real_redis_clien
     assert loaded_value == "modified"
 
 
-@pytest.mark.parametrize("operations", [
-    (lambda x: x.upper(), "HELLO"),
-    (lambda x: x.lower(), "hello"),
-    (lambda x: x.strip(), "hello"),
-    (lambda x: len(x), 5),
-    (lambda x: x[1:3], "el"),
-    (lambda x: "ell" in x, True),
-    (lambda x: x.split("l"), ["he", "", "o"])
-])
+@pytest.mark.parametrize(
+    "operations",
+    [
+        (lambda x: x.upper(), "HELLO"),
+        (lambda x: x.lower(), "hello"),
+        (lambda x: x.strip(), "hello"),
+        (lambda x: len(x), 5),
+        (lambda x: x[1:3], "el"),
+        (lambda x: "ell" in x, True),
+        (lambda x: x.split("l"), ["he", "", "o"]),
+    ],
+)
 @pytest.mark.asyncio
 async def test_redis_str_string_operations_sanity(real_redis_client, operations):
     # Arrange
