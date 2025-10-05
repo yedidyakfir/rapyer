@@ -6,7 +6,7 @@ T = TypeVar('T')
 
 class RedisList(list[T], GenericRedisType, Generic[T]):
     def __init__(self, *args, **kwargs):
-        RedisType.__init__(self, **kwargs)
+        GenericRedisType.__init__(self, **kwargs)
         super().__init__(*args)
 
     async def load(self):
