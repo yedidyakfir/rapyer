@@ -1,4 +1,6 @@
-from redis_pydantic.types.base import RedisType
+from typing import TypeVar, Generic
+
+from redis_pydantic.types.base import GenericRedisType
 from redis_pydantic.types.utils import noop
 
 T = TypeVar('T')
