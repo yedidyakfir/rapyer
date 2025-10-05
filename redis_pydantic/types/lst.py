@@ -62,7 +62,6 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     async def pop(self, index=-1):
         super().pop(index)
-        return self.pipeline.json().arrpop(self.redis_key, self.json_path, index)[0]
         arrpop = await self.pipeline.json().arrpop(self.redis_key, self.json_path, index)
         return self.inner_type.deserialize_value(arrpop[0])
 
