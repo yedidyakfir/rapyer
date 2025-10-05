@@ -148,3 +148,8 @@ class RedisDict(dict, RedisType):
 
     def clone(self):
         return dict.copy(self)
+
+    @classmethod
+    def find_inner_type(cls, type_):
+        args = get_args(type_)
+        return args[1]

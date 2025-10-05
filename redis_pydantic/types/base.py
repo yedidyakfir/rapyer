@@ -1,5 +1,6 @@
 import abc
 from abc import ABC
+from typing import get_args
 
 from redis.asyncio.client import Redis
 
@@ -49,13 +50,5 @@ class GenericRedisType(RedisType, ABC):
 
     @classmethod
     def find_inner_type(cls, type_):
-        if hasattr(type_, "__args__"):
-            # For Dict types, we want the value type (second argument)
-            # For List types, we want the element type (first argument)
-            from typing import get_origin
-            origin = get_origin(type_)
-            if origin is dict and len(type_.__args__) >= 2:
-                return cls.find_inner_type(type_.__args__[1])  # Value type for dict
-            else:
-                return cls.find_inner_type(type_.__args__[0])  # Element type for list
-        return type_
+        args = get_args(type_)
+        return args[0]
