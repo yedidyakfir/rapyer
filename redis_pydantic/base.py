@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, PrivateAttr
 from redis.asyncio.client import Pipeline
 
 from redis_pydantic.types import ALL_TYPES
+from redis_pydantic.types.base import GenericRedisType, RedisType
 
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
@@ -122,28 +123,49 @@ class BaseRedisModel(BaseModel):
         # Replace field types with Redis types and create descriptors
         for field_name, field_type in cls.__annotations__.items():
             actual_type = get_actual_type(field_type)
+            resolved_inner_type = cls._resolve_redis_type(actual_type)
+            cls._redis_field_mapping[field_name] = resolved_inner_type
 
-            # Handle generic types like list[str] by checking the origin
-            origin_type = get_origin(actual_type) or actual_type
+    @classmethod
+    def _resolve_redis_type(cls, type_):
+        """Recursively resolve a type to its Redis equivalent."""
+        # Handle generic types
+        origin_type = get_origin(type_) or type_
 
-            # Check if this type should be replaced with a Redis type
-            if origin_type in cls.Meta.redis_type:
-                redis_type_class = cls.Meta.redis_type[origin_type]
-                cls._redis_field_mapping[field_name] = redis_type_class
+        # Check if this type has a Redis equivalent
+        if origin_type in cls.Meta.redis_type:
+            redis_type_class = cls.Meta.redis_type[origin_type]
+
+            # If it's a GenericRedisType, recursively resolve its inner type
+            if issubclass(redis_type_class, GenericRedisType):
+                inner_type = redis_type_class.find_inner_type(type_)
+                resolved_inner_type = cls._resolve_redis_type(inner_type)
+                return {redis_type_class: {"inner_type": resolved_inner_type}}
+            else:
+                return {redis_type_class: {}}
+        else:
+            raise RuntimeError(f"{type_} not supported by RedisPydantic")
+
+    @classmethod
+    def create_redis_type(cls, redis_mapping: dict, **kwargs):
+        redis_type = list(redis_mapping.keys())[0]
+        redis_type_additional_params = redis_mapping[redis_type]
+        saved_kwargs = {
+            key: (cls.create_redis_type(value))
+            for key, value in redis_type_additional_params.items()
+        }
+        return redis_type(**kwargs, **saved_kwargs)
 
     def __init__(self, **data):
         super().__init__(**data)
 
         # Initialize Redis fields after Pydantic initialization
-        for field_name, redis_type_class in getattr(
-            self.__class__, "_redis_field_mapping", {}
-        ).items():
+        for field_name, redis_mapping in self.__class__._redis_field_mapping.items():
             # Get the current value (from Pydantic initialization)
-            current_value = getattr(self, field_name, [])
-
-            # Create Redis type instance
-            redis_instance = redis_type_class(
-                current_value,
+            current_value = getattr(self, field_name, None)
+            redis_instance = self.create_redis_type(
+                value=current_value,
+                redis_mapping=redis_mapping,
                 redis_key=self.key,
                 field_path=field_name,
                 redis=self.Meta.redis,
