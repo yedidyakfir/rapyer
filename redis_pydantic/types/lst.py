@@ -15,44 +15,64 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         # Get all items from Redis list
         redis_items = await self.pipeline.json().get(self.redis_key, self.field_path)
 
-        # Decode bytes to strings if needed
-        decoded_items = [
-            item.decode() if isinstance(item, bytes) else item for item in redis_items
-        ]
+        if redis_items is None:
+            redis_items = []
+
+        # Deserialize items using inner_type
+        deserialized_items = []
+        for item in redis_items:
+            if self.inner_type:
+                # If inner_type is a tuple (Redis type, resolved inner type), use the resolved type
+                target_type = self.inner_type[1] if isinstance(self.inner_type, tuple) else self.inner_type
+                deserialized_item = self.deserialize_value(item, target_type)
+                deserialized_items.append(deserialized_item)
+            else:
+                # Fallback to decode bytes if no inner_type
+                decoded_item = item.decode() if isinstance(item, bytes) else item
+                deserialized_items.append(decoded_item)
 
         # Clear local list and populate with Redis data
         super().clear()
-        super().extend(decoded_items)
+        super().extend(deserialized_items)
 
-    def append(self, __object):
+    async def append(self, __object):
         super().append(__object)
 
-        return self.pipeline.json().arrappend(
-            self.redis_key, self.json_path, str(__object)
+        # Serialize the object for Redis storage
+        serialized_object = self.serialize_value(__object)
+        return await self.pipeline.json().arrappend(
+            self.redis_key, self.json_path, serialized_object
         )
 
-    def extend(self, __iterable):
+    async def extend(self, __iterable):
         items = list(__iterable)
         super().extend(items)
 
-        # Convert iterable to list and reverse for correct order with lpush
+        # Convert iterable to list and serialize items
         if items:
-            # Add all items to Redis in reverse order (lpush adds to front)
-            return self.pipeline.json().arrappend(
+            # Serialize all items for Redis storage
+            serialized_items = [self.serialize_value(item) for item in items]
+
+            return await self.pipeline.json().arrappend(
                 self.redis_key,
                 self.json_path,
-                *[str(item) for item in reversed(items)],
+                *serialized_items,
             )
-        return noop()
+
+        return await noop()
 
     def pop(self, index=-1):
         super().pop(index)
         return self.pipeline.json().arrpop(self.redis_key, self.json_path, index)[0]
 
-    def insert(self, index, __object):
+    async def insert(self, index, __object):
         super().insert(index, __object)
-        return self.pipeline.json().arrinsert(
-            self.redis_key, self.json_path, index, str(__object)
+        
+        # Serialize the object for Redis storage
+        serialized_object = self.serialize_value(__object)
+        
+        return await self.pipeline.json().arrinsert(
+            self.redis_key, self.json_path, index, serialized_object
         )
 
     def clear(self):
