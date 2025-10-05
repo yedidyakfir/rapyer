@@ -16,7 +16,7 @@ class RedisBool(int, RedisType):
             elif isinstance(redis_value, (int, float)):
                 return bool(redis_value)
             elif isinstance(redis_value, str):
-                return redis_value.lower() in ('true', '1')
+                return redis_value.lower() in ("true", "1")
             else:
                 return bool(redis_value)
         return False
@@ -24,10 +24,8 @@ class RedisBool(int, RedisType):
     async def set(self, value: bool):
         if not isinstance(value, bool):
             raise TypeError("Value must be bool")
-        
-        return await self.pipeline.json().set(
-            self.redis_key, self.json_path, value
-        )
+
+        return await self.pipeline.json().set(self.redis_key, self.json_path, value)
 
     def clone(self):
         return bool(self)
