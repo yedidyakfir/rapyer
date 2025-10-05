@@ -34,47 +34,6 @@ class RedisFieldDescriptor:
         self.redis_type_class = redis_type_class
         self.field_name = field_name
         self.default_value = default_value
-        self.private_name = f"_redis_{field_name}"
-
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-
-        # Get or create the Redis type instance
-        if not hasattr(obj, self.private_name):
-            # Prepare initial value
-            initial_value = []
-            if self.default_value is not None:
-                if callable(self.default_value):
-                    initial_value = self.default_value()
-                else:
-                    initial_value = self.default_value
-
-            # Create instance with current parameters and initial value
-            redis_instance = self.redis_type_class(
-                initial_value,
-                redis_key=obj.key,
-                field_path=self.field_name,
-                redis=obj.Meta.redis,
-            )
-            setattr(obj, self.private_name, redis_instance)
-
-        return getattr(obj, self.private_name)
-
-    def __set__(self, obj, value):
-        # Create new Redis type instance with the value
-        initial_value = value if value is not None else []
-        redis_instance = self.redis_type_class(
-            initial_value,
-            redis_key=obj.key,
-            field_path=self.field_name,
-            redis=obj.Meta.redis,
-        )
-        setattr(obj, self.private_name, redis_instance)
-
-    def __delete__(self, obj):
-        if hasattr(obj, self.private_name):
-            delattr(obj, self.private_name)
 
 
 class BaseRedisModel(BaseModel):
