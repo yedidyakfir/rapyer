@@ -30,7 +30,7 @@ class RedisBytes(bytes, RedisType):
     async def set(self, value: bytes):
         if not isinstance(value, bytes):
             raise TypeError("Value must be bytes")
-        
+
         encoded_value = base64.b64encode(value).decode()
         return await self.pipeline.json().set(
             self.redis_key, self.json_path, encoded_value

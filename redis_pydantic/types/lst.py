@@ -3,7 +3,7 @@ from typing import TypeVar, Generic
 from redis_pydantic.types.base import GenericRedisType
 from redis_pydantic.types.utils import noop
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class RedisList(list[T], GenericRedisType, Generic[T]):
@@ -67,10 +67,10 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     async def insert(self, index, __object):
         super().insert(index, __object)
-        
+
         # Serialize the object for Redis storage
         serialized_object = self.inner_type.serialize_value(__object)
-        
+
         return await self.pipeline.json().arrinsert(
             self.redis_key, self.json_path, index, serialized_object
         )

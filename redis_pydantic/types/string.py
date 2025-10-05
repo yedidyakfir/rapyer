@@ -4,7 +4,7 @@ from redis_pydantic.types.base import RedisType
 class RedisStr(str, RedisType):
     def __new__(cls, value="", **kwargs):
         return super().__new__(cls, value)
-    
+
     def __init__(self, value="", **kwargs):
         RedisType.__init__(self, **kwargs)
 
@@ -22,10 +22,8 @@ class RedisStr(str, RedisType):
     async def set(self, value: str):
         if not isinstance(value, str):
             raise TypeError("Value must be str")
-        
-        return await self.pipeline.json().set(
-            self.redis_key, self.json_path, value
-        )
+
+        return await self.pipeline.json().set(self.redis_key, self.json_path, value)
 
     def clone(self):
         return str(self)

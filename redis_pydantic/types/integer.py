@@ -4,7 +4,7 @@ from redis_pydantic.types.base import RedisType
 class RedisInt(int, RedisType):
     def __new__(cls, value=0, **kwargs):
         return super().__new__(cls, value)
-    
+
     def __init__(self, value=0, **kwargs):
         RedisType.__init__(self, **kwargs)
 
@@ -25,10 +25,8 @@ class RedisInt(int, RedisType):
     async def set(self, value: int):
         if not isinstance(value, int):
             raise TypeError("Value must be int")
-        
-        return await self.pipeline.json().set(
-            self.redis_key, self.json_path, value
-        )
+
+        return await self.pipeline.json().set(self.redis_key, self.json_path, value)
 
     def clone(self):
         return int(self)

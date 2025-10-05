@@ -2,7 +2,7 @@ from typing import TypeVar, Generic, get_args
 
 from redis_pydantic.types.base import GenericRedisType
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
