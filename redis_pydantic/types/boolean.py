@@ -9,7 +9,7 @@ class RedisBool(int, RedisType):
         RedisType.__init__(self, **kwargs)
 
     async def load(self):
-        redis_value = await self.pipeline.json().get(self.redis_key, self.field_path)
+        redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
             if isinstance(redis_value, bool):
                 return redis_value
@@ -25,7 +25,7 @@ class RedisBool(int, RedisType):
         if not isinstance(value, bool):
             raise TypeError("Value must be bool")
 
-        return await self.pipeline.json().set(self.redis_key, self.json_path, value)
+        return await self.client.json().set(self.redis_key, self.json_path, value)
 
     def clone(self):
         return bool(self)

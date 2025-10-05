@@ -21,7 +21,7 @@ class RedisType(ABC):
         self.redis = redis
 
     @property
-    def pipeline(self):
+    def client(self):
         return _context_var.get() or self.redis
 
     @property

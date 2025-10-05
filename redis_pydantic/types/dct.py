@@ -12,7 +12,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     async def load(self):
         # Get all items from Redis dict
-        redis_items = await self.pipeline.json().get(self.redis_key, self.field_path)
+        redis_items = await self.client.json().get(self.redis_key, self.field_path)
 
         if redis_items is None:
             redis_items = {}
@@ -26,14 +26,14 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
         # Serialize the value for Redis storage
         serialized_value = self.serialize_value(value)
-        return await self.pipeline.json().set(
+        return await self.client.json().set(
             self.redis_key, f"{self.json_path}.{key}", serialized_value
         )
 
     async def adel_item(self, key):
         super().__delitem__(key)
 
-        return await self.pipeline.json().delete(
+        return await self.client.json().delete(
             self.redis_key, f"{self.json_path}.{key}"
         )
 
@@ -80,7 +80,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         """
 
         # Execute the script atomically
-        result = await self.pipeline.eval(
+        result = await self.client.eval(
             pop_script, 1, self.redis_key, self.json_path, key
         )
 
@@ -132,7 +132,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         """
 
         # Execute the script atomically
-        result = await self.pipeline.eval(
+        result = await self.client.eval(
             popitem_script, 1, self.redis_key, self.json_path
         )
 
@@ -152,7 +152,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         super().clear()
 
         # Clear Redis dict
-        return await self.pipeline.json().delete(self.redis_key, self.json_path)
+        return await self.client.json().delete(self.redis_key, self.json_path)
 
     def clone(self):
         return dict.copy(self)

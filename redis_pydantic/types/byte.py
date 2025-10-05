@@ -14,7 +14,7 @@ class RedisBytes(bytes, RedisType):
         RedisType.__init__(self, **kwargs)
 
     async def load(self):
-        redis_value = await self.pipeline.json().get(self.redis_key, self.field_path)
+        redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
             if isinstance(redis_value, str):
                 try:
@@ -32,7 +32,7 @@ class RedisBytes(bytes, RedisType):
             raise TypeError("Value must be bytes")
 
         encoded_value = base64.b64encode(value).decode()
-        return await self.pipeline.json().set(
+        return await self.client.json().set(
             self.redis_key, self.json_path, encoded_value
         )
 

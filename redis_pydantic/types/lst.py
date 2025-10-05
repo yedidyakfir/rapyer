@@ -13,7 +13,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     async def load(self):
         # Get all items from Redis list
-        redis_items = await self.pipeline.json().get(self.redis_key, self.field_path)
+        redis_items = await self.client.json().get(self.redis_key, self.field_path)
 
         if redis_items is None:
             redis_items = []
@@ -39,7 +39,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
         # Serialize the object for Redis storage
         serialized_object = self.inner_type.serialize_value(__object)
-        return await self.pipeline.json().arrappend(
+        return await self.client.json().arrappend(
             self.redis_key, self.json_path, serialized_object
         )
 
@@ -52,7 +52,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
             # Serialize all items for Redis storage
             serialized_items = [self.inner_type.serialize_value(item) for item in items]
 
-            return await self.pipeline.json().arrappend(
+            return await self.client.json().arrappend(
                 self.redis_key,
                 self.json_path,
                 *serialized_items,
@@ -62,7 +62,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     async def apop(self, index=-1):
         super().pop(index)
-        arrpop = await self.pipeline.json().arrpop(
+        arrpop = await self.client.json().arrpop(
             self.redis_key, self.json_path, index
         )
         return self.inner_type.deserialize_value(arrpop[0])
@@ -73,7 +73,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         # Serialize the object for Redis storage
         serialized_object = self.inner_type.serialize_value(__object)
 
-        return await self.pipeline.json().arrinsert(
+        return await self.client.json().arrinsert(
             self.redis_key, self.json_path, index, serialized_object
         )
 
@@ -82,7 +82,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().clear()
 
         # Clear Redis list
-        return await self.pipeline.json().delete(self.redis_key, self.json_path)
+        return await self.client.json().delete(self.redis_key, self.json_path)
 
     def clone(self):
         return list.copy(self)

@@ -9,7 +9,7 @@ class RedisStr(str, RedisType):
         RedisType.__init__(self, **kwargs)
 
     async def load(self):
-        redis_value = await self.pipeline.json().get(self.redis_key, self.field_path)
+        redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
             if isinstance(redis_value, str):
                 return redis_value
@@ -23,7 +23,7 @@ class RedisStr(str, RedisType):
         if not isinstance(value, str):
             raise TypeError("Value must be str")
 
-        return await self.pipeline.json().set(self.redis_key, self.json_path, value)
+        return await self.client.json().set(self.redis_key, self.json_path, value)
 
     def clone(self):
         return str(self)
