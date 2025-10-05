@@ -65,12 +65,15 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
-        redis_params = {self.json_field_path(key): v for key, v in kwargs.items()}
+        redis_params = {
+            self.json_field_path(key): self.inner_type.serialize_value(v)
+            for key, v in kwargs.items()
+        }
         if self.pipeline:
             update_keys_in_pipeline(self.pipeline, self.redis_key, **redis_params)
             return
 
-        with self.redis.pipeline() as pipeline:
+        async with self.redis.pipeline() as pipeline:
             update_keys_in_pipeline(pipeline, self.redis_key, **redis_params)
             await pipeline.execute()
 
