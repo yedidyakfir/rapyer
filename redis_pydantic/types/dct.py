@@ -50,9 +50,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     async def adel_item(self, key):
         super().__delitem__(key)
 
-        return await self.client.json().delete(
-            self.redis_key, self.field_path(key)
-        )
+        return await self.client.json().delete(self.redis_key, self.field_path(key))
 
     def _parse_redis_json_value(self, result):
         """Parse JSON-encoded value returned from Redis Lua scripts."""
