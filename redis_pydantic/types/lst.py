@@ -21,7 +21,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         # Deserialize items using inner_type
         deserialized_items = []
         for item in redis_items:
-            if self.inner_type:
+            if self.inner_type is not None:
                 # If inner_type is a tuple (Redis type, resolved inner type), use the resolved type
                 deserialized_item = self.inner_type.deserialize_value(item)
                 deserialized_items.append(deserialized_item)
