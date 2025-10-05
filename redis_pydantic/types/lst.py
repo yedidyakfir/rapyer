@@ -23,8 +23,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         for item in redis_items:
             if self.inner_type:
                 # If inner_type is a tuple (Redis type, resolved inner type), use the resolved type
-                target_type = self.inner_type[1] if isinstance(self.inner_type, tuple) else self.inner_type
-                deserialized_item = self.deserialize_value(item, target_type)
+                deserialized_item = self.inner_type.deserialize_value(item)
                 deserialized_items.append(deserialized_item)
             else:
                 # Fallback to decode bytes if no inner_type
@@ -39,7 +38,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().append(__object)
 
         # Serialize the object for Redis storage
-        serialized_object = self.serialize_value(__object)
+        serialized_object = self.inner_type.serialize_value(__object)
         return await self.pipeline.json().arrappend(
             self.redis_key, self.json_path, serialized_object
         )
@@ -51,7 +50,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         # Convert iterable to list and serialize items
         if items:
             # Serialize all items for Redis storage
-            serialized_items = [self.serialize_value(item) for item in items]
+            serialized_items = [self.inner_type.serialize_value(item) for item in items]
 
             return await self.pipeline.json().arrappend(
                 self.redis_key,
@@ -69,7 +68,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().insert(index, __object)
         
         # Serialize the object for Redis storage
-        serialized_object = self.serialize_value(__object)
+        serialized_object = self.inner_type.serialize_value(__object)
         
         return await self.pipeline.json().arrinsert(
             self.redis_key, self.json_path, index, serialized_object
