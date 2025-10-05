@@ -1,7 +1,6 @@
 import pytest
 import pytest_asyncio
 
-import redis_pydantic
 from redis_pydantic.base import BaseRedisModel
 from redis_pydantic.types import ALL_TYPES
 
@@ -16,15 +15,10 @@ class BoolModel(BaseRedisModel):
 
 
 @pytest_asyncio.fixture
-async def real_redis_client():
-    redis = await redis_pydantic.BaseRedisModel.Meta.redis.from_url(
-        "redis://localhost:6371/15"
-    )
-    BoolModel.Meta.redis = redis
-    await redis.flushdb()
-    yield redis
-    await redis.flushdb()
-    await redis.aclose()
+async def real_redis_client(redis_client):
+    BoolModel.Meta.redis = redis_client
+    yield redis_client
+    await redis_client.aclose()
 
 
 @pytest.mark.parametrize("test_values", [True, False])

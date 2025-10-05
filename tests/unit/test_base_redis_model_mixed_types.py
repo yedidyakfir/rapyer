@@ -1,11 +1,11 @@
+from typing import List, Dict, Any
+
 import pytest
 import pytest_asyncio
 from pydantic import Field
 
-import redis_pydantic
 from redis_pydantic.base import BaseRedisModel
 from redis_pydantic.types import ALL_TYPES
-from typing import List, Dict, Any
 
 
 class MixedTypesModel(BaseRedisModel):
@@ -26,15 +26,10 @@ class MixedTypesModel(BaseRedisModel):
 
 
 @pytest_asyncio.fixture
-async def real_redis_client():
-    redis = await redis_pydantic.BaseRedisModel.Meta.redis.from_url(
-        "redis://localhost:6371/0"
-    )
-    MixedTypesModel.Meta.redis = redis
-    await redis.flushall()
-    yield redis
-    await redis.flushall()
-    await redis.aclose()
+async def real_redis_client(redis_client):
+    MixedTypesModel.Meta.redis = redis_client
+    yield redis_client
+    await redis_client.aclose()
 
 
 @pytest.mark.parametrize("test_bytes", [b"hello", b"world", b"\x00\x01\x02"])

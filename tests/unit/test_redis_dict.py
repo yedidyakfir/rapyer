@@ -1,7 +1,6 @@
 import pytest
 import pytest_asyncio
 
-import redis_pydantic
 from redis_pydantic.base import BaseRedisModel
 from redis_pydantic.types import ALL_TYPES
 
@@ -15,15 +14,10 @@ class UserModel(BaseRedisModel):
 
 
 @pytest_asyncio.fixture
-async def real_redis_client():
-    redis = await redis_pydantic.BaseRedisModel.Meta.redis.from_url(
-        "redis://localhost:6371/0"
-    )
-    UserModel.Meta.redis = redis
-    await redis.flushall()
-    yield redis
-    await redis.flushall()
-    await redis.aclose()
+async def real_redis_client(redis_client):
+    UserModel.Meta.redis = redis_client
+    yield redis_client
+    await redis_client.aclose()
 
 
 @pytest.mark.asyncio
