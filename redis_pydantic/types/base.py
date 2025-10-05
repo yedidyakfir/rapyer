@@ -32,7 +32,7 @@ class RedisType(ABC):
     def json_path(self):
         return f"$.{self.field_path}"
 
-    def field_path(self, field_name: str):
+    def json_field_path(self, field_name: str):
         return f"{self.json_path}.{field_name}"
 
     @abc.abstractmethod

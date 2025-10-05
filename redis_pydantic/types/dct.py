@@ -44,13 +44,15 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         # Serialize the value for Redis storage
         serialized_value = self.serialize_value(value)
         return await self.client.json().set(
-            self.redis_key, self.field_path(key), serialized_value
+            self.redis_key, self.json_field_path(key), serialized_value
         )
 
     async def adel_item(self, key):
         super().__delitem__(key)
 
-        return await self.client.json().delete(self.redis_key, self.field_path(key))
+        return await self.client.json().delete(
+            self.redis_key, self.json_field_path(key)
+        )
 
     def _parse_redis_json_value(self, result):
         """Parse JSON-encoded value returned from Redis Lua scripts."""
@@ -63,7 +65,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
-        redis_params = {self.field_path(key): v for key, v in kwargs.items()}
+        redis_params = {self.json_field_path(key): v for key, v in kwargs.items()}
         if self.pipeline:
             update_keys_in_pipeline(self.pipeline, self.redis_key, **redis_params)
             return
