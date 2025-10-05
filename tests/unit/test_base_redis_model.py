@@ -27,7 +27,7 @@ async def test_base_redis_model__list_append__check_redis_append(real_redis_clie
     await user.save()
 
     # Act
-    await user.tags.append("tag3")
+    await user.tags.aappend("tag3")
 
     # Assert
     actual_lst = await real_redis_client.json().get(user.key, user.tags.json_path)
@@ -41,7 +41,7 @@ async def test_base_redis_model__list_extend__check_redis_extend(real_redis_clie
     await user.save()
 
     # Act
-    await user.tags.extend(["tag2", "tag3"])
+    await user.tags.aextend(["tag2", "tag3"])
 
     # Assert
     actual_lst = await real_redis_client.json().get(user.key, user.tags.json_path)
@@ -57,7 +57,7 @@ async def test_base_redis_model__list_insert__check_redis_insert(real_redis_clie
     await user.save()
 
     # Act
-    await user.tags.insert(1, "tag2")
+    await user.tags.ainsert(1, "tag2")
 
     # Assert
     actual_lst = await real_redis_client.json().get(user.key, user.tags.json_path)
@@ -71,7 +71,7 @@ async def test_base_redis_model__list_clear__check_redis_clear(real_redis_client
     await user.save()
 
     # Act
-    await user.tags.clear()
+    await user.tags.aclear()
 
     # Assert
     actual_lst = await real_redis_client.json().get(user.key, user.tags.json_path)

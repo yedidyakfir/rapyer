@@ -27,7 +27,7 @@ async def test_redis_dict__setitem__check_local_consistency(real_redis_client):
     await user.save()
 
     # Act
-    user.metadata["key2"] = "value2"
+    await user.metadata.aset_item("key2", "value2")
     await user.save()  # Sync with Redis
 
     # Assert
@@ -42,7 +42,7 @@ async def test_redis_dict__delitem__check_local_consistency(real_redis_client):
     await user.save()
 
     # Act
-    del user.metadata["key1"]
+    await user.metadata.adel_item("key1")
     await user.save()  # Sync with Redis
 
     # Assert
@@ -57,7 +57,7 @@ async def test_redis_dict__update__check_local_consistency(real_redis_client):
     await user.save()
 
     # Act
-    user.metadata.update({"key2": "value2", "key3": "value3"})
+    await user.metadata.aupdate({"key2": "value2", "key3": "value3"})
     await user.save()  # Sync with Redis
 
     # Assert
@@ -72,7 +72,7 @@ async def test_redis_dict__clear__check_local_consistency(real_redis_client):
     await user.save()
 
     # Act
-    user.metadata.clear()
+    await user.metadata.aclear()
     await user.save()  # Sync with Redis
 
     # Assert
@@ -105,7 +105,7 @@ async def test_redis_dict__pop__check_redis_pop(real_redis_client):
     await user.save()
 
     # Act
-    popped_value = await user.metadata.pop("key1")
+    popped_value = await user.metadata.apop("key1")
 
     # Assert
     actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
@@ -122,7 +122,7 @@ async def test_redis_dict__pop_with_default__check_default_return(real_redis_cli
     await user.save()
 
     # Act
-    result = await user.metadata.pop("nonexistent", "default_value")
+    result = await user.metadata.apop("nonexistent", "default_value")
 
     # Assert
     assert result == "default_value"
@@ -137,7 +137,7 @@ async def test_redis_dict__pop_no_default__check_key_error(real_redis_client):
 
     # Act & Assert
     with pytest.raises(KeyError):
-        await user.metadata.pop("nonexistent")
+        await user.metadata.apop("nonexistent")
 
 
 @pytest.mark.asyncio
@@ -148,7 +148,7 @@ async def test_redis_dict__popitem__check_redis_popitem(real_redis_client):
     await user.save()
 
     # Act
-    popped_value = await user.metadata.popitem()
+    popped_value = await user.metadata.apopitem()
 
     # Assert
     actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
@@ -166,7 +166,7 @@ async def test_redis_dict__update_with_dict_arg__check_local_consistency(
     await user.save()
 
     # Act
-    user.metadata.update({"key2": "value2", "key3": "value3"})
+    await user.metadata.aupdate({"key2": "value2", "key3": "value3"})
     await user.save()  # Sync with Redis
 
     # Assert
@@ -184,7 +184,7 @@ async def test_redis_dict__update_with_iterable_arg__check_local_consistency(
     await user.save()
 
     # Act
-    user.metadata.update([("key2", "value2"), ("key3", "value3")])
+    await user.metadata.aupdate([("key2", "value2"), ("key3", "value3")])
     await user.save()  # Sync with Redis
 
     # Assert
@@ -202,7 +202,7 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency(
     await user.save()
 
     # Act
-    user.metadata.update(key2="value2", key3="value3")
+    await user.metadata.aupdate(key2="value2", key3="value3")
     await user.save()  # Sync with Redis
 
     # Assert
@@ -239,7 +239,7 @@ async def test_redis_dict__popitem_empty_dict__check_key_error(real_redis_client
 
     # Act & Assert
     with pytest.raises(KeyError, match="popitem\\(\\): dictionary is empty"):
-        await user.metadata.popitem()
+        await user.metadata.apopitem()
 
 
 @pytest.mark.asyncio
