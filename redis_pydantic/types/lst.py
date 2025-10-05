@@ -1,8 +1,10 @@
 from redis_pydantic.types.base import RedisType
 from redis_pydantic.types.utils import noop
 
+T = TypeVar('T')
 
-class RedisList(list, RedisType):
+
+class RedisList(list[T], GenericRedisType, Generic[T]):
     def __init__(self, *args, **kwargs):
         RedisType.__init__(self, **kwargs)
         super().__init__(*args)
