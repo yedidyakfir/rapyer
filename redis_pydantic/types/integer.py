@@ -9,7 +9,7 @@ class RedisInt(int, RedisType):
         RedisType.__init__(self, **kwargs)
 
     async def load(self):
-        redis_value = await self.pipeline.json().get(self.redis_key, self.field_path)
+        redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
             if isinstance(redis_value, (int, float)):
                 return int(redis_value)
