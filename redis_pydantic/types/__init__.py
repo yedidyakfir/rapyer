@@ -11,5 +11,5 @@ ALL_TYPES = {
     bytes: RedisBytes,
     int: RedisInt,
     bool: RedisBool,
-    str: RedisStr
+    str: RedisStr,
 }
