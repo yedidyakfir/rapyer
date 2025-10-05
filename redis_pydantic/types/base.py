@@ -43,7 +43,7 @@ class RedisType(ABC):
 
 
 class GenericRedisType(RedisType, ABC):
-    def __init__(self, inner_type, *args, **kwargs):
+    def __init__(self, inner_type: RedisType, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.inner_type = inner_type
 
