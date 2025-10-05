@@ -16,7 +16,7 @@ class RedisBool(int, RedisType):
             elif isinstance(redis_value, (int, float)):
                 return bool(redis_value)
             elif isinstance(redis_value, str):
-                return redis_value.lower() in ('true', '1', 'yes', 'on')
+                return redis_value.lower() in ('true', '1')
             else:
                 return bool(redis_value)
         return False
