@@ -46,8 +46,10 @@ async def test_bytes_list_append_functionality(real_redis_client, test_bytes):
     assert test_bytes in model.bytes_list
     assert len(model.bytes_list) == 1
 
-    redis_data = await real_redis_client.json().get(model.key, "$.bytes_list")
-    assert redis_data is not None
+    redis_data = await real_redis_client.json().get(model.key, "$.bytes_list[0]")
+    redis_data = [
+        model.bytes_list.inner_type.deserialize_value(data) for data in redis_data
+    ]
     assert test_bytes in redis_data
 
 
