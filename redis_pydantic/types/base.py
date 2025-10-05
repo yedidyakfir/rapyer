@@ -21,12 +21,19 @@ class RedisType(ABC):
         self.redis = redis
 
     @property
+    def pipeline(self):
+        return _context_var.get()
+
+    @property
     def client(self):
         return _context_var.get() or self.redis
 
     @property
     def json_path(self):
         return f"$.{self.field_path}"
+
+    def field_path(self, field_name: str):
+        return f"{self.json_path}.{field_name}"
 
     @abc.abstractmethod
     def load(self):

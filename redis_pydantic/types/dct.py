@@ -1,6 +1,7 @@
 from typing import TypeVar, Generic, get_args
 
 from redis_pydantic.types.base import GenericRedisType
+from redis_pydantic.types.utils import update_keys_in_pipeline
 
 T = TypeVar("T")
 
@@ -17,9 +18,25 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         if redis_items is None:
             redis_items = {}
 
+        # Deserialize items using inner_type
+        deserialized_items = {}
+        for key, value in redis_items.items():
+            if self.inner_type:
+                # If inner_type is a tuple (Redis type, resolved inner type), use the resolved type
+                target_type = (
+                    self.inner_type[1]
+                    if isinstance(self.inner_type, tuple)
+                    else self.inner_type
+                )
+                deserialized_value = self.deserialize_value(value, target_type)
+                deserialized_items[key] = deserialized_value
+            else:
+                # No type conversion
+                deserialized_items[key] = value
+
         # Clear local dict and populate with Redis data
         super().clear()
-        super().update(redis_items)
+        super().update(deserialized_items)
 
     async def aset_item(self, key, value):
         super().__setitem__(key, value)
@@ -27,14 +44,14 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         # Serialize the value for Redis storage
         serialized_value = self.serialize_value(value)
         return await self.client.json().set(
-            self.redis_key, f"{self.json_path}.{key}", serialized_value
+            self.redis_key, self.field_path(key), serialized_value
         )
 
     async def adel_item(self, key):
         super().__delitem__(key)
 
         return await self.client.json().delete(
-            self.redis_key, f"{self.json_path}.{key}"
+            self.redis_key, self.field_path(key)
         )
 
     def _parse_redis_json_value(self, result):
@@ -46,19 +63,16 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             result = result[2:-2]
         return result
 
-    async def aupdate(self, *args, **kwargs):
-        # Handle different ways update can be called
-        if args:
-            other = args[0]
-            if hasattr(other, "items"):
-                for key, value in other.items():
-                    self[key] = value
-            else:
-                for key, value in other:
-                    self[key] = value
+    async def aupdate(self, **kwargs):
+        self.update(**kwargs)
+        redis_params = {self.field_path(key): v for key, v in kwargs.items()}
+        if self.pipeline:
+            update_keys_in_pipeline(self.pipeline, self.redis_key, **redis_params)
+            return
 
-        for key, value in kwargs.items():
-            self[key] = value
+        with self.redis.pipeline() as pipeline:
+            update_keys_in_pipeline(pipeline, self.redis_key, **redis_params)
+            await pipeline.execute()
 
     async def apop(self, key, default=None):
         # Redis Lua script for atomic get-and-delete operation
