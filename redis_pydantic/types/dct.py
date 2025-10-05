@@ -21,14 +21,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         # Deserialize items using inner_type
         deserialized_items = {}
         for key, value in redis_items.items():
-            if self.inner_type:
-                # If inner_type is a tuple (Redis type, resolved inner type), use the resolved type
-                target_type = (
-                    self.inner_type[1]
-                    if isinstance(self.inner_type, tuple)
-                    else self.inner_type
-                )
-                deserialized_value = self.deserialize_value(value, target_type)
+            if self.inner_type is not None:
+                # Use inner_type to deserialize the value
+                deserialized_value = self.inner_type.deserialize_value(value)
                 deserialized_items[key] = deserialized_value
             else:
                 # No type conversion
