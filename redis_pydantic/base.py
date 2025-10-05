@@ -5,7 +5,7 @@ import redis
 from pydantic import BaseModel, PrivateAttr
 
 from redis_pydantic.types import ALL_TYPES
-from redis_pydantic.types.base import GenericRedisType
+from redis_pydantic.types.base import GenericRedisType, RedisType
 
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
@@ -169,9 +169,16 @@ class BaseRedisModel(BaseModel):
             object.__setattr__(self, field_name, redis_instance)
 
     async def save(self) -> Self:
-        model_dump = self.model_dump(exclude=["_pk"])
+        model_dump = self.redis_dump()
         await self.Meta.redis.json().set(self.key, "$", model_dump)
         return self
+
+    def redis_dump(self):
+        model_dump = self.model_dump(exclude=["_pk"])
+        for k, v in self.model_fields:
+            if v is None and isinstance(v, RedisType):
+                model_dump[k] = v.serialize_value(v)
+        return model_dump
 
 
 # TODO - return if update was successful

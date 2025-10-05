@@ -62,9 +62,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     async def apop(self, index=-1):
         super().pop(index)
-        arrpop = await self.client.json().arrpop(
-            self.redis_key, self.json_path, index
-        )
+        arrpop = await self.client.json().arrpop(self.redis_key, self.json_path, index)
         return self.inner_type.deserialize_value(arrpop[0])
 
     async def ainsert(self, index, __object):
@@ -86,3 +84,9 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     def clone(self):
         return list.copy(self)
+
+    def serialize_value(self, value):
+        return [self.inner_type.serialize_value(v) for v in value]
+
+    def deserialize_value(self, value):
+        return [self.inner_type.deserialize_value(v) for v in value]
