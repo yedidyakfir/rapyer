@@ -53,9 +53,12 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         """Parse JSON-encoded value returned from Redis Lua scripts."""
         if isinstance(result, bytes):
             result = result.decode()
-        if result.startswith('["') and result.endswith('"]'):
+        if result.startswith('[') and result.endswith(']'):
             # Remove JSON array wrapping for single values
-            result = result[2:-2]
+            result = result[1:-1]
+            # Handle string values that were quoted
+            if result.startswith('"') and result.endswith('"'):
+                result = result[1:-1]
         return result
 
     async def aupdate(self, **kwargs):
@@ -108,8 +111,11 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             key, None
         )  # Use None default to avoid KeyError if local is out of sync
 
-        # Parse Redis value if it's JSON-encoded
-        return self._parse_redis_json_value(result)
+        # Deserialize the value using inner_type
+        parsed_result = self._parse_redis_json_value(result)
+        if self.inner_type is not None:
+            return self.inner_type.deserialize_value(parsed_result)
+        return parsed_result
 
     async def apopitem(self):
         # Redis Lua script for atomic get-arbitrary-key-and-delete operation
@@ -154,7 +160,10 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             super().pop(
                 redis_key.decode() if isinstance(redis_key, bytes) else redis_key
             )
-            return self._parse_redis_json_value(redis_value)
+            parsed_value = self._parse_redis_json_value(redis_value)
+            if self.inner_type is not None:
+                parsed_value = self.inner_type.deserialize_value(parsed_value)
+            return parsed_value
         else:
             # If Redis is empty but local dict has items, raise error for consistency
             raise KeyError("popitem(): dictionary is empty")
