@@ -38,3 +38,9 @@ class RedisBytes(bytes, RedisType):
 
     def clone(self):
         return bytes(self)
+
+    def serialize_value(self, value):
+        return base64.b64encode(value).decode()
+
+    def deserialize_value(self, value):
+        return base64.b64decode(value)
