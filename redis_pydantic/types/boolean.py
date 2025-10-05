@@ -31,3 +31,6 @@ class RedisBool(int, RedisType):
 
     def clone(self):
         return bool(self)
+
+    def deserialize_value(self, value):
+        return True if value == "true" else False
