@@ -34,7 +34,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().clear()
         super().extend(deserialized_items)
 
-    async def append(self, __object):
+    async def aappend(self, __object):
         super().append(__object)
 
         # Serialize the object for Redis storage
@@ -43,7 +43,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
             self.redis_key, self.json_path, serialized_object
         )
 
-    async def extend(self, __iterable):
+    async def aextend(self, __iterable):
         items = list(__iterable)
         super().extend(items)
 
@@ -60,12 +60,14 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
         return await noop()
 
-    async def pop(self, index=-1):
+    async def apop(self, index=-1):
         super().pop(index)
-        arrpop = await self.pipeline.json().arrpop(self.redis_key, self.json_path, index)
+        arrpop = await self.pipeline.json().arrpop(
+            self.redis_key, self.json_path, index
+        )
         return self.inner_type.deserialize_value(arrpop[0])
 
-    async def insert(self, index, __object):
+    async def ainsert(self, index, __object):
         super().insert(index, __object)
 
         # Serialize the object for Redis storage
@@ -75,12 +77,12 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
             self.redis_key, self.json_path, index, serialized_object
         )
 
-    def clear(self):
+    async def aclear(self):
         # Clear local list
         super().clear()
 
         # Clear Redis list
-        return self.pipeline.json().delete(self.redis_key, self.json_path)
+        return await self.pipeline.json().delete(self.redis_key, self.json_path)
 
     def clone(self):
         return list.copy(self)

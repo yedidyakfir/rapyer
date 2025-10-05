@@ -21,17 +21,21 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         super().clear()
         super().update(redis_items)
 
-    def __setitem__(self, key, value):
+    async def aset_item(self, key, value):
         super().__setitem__(key, value)
 
-        return self.pipeline.json().set(
-            self.redis_key, f"{self.json_path}.{key}", str(value)
+        # Serialize the value for Redis storage
+        serialized_value = self.serialize_value(value)
+        return await self.pipeline.json().set(
+            self.redis_key, f"{self.json_path}.{key}", serialized_value
         )
 
-    def __delitem__(self, key):
+    async def adel_item(self, key):
         super().__delitem__(key)
 
-        return self.pipeline.json().delete(self.redis_key, f"{self.json_path}.{key}")
+        return await self.pipeline.json().delete(
+            self.redis_key, f"{self.json_path}.{key}"
+        )
 
     def _parse_redis_json_value(self, result):
         """Parse JSON-encoded value returned from Redis Lua scripts."""
@@ -42,7 +46,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             result = result[2:-2]
         return result
 
-    def update(self, *args, **kwargs):
+    async def aupdate(self, *args, **kwargs):
         # Handle different ways update can be called
         if args:
             other = args[0]
@@ -56,7 +60,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         for key, value in kwargs.items():
             self[key] = value
 
-    async def pop(self, key, default=None):
+    async def apop(self, key, default=None):
         # Redis Lua script for atomic get-and-delete operation
         pop_script = """
         local key = KEYS[1]
@@ -95,7 +99,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         # Parse Redis value if it's JSON-encoded
         return self._parse_redis_json_value(result)
 
-    async def popitem(self):
+    async def apopitem(self):
         # Redis Lua script for atomic get-arbitrary-key-and-delete operation
         popitem_script = """
         local key = KEYS[1]
@@ -143,12 +147,12 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             # If Redis is empty but local dict has items, raise error for consistency
             raise KeyError("popitem(): dictionary is empty")
 
-    def clear(self):
+    async def aclear(self):
         # Clear local dict
         super().clear()
 
         # Clear Redis dict
-        return self.pipeline.json().delete(self.redis_key, self.json_path)
+        return await self.pipeline.json().delete(self.redis_key, self.json_path)
 
     def clone(self):
         return dict.copy(self)
