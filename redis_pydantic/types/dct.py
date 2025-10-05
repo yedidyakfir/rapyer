@@ -1,9 +1,13 @@
-from redis_pydantic.types.base import RedisType
+from typing import TypeVar, Generic, get_args
+
+from redis_pydantic.types.base import GenericRedisType
+
+T = TypeVar('T')
 
 
-class RedisDict(dict, RedisType):
+class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     def __init__(self, *args, **kwargs):
-        RedisType.__init__(self, **kwargs)
+        GenericRedisType.__init__(self, **kwargs)
         super().__init__(*args)
 
     async def load(self):
