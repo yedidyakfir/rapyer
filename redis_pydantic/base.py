@@ -183,3 +183,16 @@ class BaseRedisModel(BaseModel):
 # TODO - allow foreign keys
 # TODO - how to handle list of models?
 # TODO - create a lock as context manager, with updated self - also it should accept different actions
+# TODO - add foreign key - for deletion
+
+
+# TODO - steps
+#  1. finish list + add ttl
+#  2. finish dict + add ttl
+#  3. create default class setter + add ttl
+#  4. create serializer for primitives
+#  5. create tests to check
+#  6. Create for pydantic + add ttl
+#  7. create lock actions context
+#  8. create pipeline actions context
+#  9. create for nested
