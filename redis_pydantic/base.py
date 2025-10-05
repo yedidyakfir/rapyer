@@ -1,17 +1,11 @@
-import asyncio
-import json
 import uuid
-from datetime import datetime
-from decimal import Decimal
-from enum import Enum
-from typing import Any, get_origin, get_args, Self, Union, Annotated
+from typing import Any, get_origin, get_args, Self, Union
 
 import redis
-from pydantic import BaseModel, Field, PrivateAttr
-from redis.asyncio.client import Pipeline
+from pydantic import BaseModel, PrivateAttr
 
 from redis_pydantic.types import ALL_TYPES
-from redis_pydantic.types.base import GenericRedisType, RedisType
+from redis_pydantic.types.base import GenericRedisType
 
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
