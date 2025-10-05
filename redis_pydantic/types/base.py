@@ -34,3 +34,28 @@ class RedisType(ABC):
     @abc.abstractmethod
     def clone(self):
         pass
+
+    def serialize_value(self, value):
+        return value
+
+    def deserialize_value(self, value):
+        return value
+
+
+class GenericRedisType(RedisType, ABC):
+    def __init__(self, inner_type, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.inner_type = inner_type
+
+    @classmethod
+    def find_inner_type(cls, type_):
+        if hasattr(type_, "__args__"):
+            # For Dict types, we want the value type (second argument)
+            # For List types, we want the element type (first argument)
+            from typing import get_origin
+            origin = get_origin(type_)
+            if origin is dict and len(type_.__args__) >= 2:
+                return cls.find_inner_type(type_.__args__[1])  # Value type for dict
+            else:
+                return cls.find_inner_type(type_.__args__[0])  # Element type for list
+        return type_
