@@ -98,7 +98,6 @@ async def test_bool_list_operations_functionality(real_redis_client, bool_values
     assert list(fresh_model.bool_list) == original_data
 
 
-@pytest.mark.skip(reason="mixed_list uses Any type which is not supported")
 @pytest.mark.asyncio
 async def test_mixed_list_with_different_types_functionality(real_redis_client):
     # Arrange
@@ -208,7 +207,6 @@ async def test_bool_dict_operations_functionality(real_redis_client, bool_data):
         assert isinstance(value, bool)
 
 
-@pytest.mark.skip(reason="mixed_dict uses Any type which is not supported")
 @pytest.mark.asyncio
 async def test_mixed_dict_with_various_types_functionality(real_redis_client):
     # Arrange
@@ -240,7 +238,6 @@ async def test_mixed_dict_with_various_types_functionality(real_redis_client):
     assert len(redis_data) == 4
 
 
-@pytest.mark.skip(reason="mixed_list uses Any type which is not supported")
 @pytest.mark.asyncio
 async def test_list_clear_with_mixed_types_functionality(real_redis_client):
     # Arrange
@@ -258,7 +255,6 @@ async def test_list_clear_with_mixed_types_functionality(real_redis_client):
     assert redis_data is None or len(redis_data) == 0
 
 
-@pytest.mark.skip(reason="mixed_dict uses Any type which is not supported")
 @pytest.mark.asyncio
 async def test_dict_clear_with_mixed_types_functionality(real_redis_client):
     # Arrange
@@ -363,7 +359,6 @@ async def test_bytes_list_with_special_characters_edge_case(real_redis_client):
     assert list(fresh_model.bytes_list) == original_data
 
 
-@pytest.mark.skip(reason="mixed_dict uses Any type which is not supported")
 @pytest.mark.asyncio
 async def test_mixed_operations_on_same_model_functionality(real_redis_client):
     # Arrange

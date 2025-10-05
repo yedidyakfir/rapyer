@@ -36,7 +36,7 @@ class RedisType(ABC):
         return f"{self.json_path}.{field_name}"
 
     @abc.abstractmethod
-    def load(self):
+    async def load(self):
         pass
 
     @abc.abstractmethod
