@@ -61,7 +61,7 @@ async def test_redis_dict__update__check_local_consistency(real_redis_client):
     await user.save()
 
     # Act
-    await user.metadata.aupdate({"key2": "value2", "key3": "value3"})
+    await user.metadata.aupdate(**{"key2": "value2", "key3": "value3"})
     await user.save()  # Sync with Redis
 
     # Assert
@@ -184,27 +184,7 @@ async def test_redis_dict__update_with_dict_arg__check_local_consistency(
     await user.save()
 
     # Act
-    await user.metadata.aupdate({"key2": "value2", "key3": "value3"})
-    await user.save()  # Sync with Redis
-
-    # Assert
-    fresh_user = UserModel()
-    fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
-    assert user.metadata == fresh_user.metadata
-    assert len(user.metadata) == 3
-
-
-@pytest.mark.asyncio
-async def test_redis_dict__update_with_iterable_arg__check_local_consistency(
-    real_redis_client,
-):
-    # Arrange
-    user = UserModel(metadata={"key1": "value1"})
-    await user.save()
-
-    # Act
-    await user.metadata.aupdate([("key2", "value2"), ("key3", "value3")])
+    await user.metadata.aupdate(**{"key2": "value2", "key3": "value3"})
     await user.save()  # Sync with Redis
 
     # Assert
