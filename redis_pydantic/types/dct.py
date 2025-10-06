@@ -7,9 +7,10 @@ T = TypeVar("T")
 
 
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, value=None, *args, **kwargs):
+        # Extract value if passed as keyword argument
         GenericRedisType.__init__(self, **kwargs)
-        super().__init__(*args)
+        super().__init__(value, *args)
 
     async def load(self):
         # Get all items from Redis dict
