@@ -118,7 +118,13 @@ async def test_mixed_list_with_different_types_functionality(real_redis_client):
 
     redis_data = await real_redis_client.json().get(model.key, "$.mixed_list")
     assert redis_data is not None
-    assert len(redis_data) == 6
+    redis_list = redis_data[0]
+    assert "string" in redis_list
+    assert 42 in redis_list
+    assert "inserted" in redis_list
+    assert True in redis_list
+    assert {"__bytes__": "Ynl0ZXM="} in redis_list  # b"bytes" encoded
+    assert 3.14 in redis_list
 
 
 @pytest.mark.parametrize(
@@ -221,7 +227,7 @@ async def test_mixed_dict_with_various_types_functionality(real_redis_client):
     await model.save()
 
     # Act
-    await model.mixed_dict.aupdate(mixed_data)
+    await model.mixed_dict.aupdate(**mixed_data)
     await model.save()
     await model.mixed_dict.apop("int_key")
 
@@ -235,7 +241,14 @@ async def test_mixed_dict_with_various_types_functionality(real_redis_client):
         model.key, model.mixed_dict.json_path
     )
     assert redis_data is not None
-    assert len(redis_data) == 4
+    redis_dict = redis_data[0]
+    assert "string_key" in redis_dict and redis_dict["string_key"] == "string_value"
+    assert "bool_key" in redis_dict and redis_dict["bool_key"] is True
+    assert "bytes_key" in redis_dict and redis_dict["bytes_key"] == {
+        "__bytes__": "Ynl0ZXNfdmFsdWU="
+    }
+    assert "float_key" in redis_dict and redis_dict["float_key"] == 3.14
+    assert "int_key" not in redis_dict  # Should be popped
 
 
 @pytest.mark.asyncio
@@ -243,6 +256,7 @@ async def test_list_clear_with_mixed_types_functionality(real_redis_client):
     # Arrange
     model = MixedTypesModel()
     mixed_values = ["string", 42, True, b"bytes"]
+    await model.save()
 
     # Act
     await model.mixed_list.aextend(mixed_values)
@@ -252,7 +266,7 @@ async def test_list_clear_with_mixed_types_functionality(real_redis_client):
     assert len(model.mixed_list) == 0
 
     redis_data = await real_redis_client.json().get(model.key, "$.mixed_list")
-    assert redis_data is None or len(redis_data) == 0
+    assert redis_data is None or redis_data == [] or redis_data[0] == []
 
 
 @pytest.mark.asyncio
@@ -263,17 +277,12 @@ async def test_dict_clear_with_mixed_types_functionality(real_redis_client):
     await model.save()
 
     # Act
-    await model.mixed_dict.aupdate(mixed_data)
+    await model.mixed_dict.aupdate(**mixed_data)
     await model.save()
     await model.mixed_dict.aclear()
     await model.save()
 
     # Assert
-    assert len(model.mixed_dict) == 0
-
-    redis_data = await real_redis_client.json().get(
-        model.key, model.mixed_dict.json_path
-    )
     assert len(model.mixed_dict) == 0
 
 
