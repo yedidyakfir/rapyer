@@ -37,7 +37,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         super().__setitem__(key, value)
 
         # Serialize the value for Redis storage
-        serialized_value = self.serialize_value(value)
+        serialized_value = self.inner_type.serialize_value(value)
         return await self.client.json().set(
             self.redis_key, self.json_field_path(key), serialized_value
         )
