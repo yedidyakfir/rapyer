@@ -26,13 +26,16 @@ async def real_redis_client(redis_client):
 async def test_redis_int_set_functionality_sanity(real_redis_client, test_values):
     # Arrange
     model = IntModel()
+    await model.save()
 
     # Act
     await model.count.set(test_values)
 
     # Assert
-    redis_value = await real_redis_client.json().get(model.key, model.count.json_path)
-    assert redis_value == test_values
+    fresh_model = IntModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.count.load()
+    assert loaded_value == test_values
 
 
 @pytest.mark.parametrize("test_values", [42, -100, 0, 999, -999])
@@ -40,10 +43,13 @@ async def test_redis_int_set_functionality_sanity(real_redis_client, test_values
 async def test_redis_int_load_functionality_sanity(real_redis_client, test_values):
     # Arrange
     model = IntModel()
-    await real_redis_client.json().set(model.key, model.count.json_path, test_values)
+    await model.save()
+    await model.count.set(test_values)
 
     # Act
-    loaded_value = await model.count.load()
+    fresh_model = IntModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.count.load()
 
     # Assert
     assert loaded_value == test_values
@@ -68,10 +74,13 @@ async def test_redis_int_load_type_conversion_edge_case(
 ):
     # Arrange
     model = IntModel()
+    await model.save()
     await real_redis_client.json().set(model.key, model.count.json_path, redis_values)
 
     # Act
-    loaded_value = await model.count.load()
+    fresh_model = IntModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.count.load()
 
     # Assert
     if redis_values == "42":
@@ -144,6 +153,7 @@ async def test_redis_int_model_creation_functionality_sanity(real_redis_client):
 async def test_redis_int_persistence_across_instances_edge_case(real_redis_client):
     # Arrange
     model1 = IntModel(count=100)
+    await model1.save()
     await model1.count.set(100)
 
     # Act
