@@ -54,7 +54,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         """Parse JSON-encoded value returned from Redis Lua scripts."""
         if isinstance(result, bytes):
             result = result.decode()
-        if result.startswith('[') and result.endswith(']'):
+        if result.startswith("[") and result.endswith("]"):
             # Remove JSON array wrapping for single values
             result = result[1:-1]
             # Handle string values that were quoted
