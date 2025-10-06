@@ -31,8 +31,10 @@ async def test_redis_dict__setitem__check_local_consistency(real_redis_client):
     await user.save()  # Sync with Redis
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
 
 
 @pytest.mark.asyncio
@@ -46,8 +48,10 @@ async def test_redis_dict__delitem__check_local_consistency(real_redis_client):
     await user.save()  # Sync with Redis
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
 
 
 @pytest.mark.asyncio
@@ -61,8 +65,10 @@ async def test_redis_dict__update__check_local_consistency(real_redis_client):
     await user.save()  # Sync with Redis
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
 
 
 @pytest.mark.asyncio
@@ -76,9 +82,11 @@ async def test_redis_dict__clear__check_local_consistency(real_redis_client):
     await user.save()  # Sync with Redis
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
     assert len(user.metadata) == 0
-    assert user.metadata == actual_dict[0]
+    assert user.metadata == fresh_user.metadata
 
 
 @pytest.mark.asyncio
@@ -86,16 +94,22 @@ async def test_redis_dict__load__check_redis_load(real_redis_client):
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
     await user.save()
-    await real_redis_client.json().set(
-        user.key, f"{user.metadata.json_path}.key2", "value2"
-    )
+    # Use another user instance to set a value and verify load works
+    other_user = UserModel()
+    other_user.pk = user.pk
+    await other_user.metadata.load()
+    await other_user.metadata.aset_item("key2", "value2")
 
     # Act
     await user.metadata.load()
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
+    assert "key2" in user.metadata
+    assert user.metadata["key2"] == "value2"
 
 
 @pytest.mark.asyncio
@@ -108,8 +122,10 @@ async def test_redis_dict__pop__check_redis_pop(real_redis_client):
     popped_value = await user.metadata.apop("key1")
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
     assert popped_value == "value1"
     assert "key1" not in user.metadata
     assert len(user.metadata) == 1
@@ -151,8 +167,10 @@ async def test_redis_dict__popitem__check_redis_popitem(real_redis_client):
     popped_value = await user.metadata.apopitem()
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
     assert popped_value in original_dict.values()
     assert len(user.metadata) == 1
 
@@ -170,8 +188,10 @@ async def test_redis_dict__update_with_dict_arg__check_local_consistency(
     await user.save()  # Sync with Redis
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
     assert len(user.metadata) == 3
 
 
@@ -188,8 +208,10 @@ async def test_redis_dict__update_with_iterable_arg__check_local_consistency(
     await user.save()  # Sync with Redis
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
     assert len(user.metadata) == 3
 
 
@@ -206,8 +228,10 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency(
     await user.save()  # Sync with Redis
 
     # Assert
-    actual_dict = await real_redis_client.json().get(user.key, user.metadata.json_path)
-    assert user.metadata == actual_dict[0]
+    fresh_user = UserModel()
+    fresh_user.pk = user.pk
+    await fresh_user.metadata.load()
+    assert user.metadata == fresh_user.metadata
     assert len(user.metadata) == 3
 
 
