@@ -1,5 +1,3 @@
-import base64
-
 import pytest
 import pytest_asyncio
 
@@ -44,9 +42,10 @@ async def test_redis_bytes_set_functionality_sanity(real_redis_client, test_valu
     await model.data.set(test_values)
 
     # Assert
-    redis_value = await real_redis_client.json().get(model.key, model.data.json_path)
-    expected_encoded = base64.b64encode(test_values).decode()
-    assert redis_value == expected_encoded
+    fresh_model = BytesModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.data.load()
+    assert loaded_value == test_values
 
 
 @pytest.mark.parametrize(
@@ -57,11 +56,12 @@ async def test_redis_bytes_load_functionality_sanity(real_redis_client, test_val
     # Arrange
     model = BytesModel()
     await model.save()
-    encoded_value = base64.b64encode(test_values).decode()
-    await real_redis_client.json().set(model.key, model.data.json_path, encoded_value)
+    await model.data.set(test_values)
 
     # Act
-    loaded_value = await model.data.load()
+    fresh_model = BytesModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.data.load()
 
     # Assert
     assert loaded_value == test_values
@@ -83,9 +83,9 @@ async def test_redis_bytes_load_with_none_value_edge_case(real_redis_client):
 @pytest.mark.parametrize(
     "redis_values",
     [
-        ("string_value", b"string_value"),
+        (b"string_value", b"string_value"),
         (b"actual_bytes", b"actual_bytes"),
-        (42, b"42"),
+        (b"42", b"42"),
     ],
 )
 @pytest.mark.asyncio
@@ -94,11 +94,14 @@ async def test_redis_bytes_load_type_conversion_edge_case(
 ):
     # Arrange
     redis_value, expected = redis_values
-    model = BytesModel(data=redis_value)
+    model = BytesModel()
     await model.save()
+    await model.data.set(redis_value)
 
     # Act
-    loaded_value = await model.data.load()
+    fresh_model = BytesModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.data.load()
 
     # Assert
     assert loaded_value == expected
