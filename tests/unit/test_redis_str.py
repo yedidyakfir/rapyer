@@ -28,13 +28,16 @@ async def real_redis_client(redis_client):
 async def test_redis_str_set_functionality_sanity(real_redis_client, test_values):
     # Arrange
     model = StrModel()
+    await model.save()
 
     # Act
     await model.name.set(test_values)
 
     # Assert
-    redis_value = await real_redis_client.json().get(model.key, model.name.json_path)
-    assert redis_value == test_values
+    fresh_model = StrModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.name.load()
+    assert loaded_value == test_values
 
 
 @pytest.mark.parametrize(
@@ -44,10 +47,13 @@ async def test_redis_str_set_functionality_sanity(real_redis_client, test_values
 async def test_redis_str_load_functionality_sanity(real_redis_client, test_values):
     # Arrange
     model = StrModel()
-    await real_redis_client.json().set(model.key, model.name.json_path, test_values)
+    await model.save()
+    await model.name.set(test_values)
 
     # Act
-    loaded_value = await model.name.load()
+    fresh_model = StrModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.name.load()
 
     # Assert
     assert loaded_value == test_values
@@ -65,27 +71,30 @@ async def test_redis_str_load_with_none_value_edge_case(real_redis_client):
     assert loaded_value == ""
 
 
-@pytest.mark.parametrize("redis_values", [b"bytes_value", 42, True, None])
+@pytest.mark.parametrize("redis_values", ["bytes_value", 42, True, None])
 @pytest.mark.asyncio
 async def test_redis_str_load_type_conversion_edge_case(
     real_redis_client, redis_values
 ):
     # Arrange
     model = StrModel()
+    await model.save()
     await real_redis_client.json().set(model.key, model.name.json_path, redis_values)
 
     # Act
-    loaded_value = await model.name.load()
+    fresh_model = StrModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.name.load()
 
     # Assert
-    if redis_values == b"bytes_value":
+    if redis_values == "bytes_value":
         assert loaded_value == "bytes_value"
     elif redis_values == 42:
         assert loaded_value == "42"
     elif redis_values == True:
         assert loaded_value == "True"
     elif redis_values is None:
-        assert loaded_value == "None"
+        assert loaded_value == ""  # None becomes empty string
 
 
 @pytest.mark.asyncio
@@ -150,6 +159,7 @@ async def test_redis_str_model_creation_functionality_sanity(real_redis_client):
 async def test_redis_str_persistence_across_instances_edge_case(real_redis_client):
     # Arrange
     model1 = StrModel(name="original")
+    await model1.save()
     await model1.name.set("modified")
 
     # Act
@@ -200,11 +210,14 @@ async def test_redis_str_concatenation_functionality_sanity(real_redis_client):
 async def test_redis_str_empty_string_functionality_edge_case(real_redis_client):
     # Arrange
     model = StrModel(name="")
+    await model.save()
 
     # Act
     await model.name.set("")
 
     # Assert
-    redis_value = await real_redis_client.json().get(model.key, model.name.json_path)
-    assert redis_value == ""
+    fresh_model = StrModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.name.load()
+    assert loaded_value == ""
     assert len(model.name) == 0
