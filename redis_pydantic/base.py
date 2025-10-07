@@ -100,14 +100,14 @@ class BaseRedisModel(BaseModel):
             raise RuntimeError(f"{type_} not supported by RedisPydantic")
 
     @classmethod
-    def create_redis_type(cls, redis_mapping: dict, **kwargs):
+    def create_redis_type(cls, redis_mapping: dict, value=None, **kwargs):
         redis_type = list(redis_mapping.keys())[0]
         redis_type_additional_params = redis_mapping[redis_type]
         saved_kwargs = {
             key: (cls.create_redis_type(value))
             for key, value in redis_type_additional_params.items()
         }
-        return redis_type(**kwargs, **saved_kwargs)
+        return redis_type(value, **kwargs, **saved_kwargs)
 
     def __init__(self, **data):
         super().__init__(**data)
