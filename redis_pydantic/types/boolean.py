@@ -31,4 +31,9 @@ class RedisBool(int, RedisType):
         return bool(self)
 
     def deserialize_value(self, value):
-        return True if value == "true" else False
+        if isinstance(value, bool):
+            return value
+        elif isinstance(value, str):
+            return value.lower() in ("true", "1")
+        else:
+            return bool(value)

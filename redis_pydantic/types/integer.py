@@ -30,3 +30,6 @@ class RedisInt(int, RedisType):
 
     def clone(self):
         return int(self)
+
+    def deserialize_value(self, value):
+        return int(value)
