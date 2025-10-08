@@ -1,16 +1,16 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from redis_pydantic.base import BaseRedisModel
 
 
-class InnerMostModel(BaseRedisModel):
+class InnerMostModel(BaseModel):
     lst: list[str] = Field(default_factory=list)
     counter: int = 0
 
 
-class MiddleModel(BaseRedisModel):
+class MiddleModel(BaseModel):
     inner_model: InnerMostModel = Field(default_factory=InnerMostModel)
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, str] = Field(default_factory=dict)
@@ -25,8 +25,6 @@ class OuterModel(BaseRedisModel):
 @pytest_asyncio.fixture
 async def real_redis_client(redis_client):
     OuterModel.Meta.redis = redis_client
-    MiddleModel.Meta.redis = redis_client
-    InnerMostModel.Meta.redis = redis_client
     yield redis_client
     await redis_client.aclose()
 
@@ -37,17 +35,15 @@ async def test_nested_model_deep_list_append_sanity(real_redis_client):
     outer = OuterModel()
     await outer.save()
 
-
     # Act
     await outer.middle_model.inner_model.lst.aappend("deep_item")
 
     # Assert
     assert "deep_item" in outer.middle_model.inner_model.lst
     assert len(outer.middle_model.inner_model.lst) == 1
-    
+
     redis_data = await real_redis_client.json().get(
-        outer.key, 
-        outer.middle_model.inner_model.lst.json_path
+        outer.key, outer.middle_model.inner_model.lst.json_path
     )
     assert redis_data[0] == ["deep_item"]
 
@@ -65,10 +61,9 @@ async def test_nested_model_deep_list_extend_sanity(real_redis_client):
     # Assert
     assert all(item in outer.middle_model.inner_model.lst for item in test_items)
     assert len(outer.middle_model.inner_model.lst) == 3
-    
+
     redis_data = await real_redis_client.json().get(
-        outer.key, 
-        outer.middle_model.inner_model.lst.json_path
+        outer.key, outer.middle_model.inner_model.lst.json_path
     )
     assert set(redis_data[0]) == set(test_items)
 
@@ -87,10 +82,9 @@ async def test_nested_model_middle_list_operations_sanity(real_redis_client):
     # Assert
     assert "inserted_tag" in outer.middle_model.tags
     assert len(outer.middle_model.tags) == 3
-    
+
     redis_data = await real_redis_client.json().get(
-        outer.key, 
-        outer.middle_model.tags.json_path
+        outer.key, outer.middle_model.tags.json_path
     )
     assert "inserted_tag" in redis_data[0]
 
@@ -109,10 +103,9 @@ async def test_nested_model_middle_dict_operations_sanity(real_redis_client):
     assert outer.middle_model.metadata["key1"] == "value1"
     assert outer.middle_model.metadata["key2"] == "value2"
     assert len(outer.middle_model.metadata) == 2
-    
+
     redis_data = await real_redis_client.json().get(
-        outer.key, 
-        outer.middle_model.metadata.json_path
+        outer.key, outer.middle_model.metadata.json_path
     )
     assert redis_data[0] == test_metadata
 
@@ -131,26 +124,22 @@ async def test_nested_model_outer_level_operations_sanity(real_redis_client):
     # Assert
     assert outer.user_data["user1"] == 100
     assert len(outer.items) == 3
-    
+
     redis_user_data = await real_redis_client.json().get(
-        outer.key, 
-        outer.user_data.json_path
+        outer.key, outer.user_data.json_path
     )
-    redis_items = await real_redis_client.json().get(
-        outer.key, 
-        outer.items.json_path
-    )
+    redis_items = await real_redis_client.json().get(outer.key, outer.items.json_path)
     assert redis_user_data[0] == test_user_data
     assert set(redis_items[0]) == {1, 2, 3}
 
 
-@pytest.mark.parametrize("test_values", [
-    ["param1", "param2"],
-    ["a", "b", "c"],
-    ["single"]
-])
+@pytest.mark.parametrize(
+    "test_values", [["param1", "param2"], ["a", "b", "c"], ["single"]]
+)
 @pytest.mark.asyncio
-async def test_nested_model_deep_list_multiple_operations_sanity(real_redis_client, test_values):
+async def test_nested_model_deep_list_multiple_operations_sanity(
+    real_redis_client, test_values
+):
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -171,11 +160,11 @@ async def test_nested_model_persistence_across_instances_sanity(real_redis_clien
     # Arrange
     outer1 = OuterModel()
     await outer1.save()
-    
+
     # Act
     await outer1.middle_model.inner_model.lst.aappend("persistent_item")
     await outer1.middle_model.tags.aappend("persistent_tag")
-    
+
     # Create new instance with same pk
     outer2 = OuterModel()
     outer2.pk = outer1.pk
@@ -192,7 +181,7 @@ async def test_nested_model_clear_operations_edge_case(real_redis_client):
     # Arrange
     outer = OuterModel()
     await outer.save()
-    
+
     await outer.middle_model.inner_model.lst.aextend(["item1", "item2"])
     await outer.middle_model.metadata.aupdate(key1="value1", key2="value2")
 
@@ -203,21 +192,29 @@ async def test_nested_model_clear_operations_edge_case(real_redis_client):
     # Assert
     assert len(outer.middle_model.inner_model.lst) == 0
     assert len(outer.middle_model.metadata) == 0
-    
+
     redis_list_data = await real_redis_client.json().get(
-        outer.key, 
-        outer.middle_model.inner_model.lst.json_path
+        outer.key, outer.middle_model.inner_model.lst.json_path
     )
     redis_dict_data = await real_redis_client.json().get(
-        outer.key, 
-        outer.middle_model.metadata.json_path
+        outer.key, outer.middle_model.metadata.json_path
     )
     assert redis_list_data is None or redis_list_data == [] or redis_list_data[0] == []
-    assert redis_dict_data is None or redis_dict_data == [] or (isinstance(redis_dict_data, list) and len(redis_dict_data) > 0 and redis_dict_data[0] == {})
+    assert (
+        redis_dict_data is None
+        or redis_dict_data == []
+        or (
+            isinstance(redis_dict_data, list)
+            and len(redis_dict_data) > 0
+            and redis_dict_data[0] == {}
+        )
+    )
 
 
 @pytest.mark.asyncio
-async def test_nested_model_mixed_operations_on_different_levels_edge_case(real_redis_client):
+async def test_nested_model_mixed_operations_on_different_levels_edge_case(
+    real_redis_client,
+):
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -235,35 +232,39 @@ async def test_nested_model_mixed_operations_on_different_levels_edge_case(real_
     assert "deep_item" in outer.middle_model.inner_model.lst
     assert outer.user_data["count"] == 5
     assert outer.middle_model.metadata["status"] == "active"
-    
+
     # Verify Redis persistence
     redis_items = await real_redis_client.json().get(outer.key, outer.items.json_path)
-    redis_tags = await real_redis_client.json().get(outer.key, outer.middle_model.tags.json_path)
-    redis_deep_list = await real_redis_client.json().get(outer.key, outer.middle_model.inner_model.lst.json_path)
-    
+    redis_tags = await real_redis_client.json().get(
+        outer.key, outer.middle_model.tags.json_path
+    )
+    redis_deep_list = await real_redis_client.json().get(
+        outer.key, outer.middle_model.inner_model.lst.json_path
+    )
+
     assert 10 in redis_items[0]
     assert "middle_tag" in redis_tags[0]
     assert "deep_item" in redis_deep_list[0]
 
 
 @pytest.mark.asyncio
-async def test_nested_model_load_operations_after_external_changes_edge_case(real_redis_client):
+async def test_nested_model_load_operations_after_external_changes_edge_case(
+    real_redis_client,
+):
     # Arrange
     outer = OuterModel()
     await outer.save()
 
     # Act - simulate external Redis changes
     await real_redis_client.json().arrappend(
-        outer.key, 
-        outer.middle_model.inner_model.lst.json_path, 
-        "external_item"
+        outer.key, outer.middle_model.inner_model.lst.json_path, "external_item"
     )
     await real_redis_client.json().set(
-        outer.key, 
-        f"{outer.middle_model.metadata.json_path}.external_key", 
-        '"external_value"'
+        outer.key,
+        f"{outer.middle_model.metadata.json_path}.external_key",
+        '"external_value"',
     )
-    
+
     # Load changes
     await outer.middle_model.inner_model.lst.load()
     await outer.middle_model.metadata.load()
@@ -271,4 +272,6 @@ async def test_nested_model_load_operations_after_external_changes_edge_case(rea
     # Assert
     assert "external_item" in outer.middle_model.inner_model.lst
     external_value = outer.middle_model.metadata.get("external_key")
-    assert external_value == "external_value" or external_value == '"external_value"'  # Handle JSON serialization
+    assert (
+        external_value == "external_value" or external_value == '"external_value"'
+    )  # Handle JSON serialization
