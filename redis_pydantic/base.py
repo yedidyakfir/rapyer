@@ -115,6 +115,8 @@ class BaseRedisModel(BaseModel):
     async def save(self) -> Self:
         model_dump = self.redis_dump()
         await self.Meta.redis.json().set(self.key, "$", model_dump)
+        if self.Meta.ttl is not None:
+            await self.Meta.redis.expire(self.key, self.Meta.ttl)
         return self
 
     @classmethod
