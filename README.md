@@ -202,6 +202,40 @@ await model.metadata.load()                         # Load from Redis
 
 ## Advanced Usage
 
+### Lock Context Manager
+
+Use the lock context manager to ensure atomic operations across multiple fields with automatic model synchronization:
+
+```python
+class User(BaseRedisModel):
+    name: str
+    balance: int = 0
+    transaction_count: int = 0
+
+user = User(name="John", balance=1000)
+await user.save()
+
+# Lock with default action
+async with user.lock() as locked_user:
+    # The locked_user is automatically refreshed from Redis
+    locked_user.balance -= 50
+    locked_user.transaction_count += 1
+    # Changes are automatically saved when exiting the context
+
+# Lock with specific action name
+async with user.lock("transfer") as locked_user:
+    # This creates a lock with key "User:user_id/transfer"
+    locked_user.balance -= 100
+    locked_user.transaction_count += 1
+    # Automatic save on context exit
+```
+
+The lock context manager:
+- Creates a Redis lock with key `{model_key}/{action}`
+- Automatically refreshes the model with latest Redis data on entry
+- Saves all changes back to Redis on successful exit
+- Ensures atomic operations across multiple field updates
+
 ### Working with Nested Types
 
 ```python
