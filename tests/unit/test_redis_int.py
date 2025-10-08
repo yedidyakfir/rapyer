@@ -187,3 +187,7 @@ async def test_redis_int_arithmetic_operations_sanity(real_redis_client, operati
 
     # Assert
     assert result == expected
+
+
+def test_mock():
+    assert False
