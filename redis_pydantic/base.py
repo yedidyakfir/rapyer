@@ -30,6 +30,7 @@ class RedisConfig:
 @dataclasses.dataclass
 class RedisFieldConfig:
     field_path: str = ""
+    override_class_name: str = ""
 
 
 class BaseRedisModel(BaseModel):
@@ -46,9 +47,13 @@ class BaseRedisModel(BaseModel):
         self._pk = value
         self._update_redis_field_parameters()
 
+    @classmethod
+    def key_initials(cls):
+        return cls.field_config.override_class_name or cls.__name__
+
     @property
     def key(self):
-        return f"{self.__class__.__name__}:{self.pk}"
+        return f"{self.key_initials()}:{self.pk}"
 
     def _update_redis_field_parameters(self):
         for field_name in self.model_fields:
@@ -96,10 +101,13 @@ class BaseRedisModel(BaseModel):
         elif isinstance(type_, BaseRedisModel):
             return {type_: {}}
         elif issubclass(type_, BaseModel):
+            field_conf = RedisFieldConfig(
+                field_path=field_name, override_class_name=cls.key_initials()
+            )
             new_base_model_type = type(
                 f"Redis{type_.__name__}",
                 (type_, BaseRedisModel),
-                dict(field_config=RedisFieldConfig(field_path=field_name)),
+                dict(field_config=field_conf),
             )
             return {new_base_model_type: {}}
         else:
