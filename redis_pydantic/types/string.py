@@ -3,6 +3,8 @@ from redis_pydantic.types.base import RedisType
 
 class RedisStr(str, RedisType):
     def __new__(cls, value="", **kwargs):
+        if value is None:
+            value = ""
         return super().__new__(cls, value)
 
     def __init__(self, value="", **kwargs):

@@ -3,6 +3,8 @@ from redis_pydantic.types.base import RedisType
 
 class RedisBool(int, RedisType):
     def __new__(cls, value=False, **kwargs):
+        if value is None:
+            value = False
         return super().__new__(cls, bool(value))
 
     def __init__(self, value=False, **kwargs):

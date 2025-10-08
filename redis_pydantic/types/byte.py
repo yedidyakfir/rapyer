@@ -4,9 +4,7 @@ from redis_pydantic.types.base import RedisType
 
 class RedisBytes(bytes, RedisType):
     def __new__(cls, value=b"", **kwargs):
-        if isinstance(value, str):
-            value = value.encode()
-        elif not isinstance(value, bytes):
+        if value is None:
             value = b""
         return super().__new__(cls, value)
 
