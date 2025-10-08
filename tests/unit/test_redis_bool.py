@@ -2,16 +2,11 @@ import pytest
 import pytest_asyncio
 
 from redis_pydantic.base import BaseRedisModel
-from redis_pydantic.types import ALL_TYPES
 
 
 class BoolModel(BaseRedisModel):
     is_active: bool = False
     is_deleted: bool = True
-
-    class Meta:
-        redis = None
-        redis_type = ALL_TYPES
 
 
 @pytest_asyncio.fixture

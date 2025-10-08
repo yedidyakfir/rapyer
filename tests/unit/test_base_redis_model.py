@@ -2,15 +2,10 @@ import pytest
 import pytest_asyncio
 
 from redis_pydantic.base import BaseRedisModel
-from redis_pydantic.types import ALL_TYPES
 
 
 class UserModel(BaseRedisModel):
     tags: list[str] = []
-
-    class Meta:
-        redis = None  # Will be set in fixture
-        redis_type = ALL_TYPES
 
 
 @pytest_asyncio.fixture

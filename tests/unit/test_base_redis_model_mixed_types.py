@@ -5,7 +5,6 @@ import pytest_asyncio
 from pydantic import Field
 
 from redis_pydantic.base import BaseRedisModel
-from redis_pydantic.types import ALL_TYPES
 
 
 class MixedTypesModel(BaseRedisModel):
@@ -19,10 +18,6 @@ class MixedTypesModel(BaseRedisModel):
     int_dict: Dict[str, int] = Field(default_factory=dict)
     bool_dict: Dict[str, bool] = Field(default_factory=dict)
     mixed_dict: Dict[str, Any] = Field(default_factory=dict)
-
-    class Meta:
-        redis = None
-        redis_type = ALL_TYPES
 
 
 @pytest_asyncio.fixture

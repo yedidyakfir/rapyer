@@ -2,16 +2,11 @@ import pytest
 import pytest_asyncio
 
 from redis_pydantic.base import BaseRedisModel
-from redis_pydantic.types import ALL_TYPES
 
 
 class StrModel(BaseRedisModel):
     name: str = ""
     description: str = "default"
-
-    class Meta:
-        redis = None
-        redis_type = ALL_TYPES
 
 
 @pytest_asyncio.fixture
