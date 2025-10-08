@@ -132,11 +132,11 @@ class BaseRedisModel(BaseModel):
                     model_dump[field_name] = redis_field.serialize_value(redis_field)
         return model_dump
 
-    @contextlib.contextmanager
+    @contextlib.asynccontextmanager
     async def lock(self, action: str = "default"):
         async with acquire_lock(self.Meta.redis, f"{self.key}/{action}"):
-            redis_model = await self.get(self.key)
-            self.model_copy(**redis_model.model_dump())
+            redis_model = await self.__class__.get(self.key)
+            self.model_copy(update=redis_model.model_dump())
             yield redis_model
             await redis_model.save()
 
