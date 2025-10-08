@@ -42,10 +42,10 @@ async def test_nested_model_deep_list_append_sanity(real_redis_client):
     assert "deep_item" in outer.middle_model.inner_model.lst
     assert len(outer.middle_model.inner_model.lst) == 1
 
-    redis_data = await real_redis_client.json().get(
-        outer.key, outer.middle_model.inner_model.lst.json_path
-    )
-    assert redis_data[0] == ["deep_item"]
+    outer.middle_model.inner_model.lst.clear()
+    await outer.middle_model.inner_model.lst.load()
+
+    assert outer.middle_model.inner_model.lst == ["deep_item"]
 
 
 @pytest.mark.asyncio
@@ -62,10 +62,9 @@ async def test_nested_model_deep_list_extend_sanity(real_redis_client):
     assert all(item in outer.middle_model.inner_model.lst for item in test_items)
     assert len(outer.middle_model.inner_model.lst) == 3
 
-    redis_data = await real_redis_client.json().get(
-        outer.key, outer.middle_model.inner_model.lst.json_path
-    )
-    assert set(redis_data[0]) == set(test_items)
+    outer.middle_model.inner_model.lst.clear()
+    await outer.middle_model.inner_model.lst.load()
+    assert outer.middle_model.inner_model.lst == test_items
 
 
 @pytest.mark.asyncio
