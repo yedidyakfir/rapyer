@@ -1,7 +1,7 @@
 import contextlib
 import dataclasses
 import uuid
-from typing import Any, get_origin, get_args, Self, Union, ClassVar
+from typing import get_origin, Self, ClassVar
 
 import redis
 from pydantic import BaseModel, PrivateAttr
@@ -55,17 +55,25 @@ class BaseRedisModel(BaseModel):
             value = getattr(self, field_name)
             if isinstance(value, RedisType):
                 value.redis_key = self.key
+            elif isinstance(value, BaseRedisModel):
+                value.pk = self.pk
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
         # Store Redis field mappings for later use
         cls._redis_field_mapping = {}
+        full_annotation = get_public_instance_annotations(cls)
 
         # Replace field types with Redis types and create descriptors
-        for field_name, field_type in cls.__annotations__.items():
+        for field_name, field_type in full_annotation.items():
             actual_type = get_actual_type(field_type)
-            resolved_inner_type = cls._resolve_redis_type(field_name, actual_type)
+            full_field_name = (
+                f"{cls.field_config.field_path}.{field_name}"
+                if cls.field_config.field_path
+                else field_name
+            )
+            resolved_inner_type = cls._resolve_redis_type(full_field_name, actual_type)
             cls._redis_field_mapping[field_name] = resolved_inner_type
 
     @classmethod
@@ -85,6 +93,8 @@ class BaseRedisModel(BaseModel):
                 return {redis_type_class: {"inner_type": resolved_inner_type}}
             else:
                 return {redis_type_class: {}}
+        elif isinstance(type_, BaseRedisModel):
+            return {type_: {}}
         elif issubclass(type_, BaseModel):
             new_base_model_type = type(
                 f"Redis{type_.__name__}",
@@ -103,13 +113,27 @@ class BaseRedisModel(BaseModel):
             key: (cls.create_redis_type(value))
             for key, value in redis_type_additional_params.items()
         }
-        return redis_type(value, **kwargs, **saved_kwargs)
+
+        # Handle nested models - convert user model to Redis model
+        if (
+            value is not None
+            and isinstance(value, BaseModel)
+            and not isinstance(value, BaseRedisModel)
+        ):
+            redis_key = kwargs.get("redis_key")
+            pk = redis_key.split(":", 1)[1]
+            model_data = value.model_dump()
+            instance = redis_type(**model_data, **saved_kwargs)
+            instance.pk = pk
+            return instance
+        else:
+            return redis_type(value, **kwargs, **saved_kwargs)
 
     def __init__(self, **data):
         super().__init__(**data)
 
         # Initialize Redis fields after Pydantic initialization
-        for field_name, redis_mapping in self.__class__._redis_field_mapping.items():
+        for field_name, redis_mapping in self._redis_field_mapping.items():
             # Get the current value (from Pydantic initialization)
             current_value = getattr(self, field_name, None)
             full_field_path = (
