@@ -9,22 +9,13 @@ from redis.asyncio import Redis
 
 from redis_pydantic.types import ALL_TYPES
 from redis_pydantic.types.base import GenericRedisType, RedisType
-from redis_pydantic.utils import acquire_lock
+from redis_pydantic.utils import (
+    acquire_lock,
+    get_public_instance_annotations,
+    get_actual_type,
+)
 
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
-
-
-def get_actual_type(annotation: Any) -> Any:
-    """Extract the actual type from Optional/Union types."""
-    origin = get_origin(annotation)
-    if origin is Union:
-        args = get_args(annotation)
-        # Handle Optional[T] which is Union[T, None]
-        non_none_args = [arg for arg in args if arg is not type(None)]
-        if len(non_none_args) == 1:
-            return non_none_args[0]
-        return annotation  # Return as-is for complex Union types
-    return annotation
 
 
 @dataclasses.dataclass
