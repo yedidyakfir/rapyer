@@ -46,15 +46,11 @@ class BaseRedisModel(BaseModel):
         return f"{self.__class__.__name__}:{self.pk}"
 
     def _update_redis_field_parameters(self):
-        """Update Redis field parameters when key or redis connection changes."""
-        for field_name in getattr(self.__class__, "_redis_field_mapping", {}):
-            if hasattr(self, field_name):
-                redis_instance = getattr(self, field_name)
-                if hasattr(redis_instance, "redis_key") and hasattr(
-                    redis_instance, "redis"
-                ):
-                    redis_instance.redis_key = self.key
-                    redis_instance.redis = self.Meta.redis
+        for field_name in self.model_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, RedisType):
+                value.redis_key = self.key
+                value.redis = self.Meta.redis
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
