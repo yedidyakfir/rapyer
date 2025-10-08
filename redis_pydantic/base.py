@@ -118,7 +118,7 @@ class BaseRedisModel(BaseModel):
         redis_type = list(redis_mapping.keys())[0]
         redis_type_additional_params = redis_mapping[redis_type]
         saved_kwargs = {
-            key: (cls.create_redis_type(value))
+            key: (cls.create_redis_type(redis_mapping=value, **kwargs))
             for key, value in redis_type_additional_params.items()
         }
 
@@ -203,3 +203,4 @@ class BaseRedisModel(BaseModel):
 # 5. update the redis types, with __get__ etc
 # 5. add pipeline context
 # TODO - add foreign key - for deletion
+# TODO - when setting a field, update with inner type (model.lst = []...)
