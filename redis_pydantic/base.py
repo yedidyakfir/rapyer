@@ -120,7 +120,11 @@ class BaseRedisModel(BaseModel):
     @classmethod
     async def get(cls, key: str) -> Self:
         model_dump = await cls.Meta.redis.json().get(key, "$")
-        return cls(**model_dump)
+        instance = cls(**model_dump[0])
+        # Extract pk from key format: "ClassName:pk"
+        pk = key.split(":", 1)[1]
+        instance._pk = pk
+        return instance
 
     def redis_dump(self):
         model_dump = self.model_dump(exclude=["_pk"])
