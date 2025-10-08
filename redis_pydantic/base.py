@@ -31,6 +31,7 @@ class BaseRedisModel(BaseModel):
     class Meta:
         redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
         redis_type: dict[str, type] = ALL_TYPES
+        ttl: int | None = None
 
     @property
     def pk(self):
