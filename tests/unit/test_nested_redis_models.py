@@ -82,10 +82,10 @@ async def test_nested_model_middle_list_operations_sanity(real_redis_client):
     assert "inserted_tag" in outer.middle_model.tags
     assert len(outer.middle_model.tags) == 3
 
-    redis_data = await real_redis_client.json().get(
-        outer.key, outer.middle_model.tags.json_path
-    )
-    assert "inserted_tag" in redis_data[0]
+    outer.middle_model.tags.clear()
+    await outer.middle_model.tags.load()
+
+    assert outer.middle_model.tags == ["tag1", "inserted_tag", "tag2"]
 
 
 @pytest.mark.asyncio
@@ -103,10 +103,10 @@ async def test_nested_model_middle_dict_operations_sanity(real_redis_client):
     assert outer.middle_model.metadata["key2"] == "value2"
     assert len(outer.middle_model.metadata) == 2
 
-    redis_data = await real_redis_client.json().get(
-        outer.key, outer.middle_model.metadata.json_path
-    )
-    assert redis_data[0] == test_metadata
+    outer.middle_model.metadata.clear()
+    await outer.middle_model.metadata.load()
+
+    assert outer.middle_model.metadata == test_metadata
 
 
 @pytest.mark.asyncio
@@ -115,21 +115,23 @@ async def test_nested_model_outer_level_operations_sanity(real_redis_client):
     outer = OuterModel()
     await outer.save()
     test_user_data = {"user1": 100, "user2": 200}
+    test_items = [1, 2, 3]
 
     # Act
     await outer.user_data.aupdate(**test_user_data)
-    await outer.items.aextend([1, 2, 3])
+    await outer.items.aextend(test_items)
 
     # Assert
     assert outer.user_data["user1"] == 100
     assert len(outer.items) == 3
 
-    redis_user_data = await real_redis_client.json().get(
-        outer.key, outer.user_data.json_path
-    )
-    redis_items = await real_redis_client.json().get(outer.key, outer.items.json_path)
-    assert redis_user_data[0] == test_user_data
-    assert set(redis_items[0]) == {1, 2, 3}
+    outer.user_data.clear()
+    outer.items.clear()
+    await outer.user_data.load()
+    await outer.items.load()
+
+    assert outer.user_data == test_user_data
+    assert outer.items == test_items
 
 
 @pytest.mark.parametrize(
@@ -152,6 +154,11 @@ async def test_nested_model_deep_list_multiple_operations_sanity(
     assert popped == "extra" or popped == '"extra"'  # Handle JSON serialization
     assert len(outer.middle_model.inner_model.lst) == len(test_values)
     assert all(val in outer.middle_model.inner_model.lst for val in test_values)
+
+    outer.middle_model.inner_model.lst.clear()
+    await outer.middle_model.inner_model.lst.load()
+
+    assert outer.middle_model.inner_model.lst == test_values
 
 
 @pytest.mark.asyncio
@@ -232,18 +239,23 @@ async def test_nested_model_mixed_operations_on_different_levels_edge_case(
     assert outer.user_data["count"] == 5
     assert outer.middle_model.metadata["status"] == "active"
 
-    # Verify Redis persistence
-    redis_items = await real_redis_client.json().get(outer.key, outer.items.json_path)
-    redis_tags = await real_redis_client.json().get(
-        outer.key, outer.middle_model.tags.json_path
-    )
-    redis_deep_list = await real_redis_client.json().get(
-        outer.key, outer.middle_model.inner_model.lst.json_path
-    )
+    outer.items.clear()
+    outer.middle_model.tags.clear()
+    outer.middle_model.inner_model.lst.clear()
+    outer.user_data.clear()
+    outer.middle_model.metadata.clear()
+    
+    await outer.items.load()
+    await outer.middle_model.tags.load()
+    await outer.middle_model.inner_model.lst.load()
+    await outer.user_data.load()
+    await outer.middle_model.metadata.load()
 
-    assert 10 in redis_items[0]
-    assert "middle_tag" in redis_tags[0]
-    assert "deep_item" in redis_deep_list[0]
+    assert outer.items == [10]
+    assert outer.middle_model.tags == ["middle_tag"]
+    assert outer.middle_model.inner_model.lst == ["deep_item"]
+    assert outer.user_data == {"count": 5}
+    assert outer.middle_model.metadata == {"status": "active"}
 
 
 @pytest.mark.asyncio
