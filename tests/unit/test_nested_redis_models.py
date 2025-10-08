@@ -244,7 +244,7 @@ async def test_nested_model_mixed_operations_on_different_levels_edge_case(
     outer.middle_model.inner_model.lst.clear()
     outer.user_data.clear()
     outer.middle_model.metadata.clear()
-    
+
     await outer.items.load()
     await outer.middle_model.tags.load()
     await outer.middle_model.inner_model.lst.load()
@@ -283,6 +283,129 @@ async def test_nested_model_load_operations_after_external_changes_edge_case(
     # Assert
     assert "external_item" in outer.middle_model.inner_model.lst
     external_value = outer.middle_model.metadata.get("external_key")
-    assert (
-        external_value == "external_value" or external_value == '"external_value"'
-    )  # Handle JSON serialization
+    assert external_value == "external_value" or external_value == '"external_value"'
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_initial_list_data_update_sanity(real_redis_client):
+    # Arrange
+    middle_model = MiddleModel(tags=["initial_tag1", "initial_tag2"])
+    outer = OuterModel(items=[100, 200], middle_model=middle_model)
+    await outer.save()
+
+    # Act
+    await outer.items.aappend(300)
+    await outer.middle_model.tags.ainsert(1, "inserted_tag")
+
+    # Assert
+    assert 300 in outer.items
+    assert "inserted_tag" in outer.middle_model.tags
+    assert len(outer.items) == 3
+    assert len(outer.middle_model.tags) == 3
+
+    outer.items.clear()
+    outer.middle_model.tags.clear()
+    await outer.load()
+
+    assert outer.items == [100, 200, 300]
+    assert outer.middle_model.tags == ["initial_tag1", "inserted_tag", "initial_tag2"]
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_initial_dict_data_update_sanity(real_redis_client):
+    # Arrange
+    middle_model = MiddleModel(metadata={"env": "test", "version": "1.0"})
+    outer = OuterModel(
+        user_data={"initial_user": 50, "another_user": 75}, middle_model=middle_model
+    )
+    await outer.save()
+
+    # Act
+    await outer.user_data.aset_item("new_user", 125)
+    await outer.middle_model.metadata.aupdate(status="active", build="123")
+
+    # Assert
+    assert outer.user_data["new_user"] == 125
+    assert outer.middle_model.metadata["status"] == "active"
+    assert len(outer.user_data) == 3
+    assert len(outer.middle_model.metadata) == 4
+
+    outer.user_data.clear()
+    outer.middle_model.metadata.clear()
+    await outer.load()
+
+    expected_user_data = {"initial_user": 50, "another_user": 75, "new_user": 125}
+    expected_metadata = {
+        "env": "test",
+        "version": "1.0",
+        "status": "active",
+        "build": "123",
+    }
+    assert outer.user_data == expected_user_data
+    assert outer.middle_model.metadata == expected_metadata
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_initial_deep_data_update_sanity(real_redis_client):
+    # Arrange
+    inner_model = InnerMostModel(lst=["deep1", "deep2"], counter=10)
+    middle_model = MiddleModel(inner_model=inner_model)
+    outer = OuterModel(middle_model=middle_model)
+    await outer.save()
+
+    # Act
+    await outer.middle_model.inner_model.lst.aextend(["deep3", "deep4"])
+    outer.middle_model.inner_model.counter = 25
+
+    # Assert
+    assert "deep3" in outer.middle_model.inner_model.lst
+    assert "deep4" in outer.middle_model.inner_model.lst
+    assert len(outer.middle_model.inner_model.lst) == 4
+    assert outer.middle_model.inner_model.counter == 25
+
+    outer.middle_model.inner_model.lst.clear()
+    await outer.load()
+
+    assert outer.middle_model.inner_model.lst == ["deep1", "deep2", "deep3", "deep4"]
+    assert outer.middle_model.inner_model.counter == 25
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_mixed_initial_data_update_sanity(real_redis_client):
+    # Arrange
+    inner_model = InnerMostModel(lst=["inner1"])
+    middle_model = MiddleModel(
+        inner_model=inner_model, tags=["tag1"], metadata={"initial": "data"}
+    )
+    outer = OuterModel(
+        items=[1, 2], user_data={"existing": 100}, middle_model=middle_model
+    )
+    await outer.save()
+
+    # Act
+    await outer.items.aextend([3, 4])
+    await outer.user_data.aupdate(new_key=200, another=300)
+    await outer.middle_model.tags.aappend("tag2")
+    await outer.middle_model.metadata.aset_item("updated", "value")
+    await outer.middle_model.inner_model.lst.ainsert(0, "inner0")
+
+    # Assert
+    assert len(outer.items) == 4
+    assert len(outer.user_data) == 3
+    assert len(outer.middle_model.tags) == 2
+    assert len(outer.middle_model.metadata) == 2
+    assert len(outer.middle_model.inner_model.lst) == 2
+
+    outer.items.clear()
+    outer.user_data.clear()
+    outer.middle_model.tags.clear()
+    outer.middle_model.metadata.clear()
+    outer.middle_model.inner_model.lst.clear()
+
+    await outer.load()
+
+    assert outer.items == [1, 2, 3, 4]
+    assert outer.user_data == {"existing": 100, "new_key": 200, "another": 300}
+    assert outer.middle_model.tags == ["tag1", "tag2"]
+    assert outer.middle_model.metadata == {"initial": "data", "updated": "value"}
+    assert outer.middle_model.inner_model.lst == ["inner0", "inner1"]
