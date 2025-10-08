@@ -36,9 +36,15 @@ class RedisConfig:
     ttl: int | None = None
 
 
+@dataclasses.dataclass
+class RedisFieldConfig:
+    field_path: str = ""
+
+
 class BaseRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     Meta: ClassVar[RedisConfig] = RedisConfig()
+    _field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
 
     @property
     def pk(self):
@@ -108,11 +114,16 @@ class BaseRedisModel(BaseModel):
         for field_name, redis_mapping in self.__class__._redis_field_mapping.items():
             # Get the current value (from Pydantic initialization)
             current_value = getattr(self, field_name, None)
+            full_field_path = (
+                f"{self._field_config.field_path}.{field_name}"
+                if self._field_config.field_path
+                else field_name
+            )
             redis_instance = self.create_redis_type(
                 value=current_value,
                 redis_mapping=redis_mapping,
                 redis_key=self.key,
-                field_path=field_name,
+                field_path=full_field_path,
                 redis=self.Meta.redis,
             )
 
