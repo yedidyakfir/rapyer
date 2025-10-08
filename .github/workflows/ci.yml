@@ -42,7 +42,7 @@ jobs:
     - name: Start Redis
       run: |
         cd tests/unit
-        docker-compose -f docker-compose.redis.yml up -d
+        docker compose -f docker-compose.redis.yml up -d
     
     - name: Wait for Redis to be ready
       run: |
@@ -67,4 +67,4 @@ jobs:
       if: always()
       run: |
         cd tests/unit
-        docker-compose -f docker-compose.redis.yml down
+        docker compose -f docker-compose.redis.yml down
