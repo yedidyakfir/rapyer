@@ -25,15 +25,6 @@ def get_actual_type(annotation: Any) -> Any:
     return annotation
 
 
-class RedisFieldDescriptor:
-    """Descriptor that creates Redis type instances with proper parameters."""
-
-    def __init__(self, redis_type_class, field_name, default_value=None):
-        self.redis_type_class = redis_type_class
-        self.field_name = field_name
-        self.default_value = default_value
-
-
 class BaseRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
 
