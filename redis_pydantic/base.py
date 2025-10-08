@@ -1,3 +1,4 @@
+import contextlib
 import uuid
 from typing import Any, get_origin, get_args, Self, Union
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel, PrivateAttr
 
 from redis_pydantic.types import ALL_TYPES
 from redis_pydantic.types.base import GenericRedisType, RedisType
+from redis_pydantic.utils import acquire_lock
 
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
@@ -128,6 +130,11 @@ class BaseRedisModel(BaseModel):
         await self.Meta.redis.json().set(self.key, "$", model_dump)
         return self
 
+    @classmethod
+    async def get(cls, key: str) -> Self:
+        model_dump = await cls.Meta.redis.json().get(key, "$")
+        return cls(**model_dump)
+
     def redis_dump(self):
         model_dump = self.model_dump(exclude=["_pk"])
         # Override Redis field values with their serialized versions
@@ -137,6 +144,14 @@ class BaseRedisModel(BaseModel):
                 if isinstance(redis_field, RedisType):
                     model_dump[field_name] = redis_field.serialize_value(redis_field)
         return model_dump
+
+    @contextlib.contextmanager
+    async def lock(self, action: str = "default"):
+        async with acquire_lock(self.Meta.redis, f"{self.key}/{action}"):
+            redis_model = await self.get(self.key)
+            self.model_copy(**redis_model.model_dump())
+            yield redis_model
+            await redis_model.save()
 
 
 # TODO - return if update was successful
