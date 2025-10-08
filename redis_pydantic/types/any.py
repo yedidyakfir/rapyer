@@ -1,5 +1,6 @@
 import copy
 import pickle
+import base64
 
 from redis_pydantic.types.base import RedisType
 
@@ -13,7 +14,9 @@ class AnyTypeRedis(RedisType):
         return copy.copy(self)
 
     def serialize_value(self, value):
-        return pickle.dumps(value)
+        pickled_data = pickle.dumps(value)
+        return base64.b64encode(pickled_data).decode()
 
     def deserialize_value(self, value):
-        return pickle.loads(value)
+        pickled_data = base64.b64decode(value)
+        return pickle.loads(pickled_data)
