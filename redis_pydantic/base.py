@@ -10,10 +10,6 @@ from redis_pydantic.types.base import GenericRedisType, RedisType
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 
-def create_field_key(key: str, field_name: str) -> str:
-    return f"{key}/{field_name}"
-
-
 def get_actual_type(annotation: Any) -> Any:
     """Extract the actual type from Optional/Union types."""
     origin = get_origin(annotation)
