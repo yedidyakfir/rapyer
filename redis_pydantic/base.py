@@ -44,7 +44,7 @@ class RedisFieldConfig:
 class BaseRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     Meta: ClassVar[RedisConfig] = RedisConfig()
-    _field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
+    field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
 
     @property
     def pk(self):
@@ -115,8 +115,8 @@ class BaseRedisModel(BaseModel):
             # Get the current value (from Pydantic initialization)
             current_value = getattr(self, field_name, None)
             full_field_path = (
-                f"{self._field_config.field_path}.{field_name}"
-                if self._field_config.field_path
+                f"{self.field_config.field_path}.{field_name}"
+                if self.field_config.field_path
                 else field_name
             )
             redis_instance = self.create_redis_type(
