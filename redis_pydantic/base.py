@@ -50,7 +50,6 @@ class BaseRedisModel(BaseModel):
             value = getattr(self, field_name)
             if isinstance(value, RedisType):
                 value.redis_key = self.key
-                value.redis = self.Meta.redis
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
