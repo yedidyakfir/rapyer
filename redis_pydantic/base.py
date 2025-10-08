@@ -195,25 +195,11 @@ class BaseRedisModel(BaseModel):
             await redis_model.save()
 
 
-# TODO - return if update was successful
-# TODO - get the values after incrby and after lpush to store it
-# TODO - imporve get
-# TODO - move to metaclass
-# TODO - create wrapper for each supported type
-# TODO - add flag to put multiple fields in one key
-# TODO - allow foreign keys
-# TODO - how to handle list of models?
-# TODO - create a lock as context manager, with updated self - also it should accept different actions
-# TODO - add foreign key - for deletion
-
-
 # TODO - steps
-#  1. finish list + add ttl
-#  2. finish dict + add ttl
-#  3. create default class setter + add ttl
-#  4. create serializer for primitives
-#  5. create tests to check
-#  6. Create for pydantic + add ttl
-#  7. create lock actions context
-#  8. create pipeline actions context
-#  9. create for nested
+# 1. tests for nested pydantic
+# 2. check models nested of redis models
+# 3. split models and serializer
+# 4. update the redis types with serializer and inner models
+# 5. update the redis types, with __get__ etc
+# 5. add pipeline context
+# TODO - add foreign key - for deletion
