@@ -74,11 +74,11 @@ class BaseRedisModel(BaseModel):
         # Replace field types with Redis types and create descriptors
         for field_name, field_type in cls.__annotations__.items():
             actual_type = get_actual_type(field_type)
-            resolved_inner_type = cls._resolve_redis_type(actual_type)
+            resolved_inner_type = cls._resolve_redis_type(field_name, actual_type)
             cls._redis_field_mapping[field_name] = resolved_inner_type
 
     @classmethod
-    def _resolve_redis_type(cls, type_):
+    def _resolve_redis_type(cls, field_name, type_):
         """Recursively resolve a type to its Redis equivalent."""
         # Handle generic types
         origin_type = get_origin(type_) or type_
@@ -90,8 +90,15 @@ class BaseRedisModel(BaseModel):
             # If it's a GenericRedisType, recursively resolve its inner type
             if issubclass(redis_type_class, GenericRedisType):
                 inner_type = redis_type_class.find_inner_type(type_)
-                resolved_inner_type = cls._resolve_redis_type(inner_type)
+                resolved_inner_type = cls._resolve_redis_type(field_name, inner_type)
                 return {redis_type_class: {"inner_type": resolved_inner_type}}
+            elif issubclass(redis_type_class, BaseModel):
+                new_base_model_type = type(
+                    f"Redis{redis_type_class.__name__}",
+                    (redis_type_class, BaseRedisModel),
+                    dict(field_path=field_name),
+                )
+                return {new_base_model_type: {}}
             else:
                 return {redis_type_class: {}}
         else:
