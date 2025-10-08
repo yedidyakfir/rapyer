@@ -92,15 +92,15 @@ class BaseRedisModel(BaseModel):
                 inner_type = redis_type_class.find_inner_type(type_)
                 resolved_inner_type = cls._resolve_redis_type(field_name, inner_type)
                 return {redis_type_class: {"inner_type": resolved_inner_type}}
-            elif issubclass(redis_type_class, BaseModel):
-                new_base_model_type = type(
-                    f"Redis{redis_type_class.__name__}",
-                    (redis_type_class, BaseRedisModel),
-                    dict(field_path=field_name),
-                )
-                return {new_base_model_type: {}}
             else:
                 return {redis_type_class: {}}
+        elif issubclass(type_, BaseModel):
+            new_base_model_type = type(
+                f"Redis{type_.__name__}",
+                (type_, BaseRedisModel),
+                dict(field_config=RedisFieldConfig(field_path=field_name)),
+            )
+            return {new_base_model_type: {}}
         else:
             raise RuntimeError(f"{type_} not supported by RedisPydantic")
 
