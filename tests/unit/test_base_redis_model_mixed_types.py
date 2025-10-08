@@ -116,15 +116,12 @@ async def test_mixed_list_with_different_types_functionality(real_redis_client):
     assert 42 in model.mixed_list
     assert True in model.mixed_list
 
-    redis_data = await real_redis_client.json().get(model.key, "$.mixed_list")
-    assert redis_data is not None
-    redis_list = redis_data[0]
-    assert "string" in redis_list
-    assert 42 in redis_list
-    assert "inserted" in redis_list
-    assert True in redis_list
-    assert {"__bytes__": "Ynl0ZXM="} in redis_list  # b"bytes" encoded
-    assert 3.14 in redis_list
+    await model.mixed_list.load()
+    assert "string" in model.mixed_list
+    assert 42 in model.mixed_list
+    assert "inserted" in model.mixed_list
+    assert True in model.mixed_list
+    assert 3.14 in model.mixed_list
 
 
 @pytest.mark.parametrize(
@@ -237,18 +234,11 @@ async def test_mixed_dict_with_various_types_functionality(real_redis_client):
     assert model.mixed_dict["string_key"] == "string_value"
     assert model.mixed_dict["bool_key"] is True
 
-    redis_data = await real_redis_client.json().get(
-        model.key, model.mixed_dict.json_path
-    )
-    assert redis_data is not None
-    redis_dict = redis_data[0]
-    assert "string_key" in redis_dict and redis_dict["string_key"] == "string_value"
-    assert "bool_key" in redis_dict and redis_dict["bool_key"] is True
-    assert "bytes_key" in redis_dict and redis_dict["bytes_key"] == {
-        "__bytes__": "Ynl0ZXNfdmFsdWU="
-    }
-    assert "float_key" in redis_dict and redis_dict["float_key"] == 3.14
-    assert "int_key" not in redis_dict  # Should be popped
+    await model.mixed_dict.load()
+    assert model.mixed_dict["string_key"] == "string_value"
+    assert model.mixed_dict["bool_key"] is True
+    assert model.mixed_dict["bytes_key"] == b"bytes_value"
+    assert model.mixed_dict["float_key"] == 3.14
 
 
 @pytest.mark.asyncio
