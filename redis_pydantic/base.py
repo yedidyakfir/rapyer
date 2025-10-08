@@ -1,9 +1,11 @@
 import contextlib
+import dataclasses
 import uuid
-from typing import Any, get_origin, get_args, Self, Union
+from typing import Any, get_origin, get_args, Self, Union, ClassVar
 
 import redis
 from pydantic import BaseModel, PrivateAttr
+from redis.asyncio import Redis
 
 from redis_pydantic.types import ALL_TYPES
 from redis_pydantic.types.base import GenericRedisType, RedisType
@@ -25,13 +27,18 @@ def get_actual_type(annotation: Any) -> Any:
     return annotation
 
 
+@dataclasses.dataclass
+class RedisConfig:
+    redis: Redis = dataclasses.field(
+        default_factory=lambda: redis.asyncio.from_url(DEFAULT_CONNECTION)
+    )
+    redis_type: dict[str, type] = dataclasses.field(default_factory=lambda: ALL_TYPES)
+    ttl: int | None = None
+
+
 class BaseRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
-
-    class Meta:
-        redis = redis.asyncio.from_url(DEFAULT_CONNECTION)
-        redis_type: dict[str, type] = ALL_TYPES
-        ttl: int | None = None
+    Meta: ClassVar[RedisConfig] = RedisConfig()
 
     @property
     def pk(self):
