@@ -1,8 +1,31 @@
 import base64
-from redis_pydantic.types.base import RedisType
+from redis_pydantic.types.base import RedisType, RedisSerializer
+
+
+class ByteSerializer(RedisSerializer):
+    def serialize_value(self, value):
+        if isinstance(value, bytes):
+            return base64.b64encode(value).decode()
+        elif isinstance(value, str):
+            return base64.b64encode(value.encode()).decode()
+        else:
+            return base64.b64encode(str(value).encode()).decode()
+
+    def deserialize_value(self, value):
+        if isinstance(value, str):
+            try:
+                return base64.b64decode(value)
+            except Exception:
+                return value.encode()
+        elif isinstance(value, bytes):
+            return value
+        else:
+            return str(value).encode()
 
 
 class RedisBytes(bytes, RedisType):
+    serializer = ByteSerializer(bytes, None)
+
     def __new__(cls, value=b"", **kwargs):
         if value is None:
             value = b""
@@ -14,31 +37,17 @@ class RedisBytes(bytes, RedisType):
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
-            if isinstance(redis_value, str):
-                try:
-                    return base64.b64decode(redis_value)
-                except Exception:
-                    return redis_value.encode()
-            elif isinstance(redis_value, bytes):
-                return redis_value
-            else:
-                return str(redis_value).encode()
+            return self.serializer.deserialize_value(redis_value)
         return b""
 
     async def set(self, value: bytes):
         if not isinstance(value, bytes):
             raise TypeError("Value must be bytes")
 
-        encoded_value = base64.b64encode(value).decode()
+        serialized_value = self.serializer.serialize_value(value)
         return await self.client.json().set(
-            self.redis_key, self.json_path, encoded_value
+            self.redis_key, self.json_path, serialized_value
         )
 
     def clone(self):
         return bytes(self)
-
-    def serialize_value(self, value):
-        return base64.b64encode(value).decode()
-
-    def deserialize_value(self, value):
-        return base64.b64decode(value)

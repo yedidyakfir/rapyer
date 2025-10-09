@@ -1,7 +1,22 @@
-from redis_pydantic.types.base import RedisType
+from redis_pydantic.types.base import RedisType, RedisSerializer
+
+
+class StringSerializer(RedisSerializer):
+    def serialize_value(self, value):
+        return str(value) if value is not None else None
+
+    def deserialize_value(self, value):
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, bytes):
+            return value.decode()
+        else:
+            return str(value)
 
 
 class RedisStr(str, RedisType):
+    serializer = StringSerializer(str, None)
+
     def __new__(cls, value="", **kwargs):
         if value is None:
             value = ""
@@ -13,19 +28,17 @@ class RedisStr(str, RedisType):
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
-            if isinstance(redis_value, str):
-                return redis_value
-            elif isinstance(redis_value, bytes):
-                return redis_value.decode()
-            else:
-                return str(redis_value)
+            return self.serializer.deserialize_value(redis_value)
         return ""
 
     async def set(self, value: str):
         if not isinstance(value, str):
             raise TypeError("Value must be str")
 
-        return await self.client.json().set(self.redis_key, self.json_path, value)
+        serialized_value = self.serializer.serialize_value(value)
+        return await self.client.json().set(
+            self.redis_key, self.json_path, serialized_value
+        )
 
     def clone(self):
         return str(self)

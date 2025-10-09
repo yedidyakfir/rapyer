@@ -7,7 +7,21 @@ from redis.asyncio.client import Redis
 from redis_pydantic.context import _context_var
 
 
+class RedisSerializer(ABC):
+    def __init__(self, full_type: type, serializer_creator: Callable):
+        self.full_type = full_type
+        self.serializer_creator = serializer_creator
+
+    def serialize_value(self, value):
+        return value
+
+    def deserialize_value(self, value):
+        return value
+
+
 class RedisType(ABC):
+    serializer: RedisSerializer = None
+
     def __init__(
         self,
         *args,
@@ -44,28 +58,17 @@ class RedisType(ABC):
         pass
 
     def serialize_value(self, value):
-        return value
+        return self.serializer.serialize_value(value)
 
     def deserialize_value(self, value):
-        return value
-
-
-class RedisSerializer(ABC):
-    def __init__(self, full_type: type, serializer_creator: Callable):
-        self.full_type = full_type
-        self.serializer_creator = serializer_creator
-
-    def serialize_value(self, value):
-        return value
-
-    def deserialize_value(self, value):
-        return value
+        return self.serializer.deserialize_value(value)
 
 
 class GenericRedisType(RedisType, ABC):
-    def __init__(self, inner_type: RedisType, *args, **kwargs):
+    def __init__(self, serializer_creator, full_type: type, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.inner_type = inner_type
+        self.serializer_creator = serializer_creator
+        self.serializer = serializer_creator(self.find_inner_type(full_type))
 
     @classmethod
     def find_inner_type(cls, type_):

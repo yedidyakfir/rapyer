@@ -1,9 +1,39 @@
 from typing import TypeVar, Generic, get_args
 
-from redis_pydantic.types.base import GenericRedisType
+from redis_pydantic.types.base import GenericRedisType, RedisSerializer
 from redis_pydantic.types.utils import update_keys_in_pipeline
 
 T = TypeVar("T")
+
+
+class DictSerializer(RedisSerializer):
+    def __init__(self, full_type: type, serializer_creator):
+        super().__init__(full_type, serializer_creator)
+        self.inner_serializer = self._create_inner_serializer()
+
+    def _create_inner_serializer(self):
+        args = get_args(self.full_type)
+        if len(args) >= 2:
+            value_type = args[1]
+            # dict[key_type, value_type] - we care about value_type
+            return self.serializer_creator(value_type)
+        return None
+
+    def serialize_value(self, value):
+        if self.inner_serializer:
+            return {
+                k: self.inner_serializer.serialize_value(v) for k, v in value.items()
+            }
+        return dict(value)
+
+    def deserialize_value(self, value):
+        if value is None:
+            return None
+        if self.inner_serializer:
+            return {
+                k: self.inner_serializer.deserialize_value(v) for k, v in value.items()
+            }
+        return dict(value)
 
 
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
@@ -19,12 +49,12 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         if redis_items is None:
             redis_items = {}
 
-        # Deserialize items using inner_type
+        # Deserialize items using serializer
         deserialized_items = {}
         for key, value in redis_items.items():
-            if self.inner_type is not None:
-                # Use inner_type to deserialize the value
-                deserialized_value = self.inner_type.deserialize_value(value)
+            if self.serializer is not None:
+                # Use serializer to deserialize the value
+                deserialized_value = self.serializer.deserialize_value(value)
                 deserialized_items[key] = deserialized_value
             else:
                 # No type conversion
@@ -38,7 +68,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         super().__setitem__(key, value)
 
         # Serialize the value for Redis storage
-        serialized_value = self.inner_type.serialize_value(value)
+        serialized_value = (
+            self.serializer.serialize_value(value) if self.serializer else value
+        )
         return await self.client.json().set(
             self.redis_key, self.json_field_path(key), serialized_value
         )
@@ -65,7 +97,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
         redis_params = {
-            self.json_field_path(key): self.inner_type.serialize_value(v)
+            self.json_field_path(key): (
+                self.serializer.serialize_value(v) if self.serializer else v
+            )
             for key, v in kwargs.items()
         }
         if self.pipeline:
@@ -112,10 +146,10 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             key, None
         )  # Use None default to avoid KeyError if local is out of sync
 
-        # Deserialize the value using inner_type
+        # Deserialize the value using serializer
         parsed_result = self._parse_redis_json_value(result)
-        if self.inner_type is not None:
-            return self.inner_type.deserialize_value(parsed_result)
+        if self.serializer is not None:
+            return self.serializer.deserialize_value(parsed_result)
         return parsed_result
 
     async def apopitem(self):
@@ -162,8 +196,8 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
                 redis_key.decode() if isinstance(redis_key, bytes) else redis_key
             )
             parsed_value = self._parse_redis_json_value(redis_value)
-            if self.inner_type is not None:
-                parsed_value = self.inner_type.deserialize_value(parsed_value)
+            if self.serializer is not None:
+                parsed_value = self.serializer.deserialize_value(parsed_value)
             return parsed_value
         else:
             # If Redis is empty but local dict has items, raise error for consistency
@@ -185,7 +219,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return args[1]
 
     def serialize_value(self, value):
-        return {k: self.inner_type.serialize_value(v) for k, v in value.items()}
+        return {k: self.serializer.serialize_value(v) for k, v in value.items()}
 
     def deserialize_value(self, value):
-        return {k: self.inner_type.deserialize_value(v) for k, v in value.items()}
+        return {k: self.serializer.deserialize_value(v) for k, v in value.items()}

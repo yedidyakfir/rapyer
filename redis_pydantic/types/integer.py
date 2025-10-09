@@ -1,7 +1,25 @@
-from redis_pydantic.types.base import RedisType
+from redis_pydantic.types.base import RedisType, RedisSerializer
+
+
+class IntegerSerializer(RedisSerializer):
+    def serialize_value(self, value):
+        return int(value) if value is not None else None
+
+    def deserialize_value(self, value):
+        if isinstance(value, (int, float)):
+            return int(value)
+        elif isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                return 0
+        else:
+            return 0
 
 
 class RedisInt(int, RedisType):
+    serializer = IntegerSerializer(int, None)
+
     def __new__(cls, value=0, **kwargs):
         if value is None:
             value = 0
@@ -13,25 +31,17 @@ class RedisInt(int, RedisType):
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
-            if isinstance(redis_value, (int, float)):
-                return int(redis_value)
-            elif isinstance(redis_value, str):
-                try:
-                    return int(redis_value)
-                except ValueError:
-                    return 0
-            else:
-                return 0
+            return self.serializer.deserialize_value(redis_value)
         return 0
 
     async def set(self, value: int):
         if not isinstance(value, int):
             raise TypeError("Value must be int")
 
-        return await self.client.json().set(self.redis_key, self.json_path, value)
+        serialized_value = self.serializer.serialize_value(value)
+        return await self.client.json().set(
+            self.redis_key, self.json_path, serialized_value
+        )
 
     def clone(self):
         return int(self)
-
-    def deserialize_value(self, value):
-        return int(value)
