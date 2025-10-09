@@ -192,13 +192,9 @@ class BaseRedisModel(BaseModel):
         return model_dump
 
     async def load(self):
-        async with self.lock():
-            await asyncio.gather(
-                *[
-                    redis_field.load()
-                    for field_name, redis_field in self._redis_field_mapping.items()
-                ]
-            )
+        await asyncio.gather(
+            *[getattr(self, field_name).load() for field_name in self.model_dump()]
+        )
 
     @contextlib.asynccontextmanager
     async def lock(self, action: str = "default"):
