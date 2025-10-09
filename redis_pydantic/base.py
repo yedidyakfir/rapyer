@@ -98,7 +98,7 @@ class BaseRedisModel(BaseModel):
                 return {redis_type_class: {"inner_type": resolved_inner_type}}
             else:
                 return {redis_type_class: {}}
-        elif isinstance(type_, BaseRedisModel):
+        elif issubclass(type_, BaseRedisModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.key_initials()
             )
@@ -137,6 +137,17 @@ class BaseRedisModel(BaseModel):
             instance = redis_type(**model_data, **saved_kwargs)
             instance.pk = pk
             return instance
+        elif value is not None and isinstance(value, BaseRedisModel):
+            # Handle case where value is already a BaseRedisModel
+            redis_key = kwargs.get("redis_key")
+            pk = redis_key.split(":", 1)[1]
+            model_data = value.model_dump()
+            instance = redis_type(**model_data, **saved_kwargs)
+            instance.pk = pk
+            return instance
+        elif value is None:
+            # Handle case where no value is provided (default initialization)
+            return redis_type(**kwargs, **saved_kwargs)
         else:
             return redis_type(value, **kwargs, **saved_kwargs)
 
