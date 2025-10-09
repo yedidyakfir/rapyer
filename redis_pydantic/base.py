@@ -102,7 +102,12 @@ class BaseRedisModel(BaseModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.key_initials()
             )
-            return [type_, {"field_config": field_conf}]
+            new_base_redis_type = type(
+                f"{field_name.title()}{type_.__name__}",
+                (type_,),
+                dict(field_config=field_conf),
+            )
+            return [new_base_redis_type, {}]
         elif issubclass(type_, BaseModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.key_initials()
