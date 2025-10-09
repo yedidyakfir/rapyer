@@ -165,6 +165,31 @@ class BaseRedisModel(BaseModel):
             # Set it directly on the instance
             object.__setattr__(self, field_name, redis_instance)
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        is_already_at_correct_type = isinstance(value, (RedisType, BaseRedisModel))
+        has_redis_type = name in self._redis_field_mapping
+        if has_redis_type and not is_already_at_correct_type:
+            type_definitions = self._redis_field_mapping[name]
+            full_field_path = (
+                f"{self.field_config.field_path}.{name}"
+                if self.field_config.field_path
+                else name
+            )
+
+            redis_instance = self.create_redis_type(
+                value=value,
+                redis_type_def=type_definitions,
+                redis_key=self.key,
+                field_path=full_field_path,
+                redis=self.Meta.redis,
+            )
+
+            # Set the converted Redis instance
+            super().__setattr__(name, redis_instance)
+        else:
+            # Use the parent's __setattr__ for all other cases
+            super().__setattr__(name, value)
+
     async def save(self) -> Self:
         model_dump = self.redis_dump()
         await self.Meta.redis.json().set(self.key, "$", model_dump)
