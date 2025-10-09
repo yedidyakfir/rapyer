@@ -99,7 +99,10 @@ class BaseRedisModel(BaseModel):
             else:
                 return {redis_type_class: {}}
         elif isinstance(type_, BaseRedisModel):
-            return {type_: {}}
+            field_conf = RedisFieldConfig(
+                field_path=field_name, override_class_name=cls.key_initials()
+            )
+            return {type_: {"field_config": field_conf}}
         elif issubclass(type_, BaseModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.key_initials()
