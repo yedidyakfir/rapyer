@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import dataclasses
 import uuid
@@ -190,6 +191,15 @@ class BaseRedisModel(BaseModel):
                     model_dump[field_name] = redis_field.serialize_value(redis_field)
         return model_dump
 
+    async def load(self):
+        async with self.lock():
+            await asyncio.gather(
+                *[
+                    redis_field.load()
+                    for field_name, redis_field in self._redis_field_mapping.items()
+                ]
+            )
+
     @contextlib.asynccontextmanager
     async def lock(self, action: str = "default"):
         async with acquire_lock(self.Meta.redis, f"{self.key}/{action}"):
@@ -205,7 +215,7 @@ class BaseRedisModel(BaseModel):
 # 3. split models and serializer
 # 4. update the redis types with serializer and inner models
 # 5. update the redis types, with __get__ etc
-# 5. add pipeline context
+# 5. add pipeline context - change the load to pipeline rather than lock
 # 6. check that using my types explicit works
 # TODO - add foreign key - for deletion
 # TODO - when setting a field, update with inner type (model.lst = []...)
