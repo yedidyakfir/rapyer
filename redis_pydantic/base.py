@@ -196,7 +196,6 @@ class BaseRedisModel(BaseModel):
 
 
 # TODO - steps
-# 1. tests for nested pydantic
 # 2. check models nested of redis models
 # 3. split models and serializer
 # 4. update the redis types with serializer and inner models
