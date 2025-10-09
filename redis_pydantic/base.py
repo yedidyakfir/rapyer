@@ -235,10 +235,6 @@ class BaseRedisModel(BaseModel):
 
 
 # TODO - steps
-# 1. create test for all types including models and nested models, set none for the field save and load, see it reload with none values
-# 2. check models nested of redis models
-# 3. split models and serializer
-# 4. update the redis types with serializer and inner models
 # 5. update the redis types, with __get__ etc
 # 5. add pipeline context - change the load to pipeline rather than lock
 # 6. check that using my types explicit works
