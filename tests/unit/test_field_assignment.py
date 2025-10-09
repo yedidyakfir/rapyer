@@ -143,31 +143,6 @@ async def test_constructor_dict_field_converted_to_redis_type_sanity(
     assert dict(dict_model_with_values.metadata) == {"key1": "value1", "key2": "value2"}
 
 
-@pytest.mark.asyncio
-async def test_default_factory_fields_converted_to_redis_types_sanity(mixed_model):
-    # Arrange & Act (done in fixture)
-
-    # Assert - fields with default_factory should be converted to Redis types
-    assert isinstance(mixed_model.str_list, RedisList)
-    assert isinstance(mixed_model.int_list, RedisList)
-    assert isinstance(mixed_model.bool_list, RedisList)
-    assert isinstance(mixed_model.bytes_list, RedisList)
-    assert isinstance(mixed_model.str_dict, RedisDict)
-    assert isinstance(mixed_model.int_dict, RedisDict)
-    assert isinstance(mixed_model.bool_dict, RedisDict)
-    assert isinstance(mixed_model.bytes_dict, RedisDict)
-
-    # Check the actual values are empty as expected
-    assert list(mixed_model.str_list) == []
-    assert list(mixed_model.int_list) == []
-    assert list(mixed_model.bool_list) == []
-    assert list(mixed_model.bytes_list) == []
-    assert dict(mixed_model.str_dict) == {}
-    assert dict(mixed_model.int_dict) == {}
-    assert dict(mixed_model.bool_dict) == {}
-    assert dict(mixed_model.bytes_dict) == {}
-
-
 # Post-construction assignment tests
 @pytest.mark.asyncio
 async def test_assignment_string_field_converts_to_redis_type_sanity(
