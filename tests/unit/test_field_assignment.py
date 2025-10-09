@@ -1,5 +1,6 @@
 import pytest
 import pytest_asyncio
+from pydantic import ValidationError
 
 from redis_pydantic.types.boolean import RedisBool
 from redis_pydantic.types.byte import RedisBytes
@@ -16,6 +17,7 @@ from tests.unit.test_redis_bytes import BytesModel
 from tests.unit.test_redis_dict import UserModel as DictUserModel
 from tests.unit.test_redis_int import IntModel
 from tests.unit.test_redis_str import StrModel
+from tests.unit.test_none_values import NoneTestModel
 
 
 @pytest_asyncio.fixture
@@ -58,6 +60,12 @@ async def bytes_model_with_values(redis_client):
 async def dict_model_with_values(redis_client):
     DictUserModel.Meta.redis = redis_client
     yield DictUserModel(metadata={"key1": "value1", "key2": "value2"})
+
+
+@pytest_asyncio.fixture
+async def none_model_with_values(redis_client):
+    NoneTestModel.Meta.redis = redis_client
+    yield NoneTestModel(optional_string="test", optional_int=42)
 
 
 # Constructor initialization tests
@@ -317,3 +325,23 @@ async def test_assignment_preserves_previous_field_conversions_sanity(
     assert isinstance(str_model_with_values.description, RedisStr)
     assert str(str_model_with_values.name) == "first_update"
     assert str(str_model_with_values.description) == "second_update"
+
+
+@pytest.mark.asyncio
+async def test_assignment_none_to_nullable_field_sanity(none_model_with_values):
+    # Arrange & Act
+    none_model_with_values.optional_string = None
+    none_model_with_values.optional_int = None
+
+    # Assert
+    assert none_model_with_values.optional_string is None
+    assert none_model_with_values.optional_int is None
+
+
+@pytest.mark.asyncio
+async def test_assignment_none_to_non_nullable_field_validation_error(
+    str_model_with_values,
+):
+    # Arrange & Act
+    with pytest.raises(ValidationError):
+        str_model_with_values.name = None
