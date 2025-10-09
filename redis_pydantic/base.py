@@ -166,6 +166,10 @@ class BaseRedisModel(BaseModel):
             object.__setattr__(self, field_name, redis_instance)
 
     def __setattr__(self, name: str, value: Any) -> None:
+        if value is None:
+            super().__setattr__(name, value)
+            return
+
         is_already_at_correct_type = isinstance(value, (RedisType, BaseRedisModel))
         has_redis_type = name in self._redis_field_mapping
         if has_redis_type and not is_already_at_correct_type:
