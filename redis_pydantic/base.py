@@ -83,7 +83,6 @@ class BaseRedisModel(BaseModel):
 
     @classmethod
     def _resolve_redis_type(cls, field_name, type_):
-        """Recursively resolve a type to its Redis equivalent."""
         # Handle generic types
         origin_type = get_origin(type_) or type_
 
