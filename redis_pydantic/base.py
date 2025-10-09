@@ -239,5 +239,4 @@ class BaseRedisModel(BaseModel):
 # 5. add pipeline context - change the load to pipeline rather than lock
 # 6. check that using my types explicit works
 # TODO - add foreign key - for deletion
-# TODO - when setting a field, update with inner type (model.lst = []...)
 # TODO - allow dict serializer for key and value
