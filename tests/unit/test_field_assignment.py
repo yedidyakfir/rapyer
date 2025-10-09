@@ -339,9 +339,7 @@ async def test_assignment_none_to_nullable_field_sanity(none_model_with_values):
 
 
 @pytest.mark.asyncio
-async def test_assignment_none_to_non_nullable_field_validation_error(
-    str_model_with_values,
-):
+async def test_assignment_none_to_non_nullable_field_validation_error():
     # Arrange & Act
     with pytest.raises(ValidationError):
-        str_model_with_values.name = None
+        StrModel(name=None)
