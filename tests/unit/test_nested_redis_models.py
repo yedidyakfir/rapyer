@@ -22,9 +22,27 @@ class OuterModel(BaseRedisModel):
     items: list[int] = Field(default_factory=list)
 
 
+class InnerRedisModel(BaseRedisModel):
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, str] = Field(default_factory=dict)
+    counter: int = 0
+
+
+class ContainerModel(BaseModel):
+    inner_redis: InnerRedisModel = Field(default_factory=InnerRedisModel)
+    description: str = "default"
+
+
+class OuterModelWithRedisNested(BaseRedisModel):
+    container: ContainerModel = Field(default_factory=ContainerModel)
+    outer_data: list[int] = Field(default_factory=list)
+
+
 @pytest_asyncio.fixture
 async def real_redis_client(redis_client):
     OuterModel.Meta.redis = redis_client
+    OuterModelWithRedisNested.Meta.redis = redis_client
+    InnerRedisModel.Meta.redis = redis_client
     yield redis_client
     await redis_client.aclose()
 
@@ -409,3 +427,201 @@ async def test_nested_model_with_mixed_initial_data_update_sanity(real_redis_cli
     assert outer.middle_model.tags == ["tag1", "tag2"]
     assert outer.middle_model.metadata == {"initial": "data", "updated": "value"}
     assert outer.middle_model.inner_model.lst == ["inner0", "inner1"]
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_redis_inner_model_basic_operations_sanity(real_redis_client):
+    # Arrange
+    outer = OuterModelWithRedisNested()
+    await outer.save()
+
+    # Act
+    await outer.container.inner_redis.tags.aappend("redis_tag")
+    await outer.container.inner_redis.metadata.aset_item("key1", "value1")
+    await outer.outer_data.aextend([1, 2, 3])
+
+    # Assert
+    assert "redis_tag" in outer.container.inner_redis.tags
+    assert outer.container.inner_redis.metadata["key1"] == "value1"
+    assert len(outer.outer_data) == 3
+
+    outer.container.inner_redis.tags.clear()
+    outer.container.inner_redis.metadata.clear()
+    outer.outer_data.clear()
+    await outer.container.inner_redis.tags.load()
+    await outer.container.inner_redis.metadata.load()
+    await outer.outer_data.load()
+
+    assert outer.container.inner_redis.tags == ["redis_tag"]
+    assert outer.container.inner_redis.metadata == {"key1": "value1"}
+    assert outer.outer_data == [1, 2, 3]
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_redis_inner_model_counter_update_sanity(real_redis_client):
+    # Arrange
+    outer = OuterModelWithRedisNested()
+    await outer.save()
+
+    # Act
+    outer.container.inner_redis.counter = 42
+    await outer.save()
+
+    # Assert
+    assert outer.container.inner_redis.counter == 42
+
+    new_outer = await OuterModelWithRedisNested.get(outer.key)
+
+    assert new_outer.container.inner_redis.counter == 42
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_redis_inner_model_persistence_sanity(real_redis_client):
+    # Arrange
+    outer1 = OuterModelWithRedisNested()
+    await outer1.save()
+
+    # Act
+    await outer1.container.inner_redis.tags.aextend(["tag1", "tag2"])
+    await outer1.container.inner_redis.metadata.aupdate(env="test", version="1.0")
+    await outer1.outer_data.aappend(100)
+
+    # Create new instance with same pk
+    outer2 = OuterModelWithRedisNested()
+    outer2.pk = outer1.pk
+    await outer2.container.inner_redis.tags.load()
+    await outer2.container.inner_redis.metadata.load()
+    await outer2.outer_data.load()
+
+    # Assert
+    assert outer2.container.inner_redis.tags == ["tag1", "tag2"]
+    assert outer2.container.inner_redis.metadata == {"env": "test", "version": "1.0"}
+    assert outer2.outer_data == [100]
+
+
+@pytest.mark.parametrize(
+    "tag_sets", [["redis1", "redis2"], ["a", "b", "c"], ["single"]]
+)
+@pytest.mark.asyncio
+async def test_nested_model_with_redis_inner_model_parameterized_operations_sanity(
+    real_redis_client, tag_sets
+):
+    # Arrange
+    outer = OuterModelWithRedisNested()
+    await outer.save()
+
+    # Act
+    await outer.container.inner_redis.tags.aextend(tag_sets)
+    first_tag = await outer.container.inner_redis.tags.apop(0)
+
+    # Assert
+    assert first_tag == tag_sets[0] or first_tag == f'"{tag_sets[0]}"'
+    assert len(outer.container.inner_redis.tags) == len(tag_sets) - 1
+
+    outer.container.inner_redis.tags.clear()
+    await outer.container.inner_redis.tags.load()
+
+    assert outer.container.inner_redis.tags == tag_sets[1:]
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case(real_redis_client):
+    # Arrange
+    outer = OuterModelWithRedisNested()
+    await outer.save()
+
+    # Act
+    await outer.container.inner_redis.tags.aappend("first_tag")
+    await outer.container.inner_redis.metadata.aset_item("status", "active")
+    await outer.outer_data.aextend([10, 20])
+    outer.container.inner_redis.counter = 15
+    outer.container.description = "updated"
+    await outer.save()
+
+    # Assert
+    assert "first_tag" in outer.container.inner_redis.tags
+    assert outer.container.inner_redis.metadata["status"] == "active"
+    assert outer.outer_data == [10, 20]
+    assert outer.container.inner_redis.counter == 15
+    assert outer.container.description == "updated"
+
+    outer.container.inner_redis.tags.clear()
+    outer.container.inner_redis.metadata.clear()
+    outer.outer_data.clear()
+    outer = await OuterModelWithRedisNested.get(outer.key)
+
+    assert outer.container.inner_redis.tags == ["first_tag"]
+    assert outer.container.inner_redis.metadata == {"status": "active"}
+    assert outer.outer_data == [10, 20]
+    assert outer.container.inner_redis.counter == 15
+    assert outer.container.description == "updated"
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_redis_inner_model_clear_operations_edge_case(real_redis_client):
+    # Arrange
+    outer = OuterModelWithRedisNested()
+    await outer.save()
+
+    await outer.container.inner_redis.tags.aextend(["tag1", "tag2"])
+    await outer.container.inner_redis.metadata.aupdate(key1="value1", key2="value2")
+
+    # Act
+    await outer.container.inner_redis.tags.aclear()
+    await outer.container.inner_redis.metadata.aclear()
+
+    # Assert
+    assert len(outer.container.inner_redis.tags) == 0
+    assert len(outer.container.inner_redis.metadata) == 0
+
+    redis_tags_data = await real_redis_client.json().get(
+        outer.key, outer.container.inner_redis.tags.json_path
+    )
+    redis_metadata_data = await real_redis_client.json().get(
+        outer.key, outer.container.inner_redis.metadata.json_path
+    )
+    assert redis_tags_data is None or redis_tags_data == [] or redis_tags_data[0] == []
+    assert (
+        redis_metadata_data is None
+        or redis_metadata_data == []
+        or (
+            isinstance(redis_metadata_data, list)
+            and len(redis_metadata_data) > 0
+            and redis_metadata_data[0] == {}
+        )
+    )
+
+
+@pytest.mark.asyncio
+async def test_nested_model_with_redis_inner_model_with_initial_data_sanity(real_redis_client):
+    # Arrange
+    inner_redis = InnerRedisModel(
+        tags=["initial_tag"], metadata={"env": "test"}, counter=5
+    )
+    container = ContainerModel(inner_redis=inner_redis, description="test_container")
+    outer = OuterModelWithRedisNested(container=container, outer_data=[100])
+    await outer.save()
+
+    # Act
+    await outer.container.inner_redis.tags.aappend("new_tag")
+    await outer.container.inner_redis.metadata.aset_item("version", "1.0")
+    await outer.outer_data.aappend(200)
+
+    # Assert
+    assert "new_tag" in outer.container.inner_redis.tags
+    assert outer.container.inner_redis.metadata["version"] == "1.0"
+    assert 200 in outer.outer_data
+    assert len(outer.container.inner_redis.tags) == 2
+    assert len(outer.container.inner_redis.metadata) == 2
+    assert len(outer.outer_data) == 2
+
+    outer.container.inner_redis.tags.clear()
+    outer.container.inner_redis.metadata.clear()
+    outer.outer_data.clear()
+    outer = await OuterModelWithRedisNested.get(outer.key)
+
+    assert outer.container.inner_redis.tags == ["initial_tag", "new_tag"]
+    assert outer.container.inner_redis.metadata == {"env": "test", "version": "1.0"}
+    assert outer.outer_data == [100, 200]
+    assert outer.container.inner_redis.counter == 5
+    assert outer.container.description == "test_container"
