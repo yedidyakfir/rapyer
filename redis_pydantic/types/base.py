@@ -1,6 +1,6 @@
 import abc
 from abc import ABC
-from typing import get_args
+from typing import get_args, Callable
 
 from redis.asyncio.client import Redis
 
@@ -42,6 +42,18 @@ class RedisType(ABC):
     @abc.abstractmethod
     def clone(self):
         pass
+
+    def serialize_value(self, value):
+        return value
+
+    def deserialize_value(self, value):
+        return value
+
+
+class RedisSerializer(ABC):
+    def __init__(self, full_type: type, serializer_creator: Callable):
+        self.full_type = full_type
+        self.serializer_creator = serializer_creator
 
     def serialize_value(self, value):
         return value
