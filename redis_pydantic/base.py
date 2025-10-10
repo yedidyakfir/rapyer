@@ -8,6 +8,7 @@ import redis
 from pydantic import BaseModel, PrivateAttr
 from redis.asyncio import Redis
 
+from redis_pydantic.context import _context_var
 from redis_pydantic.types import ALL_TYPES, create_serializer
 from redis_pydantic.types.base import GenericRedisType, RedisType
 from redis_pydantic.utils import (
@@ -238,8 +239,10 @@ class BaseRedisModel(BaseModel):
         async with self.Meta.redis.pipeline() as pipe:
             redis_model = await self.__class__.get(self.key)
             self.model_copy(update=redis_model.model_dump())
-            yield pipe
+            _context_var.set(pipe)
+            yield redis_model
             await pipe.execute()
+            _context_var.set(None)
 
 
 # TODO - steps
