@@ -125,7 +125,11 @@ class BaseRedisModel(BaseModel):
 
     @classmethod
     def create_redis_type(
-        cls, redis_type, value: Any, redis_key: str = None, **saved_kwargs
+        cls,
+        redis_type: type["BaseRedisModel | RedisType"],
+        value: Any,
+        redis_key: str = None,
+        **saved_kwargs,
     ):
         # Handle nested models - convert user model to Redis model
         if isinstance(value, BaseModel):
