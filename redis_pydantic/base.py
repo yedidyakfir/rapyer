@@ -258,11 +258,3 @@ class BaseRedisModel(BaseModel):
             yield redis_model
             await pipe.execute()
             _context_var.set(None)
-
-
-# TODO - steps
-# 5. update the redis types, with __get__ etc
-# 6. check that using my types explicit works
-# TODO - add foreign key - for deletion
-# TODO - allow dict serializer for key and value
-# TODO - add delete function from redis
