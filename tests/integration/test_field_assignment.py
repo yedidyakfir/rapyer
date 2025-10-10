@@ -8,16 +8,16 @@ from redis_pydantic.types.dct import RedisDict
 from redis_pydantic.types.integer import RedisInt
 from redis_pydantic.types.lst import RedisList
 from redis_pydantic.types.string import RedisStr
-from tests.unit.test_base_redis_model import UserModel as BaseUserModel
+from tests.integration.test_base_redis_model import UserModel as BaseUserModel
 
 # Import existing models from other test files
-from tests.unit.test_base_redis_model_mixed_types import MixedTypesModel
-from tests.unit.test_redis_bool import BoolModel
-from tests.unit.test_redis_bytes import BytesModel
-from tests.unit.test_redis_dict import UserModel as DictUserModel
-from tests.unit.test_redis_int import IntModel
-from tests.unit.test_redis_str import StrModel
-from tests.unit.test_none_values import NoneTestModel
+from tests.integration.test_base_redis_model_mixed_types import MixedTypesModel
+from tests.integration.test_redis_bool import BoolModel
+from tests.integration.test_redis_bytes import BytesModel
+from tests.integration.test_redis_dict import UserModel as DictUserModel
+from tests.integration.test_redis_int import IntModel
+from tests.integration.test_redis_str import StrModel
+from tests.integration.test_none_values import NoneTestModel
 
 
 @pytest_asyncio.fixture
