@@ -213,6 +213,11 @@ class BaseRedisModel(BaseModel):
         instance._update_redis_field_parameters()
         return instance
 
+    @classmethod
+    async def try_delete(cls, key: str) -> bool:
+        client = _context_var.get() or cls.Meta.redis
+        return await client.delete(key) == 1
+
     async def delete(self):
         client = _context_var.get() or self.Meta.redis
         return await client.delete(self.key)
