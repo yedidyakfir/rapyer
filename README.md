@@ -121,6 +121,26 @@ class MyModel(BaseRedisModel):
         )
 ```
 
+## Saving, loading and deleting models
+A BaseRedisModel automatically creates a key, you can use it to load and delete the model
+```python
+# Save user
+user = User(name="John", tags=["python"], metadata={"role": "developer"})
+await user.save()
+
+# Load user
+loaded_user = await User.get(user.key)
+print(user.name)  # John
+
+# Delete user
+await loaded_user.delete(user.key)
+```
+
+You can also delete without loading the user
+```python
+delete_succeded = await User.try_delete(key)
+```
+
 ## Supported Types and Operations
 
 ### String (RedisStr)
