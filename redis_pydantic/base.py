@@ -209,6 +209,8 @@ class BaseRedisModel(BaseModel):
         # Extract pk from key format: "ClassName:pk"
         pk = key.split(":", 1)[1]
         instance._pk = pk
+        # Update Redis field parameters to use the correct redis_key
+        instance._update_redis_field_parameters()
         return instance
 
     def redis_dump(self):
