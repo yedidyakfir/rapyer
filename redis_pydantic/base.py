@@ -113,12 +113,7 @@ class BaseRedisModel(BaseModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.class_key_initials()
             )
-            new_base_redis_type = type(
-                f"{field_name.title()}{type_.__name__}",
-                (type_,),
-                dict(field_config=field_conf),
-            )
-            return [new_base_redis_type, {}]
+            return [type_, {"_field_config_override": field_conf}]
         elif issubclass(type_, BaseModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.class_key_initials()
@@ -150,8 +145,9 @@ class BaseRedisModel(BaseModel):
         else:
             return redis_type(value, redis_key=redis_key, **saved_kwargs)
 
-    def __init__(self, **data):
+    def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)
+        self._field_config_override = _field_config_override
 
         # Initialize Redis fields after Pydantic initialization
         for field_name, type_definitions in self._redis_field_mapping.items():
