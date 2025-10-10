@@ -27,14 +27,13 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-redis = { version = "^6.4.0", extras = ["async"] }
-pydantic = "^2.11.9"
+redis = { version = ">=6.4.0", extras = ["async"] }
+pydantic = ">=2.11.9"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.9.0"
 
 [tool.poetry.group.tests.dependencies]
-fakeredis = {version = "^2.31.3", extras = ["json", "lua"]}
 pytest = "^8.4.2"
 pytest-asyncio = "^0.25.0"
 

@@ -18,7 +18,7 @@ version = "5.0.1"
 description = "Timeout context manager for asyncio programs"
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "tests"]
+groups = ["main"]
 markers = "python_full_version < \"3.11.3\""
 files = [
     {file = "async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c"},
@@ -121,33 +121,6 @@ typing-extensions = {version = ">=4.6.0", markers = "python_version < \"3.13\""}
 test = ["pytest (>=6)"]
 
 [[package]]
-name = "fakeredis"
-version = "2.31.3"
-description = "Python implementation of redis API, can be used for testing purposes."
-optional = false
-python-versions = ">=3.7"
-groups = ["tests"]
-files = [
-    {file = "fakeredis-2.31.3-py3-none-any.whl", hash = "sha256:12aa54a3fb00984c18b28956addb91683aaf55b2dc2ef4b09d49bd481032e57a"},
-    {file = "fakeredis-2.31.3.tar.gz", hash = "sha256:76dfb92855f0787a4936a5b4fdb1905c5909ec790e62dff2b8896b412905deb0"},
-]
-
-[package.dependencies]
-jsonpath-ng = {version = ">=1.6,<2.0", optional = true, markers = "extra == \"json\""}
-lupa = {version = ">=2.1,<3.0", optional = true, markers = "extra == \"lua\""}
-redis = {version = ">=4.3", markers = "python_version > \"3.8\""}
-sortedcontainers = ">=2,<3"
-typing-extensions = {version = ">=4.7,<5.0", markers = "python_version < \"3.11\""}
-
-[package.extras]
-bf = ["pyprobables (>=0.6)"]
-cf = ["pyprobables (>=0.6)"]
-json = ["jsonpath-ng (>=1.6,<2.0)"]
-lua = ["lupa (>=2.1,<3.0)"]
-probabilistic = ["pyprobables (>=0.6)"]
-valkey = ["valkey (>=6)"]
-
-[[package]]
 name = "iniconfig"
 version = "2.1.0"
 description = "brain-dead simple config-ini parsing"
@@ -157,98 +130,6 @@ groups = ["tests"]
 files = [
     {file = "iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760"},
     {file = "iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7"},
-]
-
-[[package]]
-name = "jsonpath-ng"
-version = "1.7.0"
-description = "A final implementation of JSONPath for Python that aims to be standard compliant, including arithmetic and binary comparison operators and providing clear AST for metaprogramming."
-optional = false
-python-versions = "*"
-groups = ["tests"]
-files = [
-    {file = "jsonpath-ng-1.7.0.tar.gz", hash = "sha256:f6f5f7fd4e5ff79c785f1573b394043b39849fb2bb47bcead935d12b00beab3c"},
-    {file = "jsonpath_ng-1.7.0-py2-none-any.whl", hash = "sha256:898c93fc173f0c336784a3fa63d7434297544b7198124a68f9a3ef9597b0ae6e"},
-    {file = "jsonpath_ng-1.7.0-py3-none-any.whl", hash = "sha256:f3d7f9e848cba1b6da28c55b1c26ff915dc9e0b1ba7e752a53d6da8d5cbd00b6"},
-]
-
-[package.dependencies]
-ply = "*"
-
-[[package]]
-name = "lupa"
-version = "2.5"
-description = "Python wrapper around Lua and LuaJIT"
-optional = false
-python-versions = "*"
-groups = ["tests"]
-files = [
-    {file = "lupa-2.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:102538780e8a6164944fff6bf93737d7cb8bf9e6f7146baa56184755fadb96d5"},
-    {file = "lupa-2.5-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:d5235bf6880544f6b357513ba508f70a2d0363ae8bd94d696ba564b458435dbf"},
-    {file = "lupa-2.5-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:05f7c091d59ef267e2572a7580c23093ce89894ed2755b68159a5a271b0b48eb"},
-    {file = "lupa-2.5-cp310-cp310-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:62a810cb5270dd3f983db49f65518c1c060e7575beb464b80feafbb6b54baba1"},
-    {file = "lupa-2.5-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7d28842fcd98ef1f0b825ae1e0b9568710eb4c522fb5dffa53255024c7816b84"},
-    {file = "lupa-2.5-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:82a845a5d93766fde05fc4094a27382f5253af97b699a36d496ca3cdf6afe769"},
-    {file = "lupa-2.5-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:366e98069d20164632d66cd8c0820fcb4d8fea1214364e1614d19bf69086e29f"},
-    {file = "lupa-2.5-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:c6133fa7d193e590f52266afedbeb55ae6dbb8c6def6f3a2074b10edfdb44727"},
-    {file = "lupa-2.5-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:4b4a4a030e6a075e940a36311d44b4e2609778253ea10f933cf61786182cffed"},
-    {file = "lupa-2.5-cp310-cp310-win32.whl", hash = "sha256:9f6b2d6e2b909e8ca1a746286881e718864d44d862596e4aae769dd9f63efcda"},
-    {file = "lupa-2.5-cp310-cp310-win_amd64.whl", hash = "sha256:58bb044c788ad72b6b017e1f1513f7c2ef2a92f0d76f1b11bb0344f6bc82c623"},
-    {file = "lupa-2.5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0014935935862d3acf0f96dfa9ce6657720ece6918feaf76eb7c63948ba03a58"},
-    {file = "lupa-2.5-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:5249ac3eb11aeba0e25dbc20d53352cd04d2e48299a412d187200d492fd0fd63"},
-    {file = "lupa-2.5-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:789acf7f98e1328a2744e19dd7cb92c08e2d6397d5b9e8810954d5192499d2ae"},
-    {file = "lupa-2.5-cp311-cp311-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:858e40d67292e524416da37993ec08290f29ad804608457803d8c570970623a7"},
-    {file = "lupa-2.5-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:d126bea5b69778eeb15277b0f3c362604a5509bdab1fc768d8d4e4f97ec5a922"},
-    {file = "lupa-2.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:29688640ebb88c317a76e41111de360b0dd38e833949928d76792dba2ba5cb0a"},
-    {file = "lupa-2.5-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:3e7a9ae6f39015b07c44c32fe76fe8c3997451c7fd30a6fc12da3a78de502480"},
-    {file = "lupa-2.5-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:fa8cd11211c965d4fd1a79897d407d2614e60910936b2c2522303488331a712e"},
-    {file = "lupa-2.5-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:e6bc86dd2cc2e4751e7f44fd925a6a88da822136dc9d20b37a2aac858850acf0"},
-    {file = "lupa-2.5-cp311-cp311-win32.whl", hash = "sha256:a35c8fce1e71dd9b57486407f783de32fba938a62b806d1ebe747a5e0475958a"},
-    {file = "lupa-2.5-cp311-cp311-win_amd64.whl", hash = "sha256:0148bd1a1391d9fa3d14e0e4a07118f4091bdde7eb49cad98d417b4e5368ab77"},
-    {file = "lupa-2.5-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:85635865409320efa9e6b95f64176317a2409a3f4e261e032094c48f783eb5f5"},
-    {file = "lupa-2.5-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:ec223da758c920f2e2b20e934a7761e233ad24121e6bba4708b7d3aafff9a513"},
-    {file = "lupa-2.5-cp312-cp312-macosx_11_0_x86_64.whl", hash = "sha256:7b3e258528a89f973a5e4a1b7d268a84bb1ae6e39912cfe5373c5a81ac8b82b6"},
-    {file = "lupa-2.5-cp312-cp312-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:07d91df9994c8a17e16d9923684ea810dfc2ecd290503e100a1525ed3aa48bc8"},
-    {file = "lupa-2.5-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1d969ee4eed04788e7a5fa24613dcbc2fff6ef4e978a8ced4746f752092d70a9"},
-    {file = "lupa-2.5-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2478053c6d30b6c46a969a5ffb02181f35a5b299fc5481e99ba5ae63f0f0a63f"},
-    {file = "lupa-2.5-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:e8bfdc69ebbc12271d9dfdb821bf6d5943887f8ec48acc4b19516c0a21bf98cf"},
-    {file = "lupa-2.5-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:953aa2bb0649ed08df911a001d845626d72b31e108da38701ed1116c22b3768f"},
-    {file = "lupa-2.5-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:b4ed0d6dfb7246bc5c85f998c3507b0bd1b16553924eaf0834c4d896a60ee0cd"},
-    {file = "lupa-2.5-cp312-cp312-win32.whl", hash = "sha256:56e7e29980635a34422b9bc074015c3fc0a1ed354df6866ed27092b385b06839"},
-    {file = "lupa-2.5-cp312-cp312-win_amd64.whl", hash = "sha256:e51b0d1dee87a95f54b35f376a6eaa1143147ce3c5d89ba027772fb327555db6"},
-    {file = "lupa-2.5-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:61f09dbb8af779d78f90d71811798710a29b455c6948ea51365eefc0ab142a0d"},
-    {file = "lupa-2.5-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:e372577ac3b54a4d13d43e43de2111ad48b6fabb8f7545f40bcd989e6c13b128"},
-    {file = "lupa-2.5-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:671c7c38197a2d11040bb0e05593063ee62b29a67c982dda688bb2ef30b81670"},
-    {file = "lupa-2.5-cp313-cp313-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:5cfbbec4cb74ad70b5d1747de1537095e21cb57ca70d2a6186738322d82cf917"},
-    {file = "lupa-2.5-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:867430dde43c8cf463cd72d03b07a9158f2bee79bbdae08b0fb1e6e32982853e"},
-    {file = "lupa-2.5-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4326c120ae18de3fed09ea37be792a568a8433c7f3e01e0c7e32f883d98fc5a5"},
-    {file = "lupa-2.5-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:78308d2ea41e2fae47659fe671725d5346d61d9d894d22b36e427f259b5a0cf1"},
-    {file = "lupa-2.5-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:5a9c12e74faaea60ae50a6d2670eb7e7cfc0b036045912bb37a15753a702fc28"},
-    {file = "lupa-2.5-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:2a848ed378fbfcf735780116265bd2e68600691efefb4f7ff326a4ac089189d5"},
-    {file = "lupa-2.5-cp313-cp313-win32.whl", hash = "sha256:1ea65fb8046bf2c7cf39dfb3677ce5e25d5ea1330e7f9bce9b274fcdf55db29b"},
-    {file = "lupa-2.5-cp313-cp313-win_amd64.whl", hash = "sha256:e8d52999947d3d09c1dd2cf572cfb90a0ced3185f702e75f4b1a3ba4276b3c97"},
-    {file = "lupa-2.5-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:1e4451134e094b0a985a9af9cd1ace535f2531a4906274d7675ebb0d790a80a1"},
-    {file = "lupa-2.5-cp38-cp38-macosx_11_0_x86_64.whl", hash = "sha256:4c4c2ec16e4f3be2c995a645eec42aebb094522c2d70f41df33bfc71f7a19406"},
-    {file = "lupa-2.5-cp38-cp38-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:370e8a554eeb404d1aa0c62516e5a8241615735c936a5c87a6e9042146ed0d6e"},
-    {file = "lupa-2.5-cp38-cp38-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7451a5381676f5968ad5eedbc51a7c692d9bb62b0f89e4d26ed56aa6cf342123"},
-    {file = "lupa-2.5-cp38-cp38-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d070b9a2e8ffae07a0bdfcb6e791755d7be237e07df2d02ea1962e1393c1f0c9"},
-    {file = "lupa-2.5-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:1e1187cd2e02a567e83ed23c95982c1a610e8eb308216ebe9567487340c4375e"},
-    {file = "lupa-2.5-cp38-cp38-musllinux_1_2_i686.whl", hash = "sha256:c42b64a17a1cbca3344742ef51add827591f4a710cc7746ef37997fcc2f27409"},
-    {file = "lupa-2.5-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:d161fdd6ca5ed5f63e4cf0d2ef671c39092a2c0d886fdbff14f4938238144525"},
-    {file = "lupa-2.5-cp38-cp38-win32.whl", hash = "sha256:ec8a77bcdecc8842a57dc9509ac04f2694b205fa6de9e69b584b100ed4631668"},
-    {file = "lupa-2.5-cp38-cp38-win_amd64.whl", hash = "sha256:62af309cea7742c54640e9c94058e4aed783963be9372572212d3d9fa50741cb"},
-    {file = "lupa-2.5-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:cb2656da6005eb7eeadb3bb77d471665a95f81ebd5c10e03e0c17c29e2a6d821"},
-    {file = "lupa-2.5-cp39-cp39-macosx_11_0_universal2.whl", hash = "sha256:613714679e0b64f5bb06cd72581f9694735e682c70dbdc5cbefa11ff58da0352"},
-    {file = "lupa-2.5-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:c843bbb0160052ae9726791bdda919b11ef4a318e5d117a67fa0d7e7a204f4a8"},
-    {file = "lupa-2.5-cp39-cp39-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:d75aa4ad8c4a3bb7f8357cb764fa886cedf13d052a50bf730105d76a72e22833"},
-    {file = "lupa-2.5-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:01433c46562ee9a64779627de34ccef38241a926b5325f03fe7859d73d8d2393"},
-    {file = "lupa-2.5-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0b95f89fcc84601cc04e2a637e9029754ad43487ed50a13d8183db03b273b468"},
-    {file = "lupa-2.5-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:2acb20dd5b0b345389ac0ac714def772eb5ebdbc9500fcabedd42f206747be42"},
-    {file = "lupa-2.5-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:91e45661a8871d3b2d73cefebb4793e1e461697836479f1969a2e7cbd5486b85"},
-    {file = "lupa-2.5-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:4d468e6d9612fdfb43f44f2d077d7a389aa6bdf0b8ec57b4da2f96748cd99af6"},
-    {file = "lupa-2.5-cp39-cp39-win32.whl", hash = "sha256:c240a9a77990ff2a7f7269330beec824a7b0a825abbb8bba3100d767799b86d1"},
-    {file = "lupa-2.5-cp39-cp39-win_amd64.whl", hash = "sha256:5f3ca676d9c0de54529392c9d3303d42d16f736e651ec51170bd7f3aaff9325a"},
-    {file = "lupa-2.5.tar.gz", hash = "sha256:69c6a89f2b7b08a3040d7ed2a1eeccba37a31ddc92fa199339c53a2ae3c48c34"},
 ]
 
 [[package]]
@@ -319,18 +200,6 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
-
-[[package]]
-name = "ply"
-version = "3.11"
-description = "Python Lex & Yacc"
-optional = false
-python-versions = "*"
-groups = ["tests"]
-files = [
-    {file = "ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"},
-    {file = "ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3"},
-]
 
 [[package]]
 name = "pydantic"
@@ -545,7 +414,7 @@ version = "6.4.0"
 description = "Python client for Redis database and key-value store"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "tests"]
+groups = ["main"]
 files = [
     {file = "redis-6.4.0-py3-none-any.whl", hash = "sha256:f0544fa9604264e9464cdf4814e7d4830f74b165d52f2a330a760a88dd248b7f"},
     {file = "redis-6.4.0.tar.gz", hash = "sha256:b01bc7282b8444e28ec36b261df5375183bb47a07eb9c603f284e89cbc5ef010"},
@@ -558,18 +427,6 @@ async-timeout = {version = ">=4.0.3", markers = "python_full_version < \"3.11.3\
 hiredis = ["hiredis (>=3.2.0)"]
 jwt = ["pyjwt (>=2.9.0)"]
 ocsp = ["cryptography (>=36.0.1)", "pyopenssl (>=20.0.1)", "requests (>=2.31.0)"]
-
-[[package]]
-name = "sortedcontainers"
-version = "2.4.0"
-description = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
-optional = false
-python-versions = "*"
-groups = ["tests"]
-files = [
-    {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
-    {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
-]
 
 [[package]]
 name = "tomli"
@@ -645,4 +502,4 @@ typing-extensions = ">=4.12.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "010cade6fe037eb28ed14cf2b407ca63efca195e2da628a28b73541238f450ef"
+content-hash = "1e315cbc578894cad01eb14ef603dbdf366e6c90b3e6a08e712859a3f11bb7d6"
