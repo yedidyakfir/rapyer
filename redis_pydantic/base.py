@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import dataclasses
+import functools
 import uuid
 from typing import get_origin, Self, ClassVar, Any
 
@@ -31,15 +32,15 @@ class RedisConfig:
 
 @dataclasses.dataclass
 class RedisFieldConfig:
-    field_path: str = ""
-    override_class_name: str = ""
+    field_path: str = None
+    override_class_name: str = None
 
 
 class BaseRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     Meta: ClassVar[RedisConfig] = RedisConfig()
     field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
-    _field_config_override: RedisFieldConfig | None = None
+    _field_config_override: RedisFieldConfig = None
 
     @property
     def pk(self):
@@ -50,9 +51,17 @@ class BaseRedisModel(BaseModel):
         self._pk = value
         self._update_redis_field_parameters()
 
-    @property
+    @functools.cached_property
     def inst_field_conf(self) -> RedisFieldConfig:
-        return self._field_config_override or self.field_config
+        class_conf = dataclasses.asdict(self.field_config)
+        inst_conf = (
+            dataclasses.asdict(self._field_config_override)
+            if self._field_config_override
+            else {}
+        )
+        inst_conf = {k: v for k, v in inst_conf.items() if v is not None}
+        conf = class_conf | inst_conf
+        return RedisFieldConfig(**conf)
 
     @classmethod
     def class_key_initials(cls):
