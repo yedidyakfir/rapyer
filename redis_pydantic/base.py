@@ -75,17 +75,17 @@ class BaseRedisModel(BaseModel):
         # Replace field types with Redis types and create descriptors
         for field_name, field_type in full_annotation.items():
             actual_type = get_actual_type(field_type)
-            resolved_inner_type = cls._resolve_redis_type(field_name, actual_type)
+            full_field_name = (
+                f"{cls.field_config.field_path}.{field_name}"
+                if cls.field_config.field_path
+                else field_name
+            )
+            resolved_inner_type = cls._resolve_redis_type(full_field_name, actual_type)
             cls._redis_field_mapping[field_name] = resolved_inner_type
 
     @classmethod
     def _resolve_redis_type(cls, field_name, type_):
         # Handle generic types
-        full_field_name = (
-            f"{cls.field_config.field_path}.{field_name}"
-            if cls.field_config.field_path
-            else field_name
-        )
         origin_type = get_origin(type_) or type_
 
         # Check if this type has a Redis equivalent
@@ -102,17 +102,17 @@ class BaseRedisModel(BaseModel):
                 return [redis_type_class, {}]
         elif issubclass(type_, BaseRedisModel):
             field_conf = RedisFieldConfig(
-                field_path=full_field_name, override_class_name=cls.key_initials()
+                field_path=field_name, override_class_name=cls.key_initials()
             )
             new_base_redis_type = type(
-                f"{full_field_name.title()}{type_.__name__}",
+                f"{field_name.title()}{type_.__name__}",
                 (type_,),
                 dict(field_config=field_conf),
             )
             return [new_base_redis_type, {}]
         elif issubclass(type_, BaseModel):
             field_conf = RedisFieldConfig(
-                field_path=full_field_name, override_class_name=cls.key_initials()
+                field_path=field_name, override_class_name=cls.key_initials()
             )
             new_base_model_type = type(
                 f"Redis{type_.__name__}",
