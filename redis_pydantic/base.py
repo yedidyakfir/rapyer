@@ -39,6 +39,7 @@ class BaseRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     Meta: ClassVar[RedisConfig] = RedisConfig()
     field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
+    _field_config_override: RedisFieldConfig | None = None
 
     @property
     def pk(self):
@@ -49,13 +50,21 @@ class BaseRedisModel(BaseModel):
         self._pk = value
         self._update_redis_field_parameters()
 
+    @property
+    def inst_field_conf(self) -> RedisFieldConfig:
+        return self._field_config_override or self.field_config
+
     @classmethod
-    def key_initials(cls):
+    def class_key_initials(cls):
         return cls.field_config.override_class_name or cls.__name__
 
     @property
+    def key_initials(self):
+        return self.inst_field_conf.override_class_name or self.class_key_initials()
+
+    @property
     def key(self):
-        return f"{self.key_initials()}:{self.pk}"
+        return f"{self.key_initials}:{self.pk}"
 
     def _update_redis_field_parameters(self):
         for field_name in self.model_fields:
@@ -102,7 +111,7 @@ class BaseRedisModel(BaseModel):
                 return [redis_type_class, {}]
         elif issubclass(type_, BaseRedisModel):
             field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.key_initials()
+                field_path=field_name, override_class_name=cls.class_key_initials()
             )
             new_base_redis_type = type(
                 f"{field_name.title()}{type_.__name__}",
@@ -112,7 +121,7 @@ class BaseRedisModel(BaseModel):
             return [new_base_redis_type, {}]
         elif issubclass(type_, BaseModel):
             field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.key_initials()
+                field_path=field_name, override_class_name=cls.class_key_initials()
             )
             new_base_model_type = type(
                 f"Redis{type_.__name__}",
@@ -152,8 +161,8 @@ class BaseRedisModel(BaseModel):
                 continue
 
             full_field_path = (
-                f"{self.field_config.field_path}.{field_name}"
-                if self.field_config.field_path
+                f"{self.inst_field_conf.field_path}.{field_name}"
+                if self.inst_field_conf.field_path
                 else field_name
             )
             redis_instance = self.create_redis_type(
@@ -178,8 +187,8 @@ class BaseRedisModel(BaseModel):
         if has_redis_type and not is_already_at_correct_type:
             type_definitions = self._redis_field_mapping[name]
             full_field_path = (
-                f"{self.field_config.field_path}.{name}"
-                if self.field_config.field_path
+                f"{self.inst_field_conf.field_path}.{name}"
+                if self.inst_field_conf.field_path
                 else name
             )
 
