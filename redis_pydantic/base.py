@@ -233,6 +233,14 @@ class BaseRedisModel(BaseModel):
             yield redis_model
             await redis_model.save()
 
+    @contextlib.asynccontextmanager
+    async def pipeline(self):
+        async with self.Meta.redis.pipeline() as pipe:
+            redis_model = await self.__class__.get(self.key)
+            self.model_copy(update=redis_model.model_dump())
+            yield pipe
+            await pipe.execute()
+
 
 # TODO - steps
 # 5. update the redis types, with __get__ etc
@@ -240,3 +248,4 @@ class BaseRedisModel(BaseModel):
 # 6. check that using my types explicit works
 # TODO - add foreign key - for deletion
 # TODO - allow dict serializer for key and value
+# TODO - add delete function from redis
