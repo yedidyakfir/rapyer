@@ -259,6 +259,21 @@ async with user.pipeline() as pipelined_user:
     # All operations are executed atomically when exiting the context
 ```
 
+You can also save multiple models in an atomic action
+```python
+user1 = User(name="John", tags=["python"], metadata={"role": "developer"})
+user2 = User(name="John", tags=["python"], metadata={"role": "developer2"})
+await user1.save()
+await user2.save()
+
+async with user.pipeline():
+    await user1.delete()
+    await user2.delete()
+    # All operations are executed atomically when exiting the context
+```
+
+
+
 The pipeline context manager:
 - Batches multiple Redis operations into a single atomic transaction
 - Automatically refreshes the model with latest Redis data on entry
