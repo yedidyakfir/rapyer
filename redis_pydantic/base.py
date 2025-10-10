@@ -5,35 +5,17 @@ import functools
 import uuid
 from typing import get_origin, Self, ClassVar, Any
 
-import redis
 from pydantic import BaseModel, PrivateAttr
-from redis.asyncio import Redis
 
+from redis_pydantic.config import RedisConfig, RedisFieldConfig
 from redis_pydantic.context import _context_var
-from redis_pydantic.types import ALL_TYPES, create_serializer
+from redis_pydantic.types import create_serializer
 from redis_pydantic.types.base import GenericRedisType, RedisType
 from redis_pydantic.utils import (
     acquire_lock,
     get_public_instance_annotations,
     get_actual_type,
 )
-
-DEFAULT_CONNECTION = "redis://localhost:6379/0"
-
-
-@dataclasses.dataclass
-class RedisConfig:
-    redis: Redis = dataclasses.field(
-        default_factory=lambda: redis.asyncio.from_url(DEFAULT_CONNECTION)
-    )
-    redis_type: dict[str, type] = dataclasses.field(default_factory=lambda: ALL_TYPES)
-    ttl: int | None = None
-
-
-@dataclasses.dataclass
-class RedisFieldConfig:
-    field_path: str = None
-    override_class_name: str = None
 
 
 class BaseRedisModel(BaseModel):
