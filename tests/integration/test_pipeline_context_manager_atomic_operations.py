@@ -490,3 +490,85 @@ async def test_pipeline_dict_apopitem__check_pipeline_limitation_edge_case(
     ):
         async with model.pipeline() as redis_model:
             await redis_model.metadata.apopitem()
+
+
+@pytest.mark.asyncio
+async def test_pipeline_delete__check_atomicity_sanity(real_redis_client):
+    # Arrange
+    model1 = ComprehensiveTestModel(tags=["tag1"], name="model1")
+    model2 = ComprehensiveTestModel(tags=["tag2"], name="model2")
+    await model1.save()
+    await model2.save()
+
+    # Act
+    async with model1.pipeline() as redis_model:
+        await redis_model.delete()
+
+        # Check if models still exist during pipeline (atomicity test)
+        key1_exists = await real_redis_client.exists(model1.key)
+        key2_exists = await real_redis_client.exists(model2.key)
+        assert key1_exists == 1
+        assert key2_exists == 1
+
+    # Assert - Check if model1 was deleted after pipeline
+    key1_exists = await real_redis_client.exists(model1.key)
+    key2_exists = await real_redis_client.exists(model2.key)
+    assert key1_exists == 0
+    assert key2_exists == 1
+
+
+@pytest.mark.asyncio
+async def test_pipeline_try_delete__check_atomicity_sanity(real_redis_client):
+    # Arrange
+    model1 = ComprehensiveTestModel(tags=["tag1"], name="model1")
+    model2 = ComprehensiveTestModel(tags=["tag2"], name="model2")
+    await model1.save()
+    await model2.save()
+
+    # Act
+    async with model1.pipeline() as redis_model:
+        await ComprehensiveTestModel.try_delete(model1.key)
+
+        # Check if models still exist during pipeline (atomicity test)
+        key1_exists = await real_redis_client.exists(model1.key)
+        key2_exists = await real_redis_client.exists(model2.key)
+        assert key1_exists == 1
+        assert key2_exists == 1
+
+    # Assert - Check if model1 was deleted after pipeline and result was True
+    key1_exists = await real_redis_client.exists(model1.key)
+    key2_exists = await real_redis_client.exists(model2.key)
+    assert key1_exists == 0
+    assert key2_exists == 1
+
+
+@pytest.mark.asyncio
+async def test_pipeline_multiple_deletes__check_atomicity_sanity(real_redis_client):
+    # Arrange
+    model1 = ComprehensiveTestModel(tags=["tag1"], name="model1")
+    model2 = ComprehensiveTestModel(tags=["tag2"], name="model2")
+    model3 = ComprehensiveTestModel(tags=["tag3"], name="model3")
+    await model1.save()
+    await model2.save()
+    await model3.save()
+
+    # Act
+    async with model1.pipeline() as redis_model:
+        await redis_model.delete()
+        await ComprehensiveTestModel.try_delete(model2.key)
+
+        # Check if all models still exist during pipeline (atomicity test)
+        key1_exists = await real_redis_client.exists(model1.key)
+        key2_exists = await real_redis_client.exists(model2.key)
+        key3_exists = await real_redis_client.exists(model3.key)
+        assert key1_exists == 1
+        assert key2_exists == 1
+        assert key3_exists == 1
+
+    # Assert - Check if model1 and model2 were deleted after pipeline, model3 remains
+    key1_exists = await real_redis_client.exists(model1.key)
+    key2_exists = await real_redis_client.exists(model2.key)
+    key3_exists = await real_redis_client.exists(model3.key)
+    assert key1_exists == 0
+    assert key2_exists == 0
+    assert key3_exists == 1
