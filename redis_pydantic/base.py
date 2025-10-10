@@ -125,11 +125,8 @@ class BaseRedisModel(BaseModel):
 
     @classmethod
     def create_redis_type(
-        cls, redis_type_def: list, value: Any, redis_key: str = None, **kwargs
+        cls, redis_type, value: Any, redis_key: str = None, **saved_kwargs
     ):
-        redis_type = redis_type_def[0]
-        saved_kwargs = redis_type_def[1]
-
         # Handle nested models - convert user model to Redis model
         if isinstance(value, BaseModel):
             pk = redis_key.split(":", 1)[1]
@@ -138,7 +135,7 @@ class BaseRedisModel(BaseModel):
             instance.pk = pk
             return instance
         else:
-            return redis_type(value, **kwargs, redis_key=redis_key, **saved_kwargs)
+            return redis_type(value, redis_key=redis_key, **saved_kwargs)
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -156,11 +153,12 @@ class BaseRedisModel(BaseModel):
                 else field_name
             )
             redis_instance = self.create_redis_type(
+                redis_type=type_definitions[0],
                 value=current_value,
-                redis_type_def=type_definitions,
                 redis_key=self.key,
                 field_path=full_field_path,
                 redis=self.Meta.redis,
+                **type_definitions[1],
             )
 
             # Set it directly on the instance
@@ -182,11 +180,12 @@ class BaseRedisModel(BaseModel):
             )
 
             redis_instance = self.create_redis_type(
+                redis_type=type_definitions[0],
                 value=value,
-                redis_type_def=type_definitions,
                 redis_key=self.key,
                 field_path=full_field_path,
                 redis=self.Meta.redis,
+                **type_definitions[1],
             )
 
             # Set the converted Redis instance
