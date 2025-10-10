@@ -7,8 +7,8 @@ T = TypeVar("T")
 
 
 class DictSerializer(RedisSerializer):
-    def __init__(self, full_type: type, serializer_creator):
-        super().__init__(full_type, serializer_creator)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.inner_serializer = self._create_inner_serializer()
 
     def _create_inner_serializer(self):
