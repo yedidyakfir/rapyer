@@ -213,6 +213,10 @@ class BaseRedisModel(BaseModel):
         instance._update_redis_field_parameters()
         return instance
 
+    async def delete(self):
+        client = _context_var.get() or self.Meta.redis
+        return await client.delete(self.key)
+
     def redis_dump(self):
         model_dump = self.model_dump(exclude=["_pk"])
         # Override Redis field values with their serialized versions
@@ -249,7 +253,6 @@ class BaseRedisModel(BaseModel):
 
 # TODO - steps
 # 5. update the redis types, with __get__ etc
-# 5. add pipeline context - change the load to pipeline rather than lock
 # 6. check that using my types explicit works
 # TODO - add foreign key - for deletion
 # TODO - allow dict serializer for key and value
