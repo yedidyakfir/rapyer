@@ -62,16 +62,16 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().clear()
         super().extend(deserialized_items)
 
-    def __getitem__(self, index):
-        val = super().__getitem__(index)
-        return self.inst_init(
+    def __setitem__(self, key, value):
+        new_val = self.inst_init(
             self.inner_type,
-            val,
+            value,
             self.redis_key,
             _field_config_override=RedisFieldConfig(
-                field_path=self.json_field_path(index)
+                field_path=self.json_field_path(key)
             ),
         )
+        return super().__setitem__(key, new_val)
 
     async def aappend(self, __object):
         super().append(__object)
