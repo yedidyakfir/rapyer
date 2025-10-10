@@ -236,6 +236,94 @@ The lock context manager:
 - Saves all changes back to Redis on successful exit
 - Ensures atomic operations across multiple field updates
 
+### Pipeline Context Manager
+
+Use the pipeline context manager to batch multiple Redis operations for improved performance and atomicity:
+
+```python
+class User(BaseRedisModel):
+    name: str
+    tags: List[str] = []
+    metadata: Dict[str, str] = {}
+    counter: int = 0
+
+user = User(name="John", tags=["python"], metadata={"role": "developer"})
+await user.save()
+
+# Batch multiple operations atomically
+async with user.pipeline() as pipelined_user:
+    await pipelined_user.tags.aappend("redis")
+    await pipelined_user.tags.aextend(["async", "pydantic"])
+    await pipelined_user.metadata.aupdate(level="senior", department="engineering")
+    await pipelined_user.counter.set(100)
+    # All operations are executed atomically when exiting the context
+```
+
+The pipeline context manager:
+- Batches multiple Redis operations into a single atomic transaction
+- Automatically refreshes the model with latest Redis data on entry
+- Executes all operations atomically when exiting the context
+- Improves performance by reducing network round trips
+- Ensures data consistency - either all operations succeed or none are applied
+
+#### Supported Operations in Pipeline
+
+Most Redis operations work seamlessly in pipeline mode:
+
+```python
+async with user.pipeline() as pipelined_user:
+    # List operations
+    await pipelined_user.tags.aappend("new_tag")
+    await pipelined_user.tags.aextend(["tag1", "tag2"])
+    await pipelined_user.tags.ainsert(0, "first_tag")
+    await pipelined_user.tags.aclear()
+    
+    # Dictionary operations
+    await pipelined_user.metadata.aset_item("key", "value")
+    await pipelined_user.metadata.aupdate(key1="val1", key2="val2")
+    await pipelined_user.metadata.adel_item("old_key")
+    await pipelined_user.metadata.aclear()
+    
+    # String/Integer operations
+    await pipelined_user.name.set("New Name")
+    await pipelined_user.counter.set(42)
+```
+
+#### Pipeline Limitations
+
+Some operations that return values are not supported in pipeline mode:
+
+```python
+# These operations won't work in pipeline context:
+# - list.apop() - returns removed item
+# - dict.apop() - returns removed value  
+# - dict.apopitem() - returns removed key-value pair
+
+# Use these operations outside of pipeline context:
+popped_tag = await user.tags.apop()
+popped_value = await user.metadata.apop("key", "default")
+key, value = await user.metadata.apopitem()
+```
+
+#### Error Handling with Pipeline
+
+If an exception occurs within the pipeline context, no operations are applied to Redis:
+
+```python
+try:
+    async with user.pipeline() as pipelined_user:
+        await pipelined_user.tags.aappend("temp_tag")
+        await pipelined_user.metadata.aset_item("temp", "value")
+        raise ValueError("Something went wrong")
+        # No changes are applied to Redis due to the exception
+except ValueError:
+    print("Pipeline rolled back - no changes applied")
+
+# User data remains unchanged
+final_user = await User.get(user.key)
+# Tags and metadata are unchanged from before the pipeline
+```
+
 ### Working with Nested Models
 
 RedisPydantic automatically supports nested Pydantic models by converting regular `BaseModel` classes into Redis-enabled versions. This allows you to use all Redis field operations on nested model fields.
