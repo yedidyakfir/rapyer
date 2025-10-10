@@ -1,6 +1,7 @@
 from typing import TypeVar, Generic
 from typing import get_args
 
+from redis_pydantic.config import RedisFieldConfig
 from redis_pydantic.types.base import GenericRedisType, RedisSerializer
 from redis_pydantic.types.utils import noop
 
@@ -60,6 +61,17 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         # Clear local list and populate with Redis data
         super().clear()
         super().extend(deserialized_items)
+
+    def __getitem__(self, index):
+        val = super().__getitem__(index)
+        return self.inst_init(
+            self.inner_type,
+            val,
+            self.redis_key,
+            _field_config_override=RedisFieldConfig(
+                field_path=self.json_field_path(index)
+            ),
+        )
 
     async def aappend(self, __object):
         super().append(__object)

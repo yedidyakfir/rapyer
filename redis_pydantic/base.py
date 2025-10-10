@@ -96,7 +96,12 @@ class BaseRedisModel(BaseModel):
             if issubclass(redis_type_class, GenericRedisType):
                 return [
                     redis_type_class,
-                    {"serializer_creator": create_serializer, "full_type": type_},
+                    {
+                        "serializer_creator": create_serializer,
+                        "full_type": type_,
+                        "inst_init": cls.create_redis_type,
+                        "type_creator": cls._resolve_redis_type,
+                    },
                 ]
             else:
                 return [redis_type_class, {}]
