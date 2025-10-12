@@ -78,7 +78,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     def __setitem__(self, key, value):
         redis_type, kwargs = self.inner_type
-        field_path = f"{self.field_path}[{key}]"
+        field_path = f"{self.field_path}.{key}"
         new_val = self.inst_init(
             redis_type,
             value,
