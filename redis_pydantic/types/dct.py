@@ -1,5 +1,6 @@
 from typing import TypeVar, Generic, get_args
 
+from redis_pydantic.config import RedisFieldConfig
 from redis_pydantic.types.base import GenericRedisType, RedisSerializer
 from redis_pydantic.types.utils import update_keys_in_pipeline
 
@@ -74,6 +75,20 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return await self.client.json().set(
             self.redis_key, self.json_field_path(key), serialized_value
         )
+
+    def __setitem__(self, key, value):
+        redis_type, kwargs = self.inner_type
+        field_path = f"{self.field_path}[{key}]"
+        new_val = self.inst_init(
+            redis_type,
+            value,
+            self.redis_key,
+            **kwargs,
+            redis=self.redis,
+            field_path=field_path,
+            _field_config_override=RedisFieldConfig(field_path=field_path),
+        )
+        return super().__setitem__(key, new_val)
 
     async def adel_item(self, key):
         super().__delitem__(key)
