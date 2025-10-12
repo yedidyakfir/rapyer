@@ -169,6 +169,9 @@ class BaseRedisModel(BaseModel):
             # Set it directly on the instance
             object.__setattr__(self, field_name, redis_instance)
 
+    def is_ineer_model(self):
+        return self.inst_field_conf.field_path is not None
+
     def __setattr__(self, name: str, value: Any) -> None:
         if value is None:
             super().__setattr__(name, value)
@@ -200,7 +203,7 @@ class BaseRedisModel(BaseModel):
             super().__setattr__(name, value)
 
     async def save(self) -> Self:
-        if self.inst_field_conf.field_path is not None:
+        if self.is_ineer_model():
             raise RuntimeError("Can only save from top level model")
 
         model_dump = self.redis_dump()
@@ -208,6 +211,22 @@ class BaseRedisModel(BaseModel):
         if self.Meta.ttl is not None:
             await self.Meta.redis.expire(self.key, self.Meta.ttl)
         return self
+
+    async def duplicate(self) -> Self:
+        if self.is_ineer_model():
+            raise RuntimeError("Can only duplicate from top level model")
+
+        duplicated = self.__class__(**self.model_dump())
+        await duplicated.save()
+        return duplicated
+
+    async def duplicate_many(self, num: int) -> list[Self]:
+        if self.is_ineer_model():
+            raise RuntimeError("Can only duplicate from top level model")
+
+        duplicated_models = [self.__class__(**self.model_dump()) for _ in range(num)]
+        await asyncio.gather(*[model.save() for model in duplicated_models])
+        return duplicated_models
 
     @classmethod
     async def get(cls, key: str) -> Self:
