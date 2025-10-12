@@ -1,0 +1,65 @@
+site_name: RedisPydantic
+site_description: A Python package that provides Pydantic models with Redis as the backend storage
+site_url: https://yedidyakfir.github.io/RedisPydantic/
+repo_url: https://github.com/yedidyakfir/RedisPydantic
+repo_name: yedidyakfir/RedisPydantic
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: red
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: red
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: installation.md
+    - Quick Start: quickstart.md
+    - Configuration: configuration.md
+  - User Guide:
+    - Basic Usage: usage.md
+    - Supported Types: types.md
+    - Advanced Features: advanced.md
+    - Examples: examples.md
+  - API Reference: api.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yedidyakfir/RedisPydantic
