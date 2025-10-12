@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field
+from pydantic import Field, BaseModel
 
 from redis_pydantic.base import BaseRedisModel
 
@@ -17,59 +17,158 @@ class DictListModel(BaseRedisModel):
     items: list[dict[str, str]] = Field(default_factory=list)
 
 
+# BaseModel classes for testing nested models
+class UserProfile(BaseModel):
+    name: str
+    age: int
+    email: str
+
+
+class Product(BaseModel):
+    name: str
+    price: int  # Changed from float to int since float isn't supported
+    in_stock: bool
+
+
+class NestedConfig(BaseModel):
+    settings: dict[str, str] = Field(default_factory=dict)
+    options: list[str] = Field(default_factory=list)
+
+
+class BaseModelListModel(BaseRedisModel):
+    users: list[UserProfile] = Field(default_factory=list)
+    products: list[Product] = Field(default_factory=list)
+    configs: list[NestedConfig] = Field(default_factory=list)
+
+
 @pytest_asyncio.fixture
 async def real_redis_client(redis_client):
     IntListModel.Meta.redis = redis_client
     StrListModel.Meta.redis = redis_client
     DictListModel.Meta.redis = redis_client
+    BaseModelListModel.Meta.redis = redis_client
     yield redis_client
     await redis_client.aclose()
 
 
-@pytest.mark.parametrize("model_class,test_value", [
-    [IntListModel, 42],
-    [StrListModel, "test_string"],
-    [DictListModel, {"key": "value"}],
-])
+@pytest.fixture
+def int_list_model_with_items():
+    return IntListModel(items=[0, 0, 0])
+
+
+@pytest.fixture
+def str_list_model_with_items():
+    return StrListModel(items=["", "", ""])
+
+
+@pytest.fixture
+def dict_list_model_with_items():
+    return DictListModel(items=[{}, {}, {}])
+
+
+@pytest.fixture
+def basemodel_list_model_with_users():
+    model = BaseModelListModel()
+    model.users = [None, None, None]
+    return model
+
+
+@pytest.fixture
+def basemodel_list_model_with_products():
+    model = BaseModelListModel()
+    model.products = [None, None, None]
+    return model
+
+
+@pytest.fixture
+def basemodel_list_model_with_configs():
+    model = BaseModelListModel()
+    model.configs = [None, None, None]
+    return model
+
+
+@pytest.fixture
+def sample_user_profile():
+    return UserProfile(name="John Doe", age=30, email="john@example.com")
+
+
+@pytest.fixture
+def sample_product():
+    return Product(name="Laptop", price=999, in_stock=True)
+
+
+@pytest.fixture
+def sample_nested_config():
+    return NestedConfig(settings={"theme": "dark"}, options=["auto-save"])
+
+
 @pytest.mark.asyncio
-async def test_redis_list_setitem_type_checking_sanity(real_redis_client, model_class, test_value):
+async def test_redis_list_setitem_int_type_checking_sanity(
+    real_redis_client, int_list_model_with_items
+):
     # Arrange
-    model = model_class()
-    if isinstance(test_value, int):
-        model.items = [0, 0, 0]
-    elif isinstance(test_value, str):
-        model.items = ["", "", ""]
-    elif isinstance(test_value, dict):
-        model.items = [{}, {}, {}]
+    model = int_list_model_with_items
     await model.save()
 
     # Act
-    model.items[2] = test_value
+    model.items[2] = 42
 
     # Assert
     from redis_pydantic.types.integer import RedisInt
+
+    assert isinstance(model.items[2], RedisInt)
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_str_type_checking_sanity(
+    real_redis_client, str_list_model_with_items
+):
+    # Arrange
+    model = str_list_model_with_items
+    await model.save()
+
+    # Act
+    model.items[2] = "test_string"
+
+    # Assert
     from redis_pydantic.types.string import RedisStr
+
+    assert isinstance(model.items[2], RedisStr)
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_dict_type_checking_sanity(
+    real_redis_client, dict_list_model_with_items
+):
+    # Arrange
+    model = dict_list_model_with_items
+    await model.save()
+
+    # Act
+    model.items[2] = {"key": "value"}
+
+    # Assert
     from redis_pydantic.types.dct import RedisDict
 
-    if isinstance(test_value, int):
-        assert isinstance(model.items[2], RedisInt)
-    elif isinstance(test_value, str):
-        assert isinstance(model.items[2], RedisStr)
-    elif isinstance(test_value, dict):
-        assert isinstance(model.items[2], RedisDict)
+    assert isinstance(model.items[2], RedisDict)
 
 
-@pytest.mark.parametrize("index,test_value", [
-    [0, 100],
-    [1, 200],
-    [2, 300],
-])
+@pytest.mark.parametrize(
+    "index,test_value",
+    [
+        [0, 100],
+        [1, 200],
+        [2, 300],
+    ],
+)
 @pytest.mark.asyncio
-async def test_redis_list_setitem_int_operations_sanity(real_redis_client, index, test_value):
+async def test_redis_list_setitem_int_operations_sanity(
+    real_redis_client, index, test_value
+):
     # Arrange
     model = IntListModel(items=[0, 0, 0])
     await model.save()
-    
+
     # Act
     model.items[index] = test_value
     await model.items[index].set(test_value + 50)
@@ -82,17 +181,22 @@ async def test_redis_list_setitem_int_operations_sanity(real_redis_client, index
     assert fresh_model.items[index] == test_value + 50
 
 
-@pytest.mark.parametrize("index,test_value", [
-    [0, "hello"],
-    [1, "world"],
-    [2, "test"],
-])
+@pytest.mark.parametrize(
+    "index,test_value",
+    [
+        [0, "hello"],
+        [1, "world"],
+        [2, "test"],
+    ],
+)
 @pytest.mark.asyncio
-async def test_redis_list_setitem_str_operations_sanity(real_redis_client, index, test_value):
+async def test_redis_list_setitem_str_operations_sanity(
+    real_redis_client, index, test_value
+):
     # Arrange
     model = StrListModel(items=["", "", ""])
     await model.save()
-    
+
     # Act
     model.items[index] = test_value
     await model.items[index].set(test_value + "_modified")
@@ -105,17 +209,22 @@ async def test_redis_list_setitem_str_operations_sanity(real_redis_client, index
     assert fresh_model.items[index] == test_value + "_modified"
 
 
-@pytest.mark.parametrize("index,test_value", [
-    [0, {"key1": "value1"}],
-    [1, {"key2": "value2"}],
-    [2, {"key3": "value3"}],
-])
+@pytest.mark.parametrize(
+    "index,test_value",
+    [
+        [0, {"key1": "value1"}],
+        [1, {"key2": "value2"}],
+        [2, {"key3": "value3"}],
+    ],
+)
 @pytest.mark.asyncio
-async def test_redis_list_setitem_dict_operations_sanity(real_redis_client, index, test_value):
+async def test_redis_list_setitem_dict_operations_sanity(
+    real_redis_client, index, test_value
+):
     # Arrange
     model = DictListModel(items=[{}, {}, {}])
     await model.save()
-    
+
     # Act
     model.items[index] = test_value
     await model.save()  # Save current state to Redis before update
@@ -135,7 +244,7 @@ async def test_redis_list_setitem_int_arithmetic_operations_sanity(real_redis_cl
     # Arrange
     model = IntListModel(items=[0, 0, 0])
     await model.save()
-    
+
     # Act
     model.items[1] = 50
 
@@ -151,7 +260,7 @@ async def test_redis_list_setitem_str_operations_edge_case(real_redis_client):
     # Arrange
     model = StrListModel(items=["", "", ""])
     await model.save()
-    
+
     # Act
     model.items[0] = "test"
 
@@ -166,7 +275,7 @@ async def test_redis_list_setitem_dict_key_access_edge_case(real_redis_client):
     # Arrange
     model = DictListModel(items=[{}, {}, {}])
     await model.save()
-    
+
     # Act
     model.items[2] = {"test_key": "test_value", "another_key": "another_value"}
 
@@ -181,7 +290,7 @@ async def test_redis_list_setitem_redis_field_paths_sanity(real_redis_client):
     # Arrange
     model = IntListModel(items=[0, 0, 0])
     await model.save()
-    
+
     # Act
     model.items[1] = 42
 
@@ -196,7 +305,7 @@ async def test_redis_list_setitem_multiple_indices_sanity(real_redis_client):
     # Arrange
     model = IntListModel(items=[0, 0, 0, 0, 0])
     await model.save()
-    
+
     # Act
     model.items[0] = 10
     model.items[2] = 20
@@ -211,18 +320,216 @@ async def test_redis_list_setitem_multiple_indices_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_persistence_across_instances_edge_case(real_redis_client):
+async def test_redis_list_setitem_persistence_across_instances_edge_case(
+    real_redis_client,
+):
     # Arrange
     model1 = IntListModel(items=[1, 2, 3])
     await model1.save()
-    
+
     # Act
     model1.items[1] = 99
     await model1.items[1].set(99)
-    
+
     # Assert
     model2 = IntListModel()
     model2.pk = model1.pk
     await model2.items.load()
     # After loading, items are regular Python types, not Redis types
     assert model2.items[1] == 99
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_basemodel_products_type_checking_sanity(
+    real_redis_client, basemodel_list_model_with_products, sample_product
+):
+    # Arrange
+    model = basemodel_list_model_with_products
+    await model.save()
+    test_value = sample_product
+
+    # Act
+    model.products[1] = test_value
+
+    # Assert - should be a Redis BaseModel type
+    list_item = model.products[1]
+    assert isinstance(list_item, BaseRedisModel)
+    assert hasattr(list_item, "save")
+    assert hasattr(list_item, "load")
+    assert hasattr(list_item, "pk")
+    assert list_item.name == test_value.name
+    assert list_item.price == test_value.price
+    assert list_item.in_stock == test_value.in_stock
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_basemodel_configs_type_checking_sanity(
+    real_redis_client, basemodel_list_model_with_configs, sample_nested_config
+):
+    # Arrange
+    model = basemodel_list_model_with_configs
+    await model.save()
+    test_value = sample_nested_config
+
+    # Act
+    model.configs[1] = test_value
+
+    # Assert - should be a Redis BaseModel type
+    list_item = model.configs[1]
+    assert isinstance(list_item, BaseRedisModel)
+    assert hasattr(list_item, "save")
+    assert hasattr(list_item, "load")
+    assert hasattr(list_item, "pk")
+    assert list_item.settings == test_value.settings
+    assert list_item.options == test_value.options
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_basemodel_redis_operations_sanity(real_redis_client):
+    # Arrange
+    model = BaseModelListModel()
+    model.users = [None, None, None]
+    await model.save()
+
+    user = UserProfile(name="Alice", age=25, email="alice@example.com")
+
+    # Act
+    model.users[0] = user
+
+    # Assert - the setitem should create a Redis BaseModel
+    assert isinstance(model.users[0], BaseRedisModel)
+    assert hasattr(model.users[0], "save")
+    assert hasattr(model.users[0], "load")
+
+    # Check that the data is preserved
+    assert model.users[0].name == "Alice"
+    assert model.users[0].age == 25
+    assert model.users[0].email == "alice@example.com"
+
+    # Check that we can modify the fields
+    model.users[0].age = 26
+    assert model.users[0].age == 26
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_basemodel_field_paths_sanity(real_redis_client):
+    # Arrange
+    model = BaseModelListModel()
+    model.products = [None, None]
+    await model.save()
+
+    product = Product(name="Phone", price=699, in_stock=False)
+
+    # Act
+    model.products[1] = product
+
+    # Assert - BaseModels have different field path structure
+    assert model.products[1].key == model.key  # Same Redis key as parent
+
+    # Check the inst_field_conf for proper field path
+    if hasattr(model.products[1], "inst_field_conf"):
+        assert model.products[1].inst_field_conf.field_path == "products[1]"
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_basemodel_nested_operations_sanity(real_redis_client):
+    # Arrange
+    model = BaseModelListModel()
+    model.configs = [None]
+    await model.save()
+
+    config = NestedConfig(
+        settings={"theme": "light", "lang": "en"}, options=["auto-save", "backup"]
+    )
+
+    # Act
+    model.configs[0] = config
+
+    # Assert - the setitem should create a Redis BaseModel with nested fields
+    assert isinstance(model.configs[0], BaseRedisModel)
+    assert model.configs[0].settings == {"theme": "light", "lang": "en"}
+    assert model.configs[0].options == ["auto-save", "backup"]
+
+    # Check that we can modify nested fields (though save/load may not work correctly)
+    model.configs[0].settings["theme"] = "dark"
+    assert model.configs[0].settings["theme"] == "dark"
+
+    model.configs[0].options.append("sync")
+    assert len(model.configs[0].options) == 3
+    assert "sync" in model.configs[0].options
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_basemodel_multiple_items_sanity(real_redis_client):
+    # Arrange
+    model = BaseModelListModel()
+    model.users = [None, None, None]
+    await model.save()
+
+    users = [
+        UserProfile(name="User1", age=20, email="user1@example.com"),
+        UserProfile(name="User2", age=30, email="user2@example.com"),
+        UserProfile(name="User3", age=40, email="user3@example.com"),
+    ]
+
+    # Act
+    for i, user in enumerate(users):
+        model.users[i] = user
+
+    # Assert - all items should be Redis BaseModels
+    assert len(model.users) == 3
+    for i, expected_user in enumerate(users):
+        actual_user = model.users[i]
+        assert isinstance(actual_user, BaseRedisModel)
+        assert actual_user.name == expected_user.name
+        assert actual_user.age == expected_user.age
+        assert actual_user.email == expected_user.email
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_basemodel_field_access_edge_case(real_redis_client):
+    # Arrange
+    model = BaseModelListModel()
+    model.products = [None, None]
+    await model.save()
+
+    product = Product(name="Tablet", price=399, in_stock=True)
+
+    # Act
+    model.products[1] = product
+
+    # Assert - verify we can access and modify all fields
+    assert isinstance(model.products[1], BaseRedisModel)
+    assert model.products[1].name == "Tablet"
+    assert model.products[1].price == 399
+    assert (
+        model.products[1].in_stock == True
+    )  # May be 1 instead of True due to Redis conversion
+
+    # Modify fields
+    model.products[1].name = "Updated Tablet"
+    model.products[1].price = 299
+    model.products[1].in_stock = False
+
+    assert model.products[1].name == "Updated Tablet"
+    assert model.products[1].price == 299
+    assert (
+        model.products[1].in_stock == False
+    )  # May be 0 instead of False due to Redis conversion
+
+
+@pytest.mark.asyncio
+async def test_redis_list_setitem_inner_basemodel_save_raises_error(real_redis_client):
+    # Arrange
+    model = BaseModelListModel()
+    model.users = [None, None]
+    await model.save()
+
+    user = UserProfile(name="Alice", age=25, email="alice@example.com")
+
+    # Act
+    model.users[0] = user
+
+    # Assert
+    with pytest.raises(RuntimeError, match="Can only save from top level model"):
+        await model.users[0].save()
