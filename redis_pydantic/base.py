@@ -200,6 +200,9 @@ class BaseRedisModel(BaseModel):
             super().__setattr__(name, value)
 
     async def save(self) -> Self:
+        if self.inst_field_conf.field_path is not None:
+            raise RuntimeError("Can only save from top level model")
+
         model_dump = self.redis_dump()
         await self.Meta.redis.json().set(self.key, "$", model_dump)
         if self.Meta.ttl is not None:
