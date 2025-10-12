@@ -641,6 +641,200 @@ await config.limits.aupdate(
 )
 ```
 
+## Model Duplication
+
+RedisPydantic provides built-in model duplication functionality for creating copies of existing models with new unique keys while preserving all data.
+
+### Basic Duplication
+
+```python
+class User(BaseRedisModel):
+    name: str
+    age: int
+    tags: List[str] = []
+    metadata: Dict[str, str] = {}
+
+# Create and save original user
+original_user = User(name="John", age=30, tags=["python", "redis"])
+await original_user.save()
+
+# Create a duplicate with new unique key
+duplicate_user = await original_user.duplicate()
+
+# Both users exist independently in Redis
+print(f"Original key: {original_user.key}")   # User:uuid1
+print(f"Duplicate key: {duplicate_user.key}") # User:uuid2
+
+# Same data, different keys
+assert duplicate_user.name == original_user.name
+assert duplicate_user.age == original_user.age
+assert duplicate_user.tags == original_user.tags
+assert duplicate_user.pk != original_user.pk  # Different primary keys
+```
+
+### Bulk Duplication
+
+Create multiple duplicates efficiently:
+
+```python
+original = User(name="Template User", age=25)
+await original.save()
+
+# Create 5 duplicates at once
+duplicates = await original.duplicate_many(5)
+
+# All duplicates have unique keys and identical data
+for duplicate in duplicates:
+    assert duplicate.pk != original.pk
+    assert duplicate.name == original.name
+    assert duplicate.age == original.age
+```
+
+### Working with Duplicated Models
+
+Duplicated models are fully independent and support all Redis operations:
+
+```python
+original = User(name="John", tags=["python"])
+await original.save()
+
+duplicate = await original.duplicate()
+
+# Modify duplicate independently
+await duplicate.tags.aappend("redis")
+await duplicate.name.set("John Copy")
+
+# Original remains unchanged
+await original.tags.load()
+assert original.tags == ["python"]
+assert original.name == "John"
+
+# Duplicate has the changes
+assert duplicate.tags == ["python", "redis"]
+assert duplicate.name == "John Copy"
+```
+
+### Nested Model Duplication
+
+Duplication works seamlessly with nested models:
+
+```python
+class UserProfile(BaseModel):
+    bio: str = ""
+    skills: List[str] = Field(default_factory=list)
+    preferences: Dict[str, str] = Field(default_factory=dict)
+
+class User(BaseRedisModel):
+    name: str
+    profile: UserProfile = Field(default_factory=UserProfile)
+    tags: List[str] = Field(default_factory=list)
+
+# Create user with nested data
+original = User(
+    name="Alice",
+    profile=UserProfile(
+        bio="Software Engineer",
+        skills=["Python", "Redis"],
+        preferences={"theme": "dark", "lang": "en"}
+    ),
+    tags=["engineer", "python"]
+)
+await original.save()
+
+# Duplicate preserves all nested structure
+duplicate = await original.duplicate()
+
+# Verify nested data is identical
+assert duplicate.profile.bio == original.profile.bio
+assert duplicate.profile.skills == original.profile.skills
+assert duplicate.profile.preferences == original.profile.preferences
+
+# Nested Redis operations work independently
+await duplicate.profile.skills.aappend("JavaScript")
+await original.profile.skills.load()
+assert "JavaScript" not in original.profile.skills  # Original unchanged
+assert "JavaScript" in duplicate.profile.skills      # Duplicate modified
+```
+
+### Duplication with Redis Nested Models
+
+When using `BaseRedisModel` as nested models, duplication preserves the Redis functionality:
+
+```python
+class UserStats(BaseRedisModel):
+    login_count: int = 0
+    preferences: Dict[str, bool] = Field(default_factory=dict)
+
+class User(BaseRedisModel):
+    name: str
+    stats: UserStats = Field(default_factory=UserStats)
+
+original = User(name="Bob")
+await original.save()
+
+# Add some stats data
+await original.stats.preferences.aupdate(notifications=True, dark_mode=False)
+original.stats.login_count = 10
+await original.save()
+
+# Duplicate preserves Redis nested model
+duplicate = await original.duplicate()
+
+# Independent Redis operations on nested models
+await duplicate.stats.preferences.aset_item("email_alerts", True)
+await original.stats.preferences.load()
+
+assert "email_alerts" not in original.stats.preferences
+assert duplicate.stats.preferences["email_alerts"] is True
+```
+
+### Duplication Restrictions
+
+Duplication can only be performed on top-level models:
+
+```python
+user = User(name="Test")
+await user.save()
+
+# ✅ This works - duplicating top-level model
+duplicate = await user.duplicate()
+
+# ❌ This raises RuntimeError - cannot duplicate inner models
+try:
+    await user.profile.duplicate()  # Inner BaseModel
+except RuntimeError as e:
+    print(e)  # "Can only duplicate from top level model"
+
+try:
+    await user.stats.duplicate()    # Inner BaseRedisModel
+except RuntimeError as e:
+    print(e)  # "Can only duplicate from top level model"
+```
+
+### Use Cases for Duplication
+
+1. **Template System**: Create template models and duplicate them for new instances
+2. **Backup/Versioning**: Create snapshots of model state
+3. **A/B Testing**: Duplicate user data for testing different scenarios
+4. **Batch Processing**: Create multiple similar records efficiently
+5. **Development/Testing**: Generate test data based on existing models
+
+```python
+# Template example
+template_user = User(
+    name="Template",
+    profile=UserProfile(bio="Default bio", skills=["basic"]),
+    tags=["new_user"]
+)
+await template_user.save()
+
+# Create new users from template
+new_users = await template_user.duplicate_many(100)
+for i, user in enumerate(new_users):
+    await user.name.set(f"User_{i}")
+    # Each user starts with template data but can be customized
+```
+
 ## License
 
 MIT License
