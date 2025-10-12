@@ -62,11 +62,18 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().clear()
         super().extend(deserialized_items)
 
+    def json_field_path(self, field_name: str):
+        return f"{self.json_path}[{field_name}]"
+
     def __setitem__(self, key, value):
+        redis_type, kwargs = self.inner_type
         new_val = self.inst_init(
-            self.inner_type,
+            redis_type,
             value,
             self.redis_key,
+            **kwargs,
+            redis=self.redis,
+            field_path=self.json_field_path(key),
             _field_config_override=RedisFieldConfig(
                 field_path=self.json_field_path(key)
             ),
