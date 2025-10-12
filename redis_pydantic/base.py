@@ -57,14 +57,6 @@ class BaseRedisModel(BaseModel):
     def key(self):
         return f"{self.key_initials}:{self.pk}"
 
-    def _update_redis_field_parameters(self):
-        for field_name in self.model_fields:
-            value = getattr(self, field_name)
-            if isinstance(value, RedisType):
-                value.redis_key = self.key
-            elif isinstance(value, BaseRedisModel):
-                value.pk = self.pk
-
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
@@ -82,64 +74,6 @@ class BaseRedisModel(BaseModel):
             )
             resolved_inner_type = cls._resolve_redis_type(full_field_name, actual_type)
             cls._redis_field_mapping[field_name] = resolved_inner_type
-
-    @classmethod
-    def _resolve_redis_type(cls, field_name, type_):
-        # Handle generic types
-        origin_type = get_origin(type_) or type_
-
-        # Check if this type has a Redis equivalent
-        if origin_type in cls.Meta.redis_type:
-            redis_type_class = cls.Meta.redis_type[origin_type]
-
-            # If it's a GenericRedisType, create its serializer
-            if issubclass(redis_type_class, GenericRedisType):
-                return [
-                    redis_type_class,
-                    {
-                        "serializer_creator": create_serializer,
-                        "full_type": type_,
-                        "inst_init": cls.create_redis_type,
-                        "type_creator": cls._resolve_redis_type,
-                    },
-                ]
-            else:
-                return [redis_type_class, {}]
-        elif issubclass(type_, BaseRedisModel):
-            field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.class_key_initials()
-            )
-            return [type_, {"_field_config_override": field_conf}]
-        elif issubclass(type_, BaseModel):
-            field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.class_key_initials()
-            )
-            new_base_model_type = type(
-                f"Redis{type_.__name__}",
-                (type_, BaseRedisModel),
-                dict(field_config=field_conf),
-            )
-            return [new_base_model_type, {}]
-        else:
-            raise RuntimeError(f"{type_} not supported by RedisPydantic")
-
-    @classmethod
-    def create_redis_type(
-        cls,
-        redis_type: type["BaseRedisModel | RedisType"],
-        value: Any,
-        redis_key: str = None,
-        **saved_kwargs,
-    ):
-        # Handle nested models - convert user model to Redis model
-        if isinstance(value, BaseModel):
-            pk = redis_key.split(":", 1)[1]
-            model_data = value.model_dump()
-            instance = redis_type(**model_data, **saved_kwargs)
-            instance.pk = pk
-            return instance
-        else:
-            return redis_type(value, redis_key=redis_key, **saved_kwargs)
 
     def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)
@@ -171,36 +105,6 @@ class BaseRedisModel(BaseModel):
 
     def is_ineer_model(self):
         return self.inst_field_conf.field_path is not None
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if value is None:
-            super().__setattr__(name, value)
-            return
-
-        is_already_at_correct_type = isinstance(value, (RedisType, BaseRedisModel))
-        has_redis_type = name in self._redis_field_mapping
-        if has_redis_type and not is_already_at_correct_type:
-            type_definitions = self._redis_field_mapping[name]
-            full_field_path = (
-                f"{self.inst_field_conf.field_path}.{name}"
-                if self.inst_field_conf.field_path
-                else name
-            )
-
-            redis_instance = self.create_redis_type(
-                redis_type=type_definitions[0],
-                value=value,
-                redis_key=self.key,
-                field_path=full_field_path,
-                redis=self.Meta.redis,
-                **type_definitions[1],
-            )
-
-            # Set the converted Redis instance
-            super().__setattr__(name, redis_instance)
-        else:
-            # Use the parent's __setattr__ for all other cases
-            super().__setattr__(name, value)
 
     async def save(self) -> Self:
         if self.is_ineer_model():
@@ -280,3 +184,99 @@ class BaseRedisModel(BaseModel):
             yield redis_model
             await pipe.execute()
             _context_var.set(None)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if value is None:
+            super().__setattr__(name, value)
+            return
+
+        is_already_at_correct_type = isinstance(value, (RedisType, BaseRedisModel))
+        has_redis_type = name in self._redis_field_mapping
+        if has_redis_type and not is_already_at_correct_type:
+            type_definitions = self._redis_field_mapping[name]
+            full_field_path = (
+                f"{self.inst_field_conf.field_path}.{name}"
+                if self.inst_field_conf.field_path
+                else name
+            )
+
+            redis_instance = self.create_redis_type(
+                redis_type=type_definitions[0],
+                value=value,
+                redis_key=self.key,
+                field_path=full_field_path,
+                redis=self.Meta.redis,
+                **type_definitions[1],
+            )
+
+            # Set the converted Redis instance
+            super().__setattr__(name, redis_instance)
+        else:
+            # Use the parent's __setattr__ for all other cases
+            super().__setattr__(name, value)
+
+    def _update_redis_field_parameters(self):
+        for field_name in self.model_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, RedisType):
+                value.redis_key = self.key
+            elif isinstance(value, BaseRedisModel):
+                value.pk = self.pk
+
+    @classmethod
+    def _resolve_redis_type(cls, field_name, type_):
+        # Handle generic types
+        origin_type = get_origin(type_) or type_
+
+        # Check if this type has a Redis equivalent
+        if origin_type in cls.Meta.redis_type:
+            redis_type_class = cls.Meta.redis_type[origin_type]
+
+            # If it's a GenericRedisType, create its serializer
+            if issubclass(redis_type_class, GenericRedisType):
+                return [
+                    redis_type_class,
+                    {
+                        "serializer_creator": create_serializer,
+                        "full_type": type_,
+                        "inst_init": cls.create_redis_type,
+                        "type_creator": cls._resolve_redis_type,
+                    },
+                ]
+            else:
+                return [redis_type_class, {}]
+        elif issubclass(type_, BaseRedisModel):
+            field_conf = RedisFieldConfig(
+                field_path=field_name, override_class_name=cls.class_key_initials()
+            )
+            return [type_, {"_field_config_override": field_conf}]
+        elif issubclass(type_, BaseModel):
+            field_conf = RedisFieldConfig(
+                field_path=field_name, override_class_name=cls.class_key_initials()
+            )
+            new_base_model_type = type(
+                f"Redis{type_.__name__}",
+                (type_, BaseRedisModel),
+                dict(field_config=field_conf),
+            )
+            return [new_base_model_type, {}]
+        else:
+            raise RuntimeError(f"{type_} not supported by RedisPydantic")
+
+    @classmethod
+    def create_redis_type(
+        cls,
+        redis_type: type["BaseRedisModel | RedisType"],
+        value: Any,
+        redis_key: str = None,
+        **saved_kwargs,
+    ):
+        # Handle nested models - convert user model to Redis model
+        if isinstance(value, BaseModel):
+            pk = redis_key.split(":", 1)[1]
+            model_data = value.model_dump()
+            instance = redis_type(**model_data, **saved_kwargs)
+            instance.pk = pk
+            return instance
+        else:
+            return redis_type(value, redis_key=redis_key, **saved_kwargs)
