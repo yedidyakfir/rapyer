@@ -36,6 +36,7 @@ nav:
   - User Guide:
     - Basic Usage: usage.md
     - Supported Types: types.md
+    - Nested Models: nested-models.md
     - Advanced Features: advanced.md
     - Examples: examples.md
   - API Reference: api.md

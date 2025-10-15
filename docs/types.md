@@ -26,6 +26,9 @@ class MyModel(BaseRedisModel):
 
 # Operations  
 await model.count.set(42)
+await model.count.increase(5)      # Increase by 5
+await model.count.increase()       # Increase by 1 (default)
+await model.count.increase(-3)     # Decrease by 3
 await model.count.load()
 current_count = model.count
 ```

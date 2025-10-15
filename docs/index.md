@@ -17,6 +17,7 @@ A Python package that provides Pydantic models with Redis as the backend storage
 import asyncio
 from redis_pydantic.base import BaseRedisModel
 from typing import List, Dict
+from datetime import datetime
 
 class User(BaseRedisModel):
     name: str
@@ -24,10 +25,11 @@ class User(BaseRedisModel):
     tags: List[str] = []
     metadata: Dict[str, str] = {}
     score: int = 0
+    created_at: datetime
 
 async def main():
     # Create a new user
-    user = User(name="John", age=30)
+    user = User(name="John", age=30, created_at=datetime.now())
     await user.save()
     
     # Retrieve user by key
