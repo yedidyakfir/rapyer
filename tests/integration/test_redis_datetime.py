@@ -2,20 +2,22 @@ import pytest
 import pytest_asyncio
 from datetime import datetime, timezone
 
+from pydantic import Field
+
 from redis_pydantic.base import BaseRedisModel
 
 
 class DatetimeModel(BaseRedisModel):
-    created_at: datetime = None
-    updated_at: datetime = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
 
 class DatetimeListModel(BaseRedisModel):
-    dates: list[datetime] = []
+    dates: list[datetime] = Field(default_factory=list)
 
 
 class DatetimeDictModel(BaseRedisModel):
-    event_dates: dict[str, datetime] = {}
+    event_dates: dict[str, datetime] = Field(default_factory=dict)
 
 
 @pytest_asyncio.fixture
