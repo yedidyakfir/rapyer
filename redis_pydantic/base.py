@@ -169,13 +169,19 @@ class BaseRedisModel(BaseModel):
             *[getattr(self, field_name).load() for field_name in self.model_dump()]
         )
 
+    @classmethod
     @contextlib.asynccontextmanager
-    async def lock(self, action: str = "default"):
-        async with acquire_lock(self.Meta.redis, f"{self.key}/{action}"):
-            redis_model = await self.__class__.get(self.key)
-            self.model_copy(update=redis_model.model_dump())
+    async def lock_from_key(cls, key: str, action: str = "default"):
+        async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
+            redis_model = await cls.get(key)
             yield redis_model
             await redis_model.save()
+
+    @contextlib.asynccontextmanager
+    async def lock(self, action: str = "default"):
+        async with self.lock_from_key(self.key, action) as redis_model:
+            self.model_copy(update=redis_model.model_dump())
+            yield redis_model
 
     @contextlib.asynccontextmanager
     async def pipeline(self):
