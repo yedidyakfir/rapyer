@@ -9,6 +9,7 @@ from pydantic import BaseModel, PrivateAttr
 
 from redis_pydantic.config import RedisConfig, RedisFieldConfig
 from redis_pydantic.context import _context_var
+from redis_pydantic.types.any import AnyTypeRedis
 from redis_pydantic.types.init import create_serializer
 from redis_pydantic.types.base import GenericRedisType, RedisType
 from redis_pydantic.utils import (
@@ -269,7 +270,7 @@ class BaseRedisModel(BaseModel):
             )
             return [new_base_model_type, {}]
         else:
-            raise RuntimeError(f"{type_} not supported by RedisPydantic")
+            return [AnyTypeRedis, {}]
 
     @classmethod
     def create_redis_type(
