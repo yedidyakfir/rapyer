@@ -1,6 +1,7 @@
 # RedisPydantic
 
 A Python package that provides Pydantic models with Redis as the backend storage, enabling automatic synchronization between your Python objects and Redis with full type validation.
+Our goal is to make redis action easy and accessible, and more importantly, to make it easy to use redis with race conditions and data consistency.
 
 ## Features
 
@@ -70,56 +71,7 @@ if __name__ == "__main__":
 
 ## Redis Connection Setup
 
-### Default Connection
-
-By default, RedisPydantic connects to `redis://localhost:6379/0`. 
-
-### Custom Connection
-
-Configure Redis connection in your model's `Meta` class:
-
-```python
-import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
-
-class MyModel(BaseRedisModel):
-    name: str
-    
-    class Meta:
-        redis = redis.from_url("redis://your-redis-host:6379/1")
-```
-
-### Environment-based Configuration
-
-```python
-import os
-import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
-
-redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-
-class MyModel(BaseRedisModel):
-    name: str
-    
-    class Meta:
-        redis = redis.from_url(redis_url)
-```
-
-### Connection with Authentication
-
-```python
-import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
-
-class MyModel(BaseRedisModel):
-    name: str
-    
-    class Meta:
-        redis = redis.from_url(
-            "redis://username:password@your-redis-host:6379/0",
-            decode_responses=True
-        )
-```
+By default, RedisPydantic connects to `redis://localhost:6379/0`.
 
 ## Saving, loading and deleting models
 A BaseRedisModel automatically creates a key, you can use it to load and delete the model
@@ -139,85 +91,6 @@ await loaded_user.delete(user.key)
 You can also delete without loading the user
 ```python
 delete_succeded = await User.try_delete(key)
-```
-
-## Supported Types and Operations
-
-### String (RedisStr)
-
-```python
-class MyModel(BaseRedisModel):
-    name: str = "default"
-
-# Operations
-await model.name.set("new_value")  # Set string value
-await model.name.load()            # Load from Redis
-```
-
-### Integer (RedisInt)
-
-```python
-class MyModel(BaseRedisModel):
-    counter: int = 0
-
-# Operations
-await model.counter.set(42)        # Set integer value
-await model.counter.load()         # Load from Redis
-```
-
-### Boolean (RedisBool)
-
-```python
-class MyModel(BaseRedisModel):
-    is_active: bool = True
-
-# Operations
-await model.is_active.set(False)   # Set boolean value
-await model.is_active.load()       # Load from Redis
-```
-
-### Bytes (RedisBytes)
-
-```python
-class MyModel(BaseRedisModel):
-    data: bytes = b""
-
-# Operations
-await model.data.set(b"binary_data")  # Set bytes value
-await model.data.load()               # Load from Redis
-```
-
-### List (RedisList)
-
-```python
-class MyModel(BaseRedisModel):
-    items: List[str] = []
-
-# Operations
-await model.items.aappend("item1")           # Append single item
-await model.items.aextend(["item2", "item3"]) # Extend with multiple items
-await model.items.ainsert(0, "first")        # Insert at specific index
-popped = await model.items.apop()            # Pop last item
-popped = await model.items.apop(0)           # Pop item at index
-await model.items.aclear()                   # Clear all items
-await model.items.load()                     # Load from Redis
-```
-
-### Dictionary (RedisDict)
-
-```python
-class MyModel(BaseRedisModel):
-    metadata: Dict[str, str] = {}
-
-# Operations
-await model.metadata.aset_item("key", "value")     # Set single item
-await model.metadata.aupdate(key1="val1", key2="val2")  # Update multiple items
-await model.metadata.adel_item("key")               # Delete item
-popped = await model.metadata.apop("key")           # Pop item by key
-popped = await model.metadata.apop("key", "default") # Pop with default
-key, value = await model.metadata.apopitem()        # Pop arbitrary item
-await model.metadata.aclear()                       # Clear all items
-await model.metadata.load()                         # Load from Redis
 ```
 
 ## Advanced Usage
