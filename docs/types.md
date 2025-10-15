@@ -282,7 +282,6 @@ await model.data.aupdate(
 )
 
 # These might cause issues (not JSON-serializable)
-# await model.data.aset_item("datetime", datetime.now())  # ❌ 
 # await model.data.aset_item("bytes", b"data")            # ❌
 ```
 
