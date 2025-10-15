@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Any, get_origin
 
@@ -12,6 +13,7 @@ from redis_pydantic.types.byte import RedisBytes
 from redis_pydantic.types.integer import RedisInt
 from redis_pydantic.types.boolean import RedisBool
 from redis_pydantic.types.string import RedisStr
+from redis_pydantic.types.datetime import RedisDatetime
 
 from redis_pydantic.types.string import StringSerializer
 from redis_pydantic.types.integer import IntegerSerializer
@@ -20,6 +22,7 @@ from redis_pydantic.types.byte import ByteSerializer
 from redis_pydantic.types.any import AnySerializer
 from redis_pydantic.types.lst import ListSerializer
 from redis_pydantic.types.dct import DictSerializer
+from redis_pydantic.types.datetime import DatetimeSerializer
 
 
 ALL_TYPES = {
@@ -29,6 +32,7 @@ ALL_TYPES = {
     int: RedisInt,
     bool: RedisBool,
     str: RedisStr,
+    datetime: RedisDatetime,
     Any: AnyTypeRedis,
 }
 
@@ -39,6 +43,7 @@ SERIALIZER = {
     int: IntegerSerializer,
     bool: BooleanSerializer,
     str: StringSerializer,
+    datetime: DatetimeSerializer,
     Any: AnySerializer,
     Enum: EnumSerializer,
 }

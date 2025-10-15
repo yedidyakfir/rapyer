@@ -1,0 +1,49 @@
+from datetime import datetime
+from redis_pydantic.types.base import RedisType, RedisSerializer
+
+
+class DatetimeSerializer(RedisSerializer):
+    def serialize_value(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return str(value)
+
+    def deserialize_value(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                return None
+        return None
+
+
+class RedisDatetime(RedisType):
+    serializer = DatetimeSerializer(datetime, None)
+
+    def __init__(self, value=None, **kwargs):
+        RedisType.__init__(self, **kwargs)
+        self._value = value
+
+    async def load(self):
+        redis_value = await self.client.json().get(self.redis_key, self.field_path)
+        if redis_value is not None:
+            return self.serializer.deserialize_value(redis_value)
+        return None
+
+    async def set(self, value: datetime):
+        if value is not None and not isinstance(value, datetime):
+            raise TypeError("Value must be datetime or None")
+
+        serialized_value = self.serializer.serialize_value(value)
+        return await self.client.json().set(
+            self.redis_key, self.json_path, serialized_value
+        )
+
+    def clone(self):
+        return self._value
