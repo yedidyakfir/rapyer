@@ -1,8 +1,18 @@
 # Supported Types
 
-RedisPydantic supports various Python types with automatic Redis serialization and type validation.
+RedisPydantic supports **all Python types** with automatic Redis serialization and type validation. Types fall into two categories:
 
-## Primitive Types
+1. **Natively supported types** - Optimized Redis storage with native operations
+2. **All other types** - Automatically handled using pickle serialization
+
+!!! info "Universal Type Support"
+    Any Python type can be used as a field type. Unmapped types are automatically serialized using Python's pickle module and stored as base64-encoded strings in Redis. While this works for any type, natively supported types offer better performance and Redis-native operations.
+
+## Natively Supported Types
+
+The following types have optimized Redis storage and native operations:
+
+### Primitive Types
 
 ### String (RedisStr)
 
@@ -61,6 +71,24 @@ content = model.data  # Returns bytes object
 
 !!! note "Bytes Serialization"
     Bytes are automatically base64 encoded when stored in Redis and decoded when loaded.
+
+### Datetime (RedisDatetime)
+
+```python
+from datetime import datetime
+
+class MyModel(BaseRedisModel):
+    created_at: datetime = datetime.now()
+    updated_at: datetime
+
+# Operations
+await model.created_at.set(datetime(2023, 12, 25, 10, 30))
+await model.created_at.load()
+timestamp = model.created_at  # Returns datetime object
+```
+
+!!! note "Datetime Serialization"
+    Datetime objects are automatically serialized to ISO format strings in Redis and parsed back to datetime objects when loaded.
 
 ## Collection Types
 
@@ -312,3 +340,133 @@ class OverNestedModel(BaseRedisModel):
 ```
 
 Choose the right balance between structure and performance for your use case.
+
+## Unmapped Types (Pickle Serialization)
+
+Any type not natively supported is automatically handled using pickle serialization. This provides universal compatibility at the cost of some performance and Redis-native operations.
+
+### Examples of Unmapped Types
+
+```python
+from typing import Union, Tuple
+from collections import namedtuple
+from dataclasses import dataclass
+from enum import Enum
+import decimal
+
+# Custom types
+Point = namedtuple('Point', ['x', 'y'])
+
+@dataclass  
+class Config:
+    debug: bool = False
+    timeout: float = 30.0
+
+class Status(Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+
+class UniversalModel(BaseRedisModel):
+    # These use pickle serialization
+    point: Point = Point(0, 0)
+    config: Config = Config()
+    status: Status = Status.PENDING
+    decimal_value: decimal.Decimal = decimal.Decimal('0.00')
+    tuple_data: Tuple[int, str, bool] = (1, "test", True)
+    union_field: Union[str, int, Point] = "default"
+    
+    # Any custom class works
+    custom_object: Any = None
+
+# Usage is identical to native types
+model = UniversalModel()
+await model.save()
+
+# Set values
+await model.point.set(Point(10, 20))
+await model.config.set(Config(debug=True, timeout=60.0))
+await model.status.set(Status.COMPLETED)
+await model.decimal_value.set(decimal.Decimal('123.45'))
+
+# Load values (types are preserved)
+loaded_point = await model.point.load()
+assert isinstance(loaded_point, Point)
+assert loaded_point.x == 10 and loaded_point.y == 20
+```
+
+### Pickle Serialization Behavior
+
+```python
+class PickleModel(BaseRedisModel):
+    custom_data: Any = None
+
+model = PickleModel()
+
+# Any Python object can be stored
+await model.custom_data.set({
+    'complex': [1, 2, {'nested': True}],
+    'datetime': datetime.now(),
+    'decimal': decimal.Decimal('99.99'),
+    'function': lambda x: x * 2  # Even functions work
+})
+
+# Object is pickled, base64 encoded, and stored in Redis
+# When loaded, it's unpickled and original type is restored
+loaded_data = await model.custom_data.load()
+```
+
+### Considerations for Unmapped Types
+
+**Advantages:**
+- Universal compatibility with any Python type
+- Automatic type preservation
+- No additional configuration required
+
+**Limitations:**
+- No Redis-native operations (like atomic increments for numbers)
+- Larger storage footprint (pickle + base64 encoding)
+- Potential security concerns with unpickling untrusted data
+- Not human-readable in Redis
+- Performance overhead for serialization/deserialization
+
+**Best Practices:**
+- Use native types when possible for better performance
+- Reserve unmapped types for complex objects that don't have native equivalents
+- Be cautious with pickle serialization in production environments
+- Consider JSON serialization for simpler data structures
+
+```python
+# Preferred: Use native types when possible
+class OptimizedModel(BaseRedisModel):
+    count: int = 0                    # Native Redis operations
+    tags: List[str] = []             # Native list operations
+    metadata: Dict[str, str] = {}    # Native dict operations
+
+# When needed: Use unmapped types for complex objects
+class ComplexModel(BaseRedisModel):
+    # Native types for simple data
+    name: str = ""
+    scores: List[int] = []
+    
+    # Unmapped types for complex objects
+    algorithm_state: Any = None      # Custom ML model state
+    config_object: ConfigClass = None   # Complex configuration
+```
+
+## Quick Reference
+
+### Natively Supported Types
+- `str` → RedisStr - String operations
+- `int` → RedisInt - Numeric operations with atomic increment
+- `bool` → RedisBool - Boolean values  
+- `bytes` → RedisBytes - Binary data with base64 encoding
+- `datetime` → RedisDatetime - Datetime objects with ISO serialization
+- `List[T]` → RedisList - List operations (append, extend, pop, etc.)
+- `Dict[K, V]` → RedisDict - Dictionary operations (set, update, pop, etc.)
+- Nested Pydantic models → Automatic Redis model conversion
+
+### Universal Support
+- **Any other type** → AnyTypeRedis - Pickle serialization
+- Examples: `Tuple`, `Union`, `Enum`, `dataclass`, custom classes, `Decimal`, etc.
+
+All types work identically from an API perspective - the difference is in storage efficiency and available operations.

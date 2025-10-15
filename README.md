@@ -10,7 +10,7 @@ Our goal is to make redis action easy and accessible, and more importantly, to m
 - **Async/Await Support**: Built with asyncio for high-performance applications
 - **Pydantic Integration**: Full type validation and serialization using Pydantic v2
 - **Redis Backend**: Efficient storage using Redis JSON with support for various data types
-- **Automatic Serialization**: Handles lists, dicts, BaseModel instances, and primitive types
+- **Universal Type Support**: Supports all Python types - native optimization for primitives, automatic pickle serialization for everything else
 - **Atomic Operations**: Built-in methods for atomic list and dictionary operations
 - **Type Safety**: Full type hints and validation for all Redis operations
 
@@ -93,6 +93,50 @@ await loaded_user.delete(user.key)
 You can also delete without loading the user
 ```python
 delete_succeded = await User.try_delete(key)
+```
+
+## Type Support
+
+RedisPydantic supports **all Python types** with automatic serialization:
+
+### Natively Supported Types (Optimized)
+- `str`, `int`, `bool`, `bytes`, `datetime` - Redis-native operations
+- `List[T]`, `Dict[K, V]` - Atomic list/dict operations  
+- Nested Pydantic models - Automatic Redis conversion
+
+### Universal Support (Pickle Serialization)
+- **Any other type** - `Tuple`, `Union`, `Enum`, `dataclass`, custom classes, etc.
+- Automatic pickle serialization with type preservation
+- Same API as native types
+
+```python
+from typing import Union, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+@dataclass
+class Config:
+    debug: bool = False
+    
+class Status(Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+class FlexibleModel(BaseRedisModel):
+    # Native types (optimized)
+    name: str = "default"
+    scores: List[int] = []
+    
+    # Unmapped types (pickle serialization)
+    config: Config = Config()
+    status: Status = Status.ACTIVE
+    coordinates: Tuple[float, float] = (0.0, 0.0)
+    data: Union[str, int, Config] = "default"
+
+# All types work identically
+model = FlexibleModel()
+await model.config.set(Config(debug=True))  # Pickled automatically
+await model.scores.aappend(95)               # Native Redis operation
 ```
 
 ## Advanced Usage
