@@ -43,5 +43,9 @@ class RedisInt(int, RedisType):
             self.redis_key, self.json_path, serialized_value
         )
 
+    async def increase(self, amount: int = 1):
+        result = await self.client.json().numincrby(self.redis_key, self.json_path, amount)
+        return result[0] if isinstance(result, list) and result else result
+
     def clone(self):
         return int(self)

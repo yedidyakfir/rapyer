@@ -182,3 +182,91 @@ async def test_redis_int_arithmetic_operations_sanity(real_redis_client, operati
 
     # Assert
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "initial_value,increase_amount,expected",
+    [
+        (0, 1, 1),
+        (10, 5, 15),
+        (100, -20, 80),
+        (-50, 30, -20),
+        (0, 0, 0),
+        (999, 1, 1000),
+        (-999, -1, -1000),
+    ],
+)
+@pytest.mark.asyncio
+async def test_redis_int_increase_functionality_sanity(
+    real_redis_client, initial_value, increase_amount, expected
+):
+    # Arrange
+    model = IntModel()
+    await model.save()
+    await model.count.set(initial_value)
+
+    # Act
+    result = await model.count.increase(increase_amount)
+
+    # Assert
+    fresh_model = IntModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.count.load()
+    assert loaded_value == expected
+    assert result == expected
+
+
+@pytest.mark.asyncio
+async def test_redis_int_increase_default_amount_sanity(real_redis_client):
+    # Arrange
+    model = IntModel()
+    await model.save()
+    await model.count.set(10)
+
+    # Act
+    result = await model.count.increase()
+
+    # Assert
+    fresh_model = IntModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.count.load()
+    assert loaded_value == 11
+    assert result == 11
+
+
+@pytest.mark.asyncio
+async def test_redis_int_increase_on_non_existent_key_edge_case(real_redis_client):
+    # Arrange
+    model = IntModel()
+    await model.save()
+
+    # Act
+    result = await model.count.increase(5)
+
+    # Assert
+    fresh_model = IntModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.count.load()
+    assert loaded_value == 5
+    assert result == 5
+
+
+@pytest.mark.asyncio
+async def test_redis_int_increase_multiple_times_sanity(real_redis_client):
+    # Arrange
+    model = IntModel(count=0)
+    await model.save()
+
+    # Act
+    result1 = await model.count.increase(10)
+    result2 = await model.count.increase(20)
+    result3 = await model.count.increase(-5)
+
+    # Assert
+    fresh_model = IntModel()
+    fresh_model.pk = model.pk
+    loaded_value = await fresh_model.count.load()
+    assert result1 == 10
+    assert result2 == 30
+    assert result3 == 25
+    assert loaded_value == 25
