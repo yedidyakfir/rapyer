@@ -21,6 +21,8 @@ class RedisSerializer(ABC):
 
 class PydanicSerializer(RedisSerializer):
     def serialize_value(self, value):
+        if isinstance(value, dict):
+            return value
         return value.model_dump()
 
     def deserialize_value(self, value):

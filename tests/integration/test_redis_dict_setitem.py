@@ -546,7 +546,7 @@ async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity
     # Use regular aset_item for comparison
     await model.addresses.aset_item(
         "regular_key",
-        {"street": "666 Regular Ave", "city": "Phoenix", "zip_code": "85001"},
+        dict(street="666 Regular Ave", city="Phoenix", zip_code="85001"),
     )
 
     # Assert - check both setitem and aset_item work
@@ -560,9 +560,9 @@ async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity
     # regular aset_item should also work when loaded
     await model.addresses.load()
     regular_address = model.addresses["regular_key"]
-    assert regular_address["street"] == "666 Regular Ave"
-    assert regular_address["city"] == "Phoenix"
-    assert regular_address["zip_code"] == "85001"
+    assert regular_address.street == "666 Regular Ave"
+    assert regular_address.city == "Phoenix"
+    assert regular_address.zip_code == "85001"
 
 
 @pytest.mark.asyncio

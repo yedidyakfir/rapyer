@@ -398,7 +398,7 @@ async def test_redis_list_setitem_basemodel_configs_type_checking_sanity(
 async def test_redis_list_setitem_basemodel_redis_operations_sanity(real_redis_client):
     # Arrange
     model = BaseModelListModel()
-    model.users = [None, None, None]
+    model.users = [UserProfile(name="Ori", age=2, email="Myemail")]
     await model.save()
 
     user = UserProfile(name="Alice", age=25, email="alice@example.com")
@@ -424,8 +424,12 @@ async def test_redis_list_setitem_basemodel_redis_operations_sanity(real_redis_c
 @pytest.mark.asyncio
 async def test_redis_list_setitem_basemodel_field_paths_sanity(real_redis_client):
     # Arrange
-    model = BaseModelListModel()
-    model.products = [None, None]
+    model = BaseModelListModel(
+        products=[
+            Product(name="Ori", price=2, in_stock=True),
+            Product(name="Banan", price=2, in_stock=False),
+        ]
+    )
     await model.save()
 
     product = Product(name="Phone", price=699, in_stock=False)
@@ -444,8 +448,7 @@ async def test_redis_list_setitem_basemodel_field_paths_sanity(real_redis_client
 @pytest.mark.asyncio
 async def test_redis_list_setitem_basemodel_nested_operations_sanity(real_redis_client):
     # Arrange
-    model = BaseModelListModel()
-    model.configs = [None]
+    model = BaseModelListModel(configs=[NestedConfig(settings={}, options=[])])
     await model.save()
 
     config = NestedConfig(
@@ -472,8 +475,13 @@ async def test_redis_list_setitem_basemodel_nested_operations_sanity(real_redis_
 @pytest.mark.asyncio
 async def test_redis_list_setitem_basemodel_multiple_items_sanity(real_redis_client):
     # Arrange
-    model = BaseModelListModel()
-    model.users = [None, None, None]
+    model = BaseModelListModel(
+        users=[
+            UserProfile(name="Temp", age=0, email="asdfa"),
+            UserProfile(name="Temp", age=0, email="asdfa"),
+            UserProfile(name="Temp", age=0, email="asdfa"),
+        ]
+    )
     await model.save()
 
     users = [
@@ -499,8 +507,12 @@ async def test_redis_list_setitem_basemodel_multiple_items_sanity(real_redis_cli
 @pytest.mark.asyncio
 async def test_redis_list_setitem_basemodel_field_access_edge_case(real_redis_client):
     # Arrange
-    model = BaseModelListModel()
-    model.products = [None, None]
+    model = BaseModelListModel(
+        products=[
+            Product(name="Ori", price=2, in_stock=True),
+            Product(name="Or2i", price=2, in_stock=True),
+        ]
+    )
     await model.save()
 
     product = Product(name="Tablet", price=399, in_stock=True)
@@ -512,9 +524,8 @@ async def test_redis_list_setitem_basemodel_field_access_edge_case(real_redis_cl
     assert isinstance(model.products[1], BaseRedisModel)
     assert model.products[1].name == "Tablet"
     assert model.products[1].price == 399
-    assert (
-        model.products[1].in_stock == True
-    )  # May be 1 instead of True due to Redis conversion
+    # May be 1 instead of True due to Redis conversion
+    assert model.products[1].in_stock == True
 
     # Modify fields
     model.products[1].name = "Updated Tablet"
@@ -523,16 +534,14 @@ async def test_redis_list_setitem_basemodel_field_access_edge_case(real_redis_cl
 
     assert model.products[1].name == "Updated Tablet"
     assert model.products[1].price == 299
-    assert (
-        model.products[1].in_stock == False
-    )  # May be 0 instead of False due to Redis conversion
+    # May be 0 instead of False due to Redis conversion
+    assert model.products[1].in_stock == False
 
 
 @pytest.mark.asyncio
 async def test_redis_list_setitem_inner_basemodel_save_raises_error(real_redis_client):
     # Arrange
-    model = BaseModelListModel()
-    model.users = [None, None]
+    model = BaseModelListModel(users=[UserProfile(name="Ori", age=2, email="Myemail")])
     await model.save()
 
     user = UserProfile(name="Alice", age=25, email="alice@example.com")
