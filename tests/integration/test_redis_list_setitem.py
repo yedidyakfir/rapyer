@@ -76,14 +76,24 @@ def basemodel_list_model_with_users():
 @pytest.fixture
 def basemodel_list_model_with_products():
     model = BaseModelListModel()
-    model.products = [None, None, None]
+    model.products = [
+        Product(name="hi", price=100, in_stock=True),
+        Product(name="hi", price=101, in_stock=False),
+    ]
     return model
 
 
 @pytest.fixture
 def basemodel_list_model_with_configs():
     model = BaseModelListModel()
-    model.configs = [None, None, None]
+    model.configs = [
+        NestedConfig(
+            settings={"theme": "light", "lang": "en"}, options=["auto-save", "backup"]
+        ),
+        NestedConfig(
+            settings={"theme": "dark", "lang": "en"}, options=["auto-save", "backup"]
+        ),
+    ]
     return model
 
 

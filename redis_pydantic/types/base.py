@@ -19,6 +19,14 @@ class RedisSerializer(ABC):
         return value
 
 
+class PydanicSerializer(RedisSerializer):
+    def serialize_value(self, value):
+        return value.model_dump()
+
+    def deserialize_value(self, value):
+        return self.full_type(**value)
+
+
 class RedisType(ABC):
     serializer: RedisSerializer = None
 
