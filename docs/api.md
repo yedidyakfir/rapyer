@@ -395,7 +395,8 @@ RedisPydantic is fully typed. Common type annotations:
 
 ```python
 from typing import List, Dict, Optional, Any
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
+
 
 class TypedModel(BaseRedisModel):
     name: str

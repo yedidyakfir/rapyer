@@ -8,7 +8,7 @@ DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 
 def create_all_types():
-    from redis_pydantic.types.init import ALL_TYPES
+    from rapyer.types.init import ALL_TYPES
 
     return ALL_TYPES
 

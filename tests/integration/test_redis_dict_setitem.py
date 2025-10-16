@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from pydantic import Field, BaseModel
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class IntDictModel(BaseRedisModel):
@@ -98,7 +98,7 @@ async def test_redis_dict_setitem_int_type_checking_sanity(
     model.metadata["test_key"] = 42
 
     # Assert
-    from redis_pydantic.types.integer import RedisInt
+    from rapyer.types.integer import RedisInt
 
     assert isinstance(model.metadata["test_key"], RedisInt)
 
@@ -115,7 +115,7 @@ async def test_redis_dict_setitem_str_type_checking_sanity(
     model.metadata["test_key"] = "test_string"
 
     # Assert
-    from redis_pydantic.types.string import RedisStr
+    from rapyer.types.string import RedisStr
 
     assert isinstance(model.metadata["test_key"], RedisStr)
 
@@ -132,7 +132,7 @@ async def test_redis_dict_setitem_dict_type_checking_sanity(
     model.metadata["test_key"] = {"nested_key": "nested_value"}
 
     # Assert
-    from redis_pydantic.types.dct import RedisDict
+    from rapyer.types.dct import RedisDict
 
     assert isinstance(model.metadata["test_key"], RedisDict)
 

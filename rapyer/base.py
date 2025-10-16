@@ -7,13 +7,13 @@ from typing import get_origin, Self, ClassVar, Any
 
 from pydantic import BaseModel, PrivateAttr
 
-from redis_pydantic.config import RedisConfig, RedisFieldConfig
-from redis_pydantic.context import _context_var, _context_xx_pipe
-from redis_pydantic.errors.base import KeyNotFound
-from redis_pydantic.types.any import AnyTypeRedis
-from redis_pydantic.types.init import create_serializer
-from redis_pydantic.types.base import GenericRedisType, RedisType
-from redis_pydantic.utils import (
+from rapyer.config import RedisConfig, RedisFieldConfig
+from rapyer.context import _context_var, _context_xx_pipe
+from rapyer.errors.base import KeyNotFound
+from rapyer.types.any import AnyTypeRedis
+from rapyer.types.init import create_serializer
+from rapyer.types.base import GenericRedisType, RedisType
+from rapyer.utils import (
     acquire_lock,
     get_public_instance_annotations,
     get_actual_type,

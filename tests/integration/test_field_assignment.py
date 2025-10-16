@@ -2,12 +2,12 @@ import pytest
 import pytest_asyncio
 from pydantic import ValidationError
 
-from redis_pydantic.types.boolean import RedisBool
-from redis_pydantic.types.byte import RedisBytes
-from redis_pydantic.types.dct import RedisDict
-from redis_pydantic.types.integer import RedisInt
-from redis_pydantic.types.lst import RedisList
-from redis_pydantic.types.string import RedisStr
+from rapyer.types.boolean import RedisBool
+from rapyer.types.byte import RedisBytes
+from rapyer.types.dct import RedisDict
+from rapyer.types.integer import RedisInt
+from rapyer.types.lst import RedisList
+from rapyer.types.string import RedisStr
 from tests.integration.test_base_redis_model import UserModel as BaseUserModel
 
 # Import existing models from other test files

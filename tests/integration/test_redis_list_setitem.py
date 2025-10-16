@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from pydantic import Field, BaseModel
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class IntListModel(BaseRedisModel):
@@ -124,7 +124,7 @@ async def test_redis_list_setitem_int_type_checking_sanity(
     model.items[2] = 42
 
     # Assert
-    from redis_pydantic.types.integer import RedisInt
+    from rapyer.types.integer import RedisInt
 
     assert isinstance(model.items[2], RedisInt)
 
@@ -141,7 +141,7 @@ async def test_redis_list_setitem_str_type_checking_sanity(
     model.items[2] = "test_string"
 
     # Assert
-    from redis_pydantic.types.string import RedisStr
+    from rapyer.types.string import RedisStr
 
     assert isinstance(model.items[2], RedisStr)
 
@@ -158,7 +158,7 @@ async def test_redis_list_setitem_dict_type_checking_sanity(
     model.items[2] = {"key": "value"}
 
     # Assert
-    from redis_pydantic.types.dct import RedisDict
+    from rapyer.types.dct import RedisDict
 
     assert isinstance(model.items[2], RedisDict)
 
@@ -559,13 +559,13 @@ async def test_redis_list_apop_after_clear_sanity(real_redis_client):
     # Arrange
     model = StrListModel(items=["item1", "item2", "item3"])
     await model.save()
-    
+
     # Act
     model.items = []
     await model.save()
     await model.items.aappend("new_item")
-    
+
     popped_value = await model.items.apop()
-    
+
     # Assert
     assert popped_value == "new_item" or popped_value == '"new_item"'

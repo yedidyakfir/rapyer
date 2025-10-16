@@ -1,5 +1,5 @@
 import base64
-from redis_pydantic.types.base import RedisType, RedisSerializer
+from rapyer.types.base import RedisType, RedisSerializer
 
 
 class ByteSerializer(RedisSerializer):

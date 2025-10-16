@@ -47,15 +47,18 @@ Test your installation:
 
 ```python
 import asyncio
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
+
 
 class TestModel(BaseRedisModel):
     name: str = "test"
+
 
 async def test():
     model = TestModel()
     await model.save()
     print("Installation successful!")
+
 
 asyncio.run(test())
 ```

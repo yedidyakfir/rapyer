@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class ComprehensiveTestModel(BaseRedisModel):
@@ -170,7 +170,7 @@ async def test_pipeline_context_manager__pipeline_context_cleanup__check_context
     model = PipelineTestModel(metadata={"test": "value"})
     await model.save()
 
-    from redis_pydantic.context import _context_var
+    from rapyer.context import _context_var
 
     # Act & Assert - Context should be None before pipeline
     assert _context_var.get() is None

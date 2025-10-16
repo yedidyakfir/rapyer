@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 from pydantic import Field
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class MixedTypesModel(BaseRedisModel):

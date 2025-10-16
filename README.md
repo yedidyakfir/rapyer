@@ -31,8 +31,9 @@ pip install redis-pydantic
 
 ```python
 import asyncio
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 from typing import List, Dict
+
 
 class User(BaseRedisModel):
     name: str
@@ -41,31 +42,33 @@ class User(BaseRedisModel):
     metadata: Dict[str, str] = {}
     score: int = 0
 
+
 async def main():
     # Create a new user
     user = User(name="John", age=30)
     await user.save()
-    
+
     # Retrieve user by key
     retrieved_user = User()
     retrieved_user.pk = user.pk
     await retrieved_user.name.load()  # Load specific field
     print(f"Retrieved: {retrieved_user.name}")
-    
+
     # Update field directly in Redis
     await user.name.set("John Doe")
-    
+
     # Work with lists
     await user.tags.aappend("python")
     await user.tags.aappend("redis")
     await user.tags.aextend(["pydantic", "async"])
-    
+
     # Work with dictionaries
     await user.metadata.aset_item("department", "engineering")
     await user.metadata.aupdate(role="developer", level="senior")
-    
+
     # Increment counters
     await user.score.set(100)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

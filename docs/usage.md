@@ -5,8 +5,9 @@
 ### Creating Models
 
 ```python
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 from typing import List, Dict
+
 
 class User(BaseRedisModel):
     name: str
@@ -14,6 +15,7 @@ class User(BaseRedisModel):
     tags: List[str] = []
     metadata: Dict[str, str] = {}
     score: int = 0
+
 
 # Create instance
 user = User(name="John", age=30)

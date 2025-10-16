@@ -5,7 +5,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from pydantic import Field
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class AnyModel(BaseRedisModel):
@@ -170,7 +170,7 @@ async def test_redis_any_inheritance_sanity(real_redis_client):
     model = AnyModel(simple_any="test")
 
     # Assert
-    from redis_pydantic.types.any import AnyTypeRedis
+    from rapyer.types.any import AnyTypeRedis
 
     assert isinstance(model.simple_any, AnyTypeRedis)
 
@@ -195,7 +195,7 @@ async def test_redis_any_model_creation_functionality_sanity(real_redis_client):
     model = AnyModel(simple_any="test")
 
     # Assert
-    from redis_pydantic.types.any import AnyTypeRedis
+    from rapyer.types.any import AnyTypeRedis
 
     assert isinstance(model.simple_any, AnyTypeRedis)
     assert hasattr(model.simple_any, "redis_key")

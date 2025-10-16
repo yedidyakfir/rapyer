@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from pydantic import Field, BaseModel
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class InnerMostModel(BaseModel):
@@ -430,7 +430,9 @@ async def test_nested_model_with_mixed_initial_data_update_sanity(real_redis_cli
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_basic_operations_sanity(real_redis_client):
+async def test_nested_model_with_redis_inner_model_basic_operations_sanity(
+    real_redis_client,
+):
     # Arrange
     outer = OuterModelWithRedisNested()
     await outer.save()
@@ -458,7 +460,9 @@ async def test_nested_model_with_redis_inner_model_basic_operations_sanity(real_
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_counter_update_sanity(real_redis_client):
+async def test_nested_model_with_redis_inner_model_counter_update_sanity(
+    real_redis_client,
+):
     # Arrange
     outer = OuterModelWithRedisNested()
     await outer.save()
@@ -476,7 +480,9 @@ async def test_nested_model_with_redis_inner_model_counter_update_sanity(real_re
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_persistence_sanity(real_redis_client):
+async def test_nested_model_with_redis_inner_model_persistence_sanity(
+    real_redis_client,
+):
     # Arrange
     outer1 = OuterModelWithRedisNested()
     await outer1.save()
@@ -525,7 +531,9 @@ async def test_nested_model_with_redis_inner_model_parameterized_operations_sani
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case(real_redis_client):
+async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case(
+    real_redis_client,
+):
     # Arrange
     outer = OuterModelWithRedisNested()
     await outer.save()
@@ -558,7 +566,9 @@ async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case(re
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_clear_operations_edge_case(real_redis_client):
+async def test_nested_model_with_redis_inner_model_clear_operations_edge_case(
+    real_redis_client,
+):
     # Arrange
     outer = OuterModelWithRedisNested()
     await outer.save()
@@ -593,7 +603,9 @@ async def test_nested_model_with_redis_inner_model_clear_operations_edge_case(re
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_with_initial_data_sanity(real_redis_client):
+async def test_nested_model_with_redis_inner_model_with_initial_data_sanity(
+    real_redis_client,
+):
     # Arrange
     inner_redis = InnerRedisModel(
         tags=["initial_tag"], metadata={"env": "test"}, counter=5

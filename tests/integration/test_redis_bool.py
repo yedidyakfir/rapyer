@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class BoolModel(BaseRedisModel):

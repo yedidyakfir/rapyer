@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class StrModel(BaseRedisModel):
@@ -108,7 +108,7 @@ async def test_redis_str_inheritance_sanity(real_redis_client):
     model = StrModel(name="hello")
 
     # Assert
-    from redis_pydantic.types.string import RedisStr
+    from rapyer.types.string import RedisStr
 
     assert isinstance(model.name, RedisStr)
     assert isinstance(model.name, str)
@@ -137,7 +137,7 @@ async def test_redis_str_model_creation_functionality_sanity(real_redis_client):
     model = StrModel(name="test")
 
     # Assert
-    from redis_pydantic.types.string import RedisStr
+    from rapyer.types.string import RedisStr
 
     assert isinstance(model.name, RedisStr)
     assert hasattr(model.name, "redis_key")

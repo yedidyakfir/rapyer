@@ -1,9 +1,9 @@
 from typing import TypeVar, Generic
 from typing import get_args
 
-from redis_pydantic.config import RedisFieldConfig
-from redis_pydantic.types.base import GenericRedisType, RedisSerializer, RedisType
-from redis_pydantic.types.utils import noop
+from rapyer.config import RedisFieldConfig
+from rapyer.types.base import GenericRedisType, RedisSerializer, RedisType
+from rapyer.types.utils import noop
 
 T = TypeVar("T")
 

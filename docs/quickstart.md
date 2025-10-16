@@ -8,8 +8,9 @@ Create your first Redis-backed Pydantic model:
 
 ```python
 import asyncio
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 from typing import List, Dict
+
 
 class User(BaseRedisModel):
     name: str
@@ -72,8 +73,9 @@ key, value = await user.metadata.apopitem()
 
 ```python
 import asyncio
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 from typing import List, Dict
+
 
 class User(BaseRedisModel):
     name: str
@@ -82,22 +84,24 @@ class User(BaseRedisModel):
     metadata: Dict[str, str] = {}
     score: int = 0
 
+
 async def main():
     # Create and save user
     user = User(name="Alice", age=25)
     await user.save()
-    
+
     # Add some data
     await user.tags.aextend(["python", "redis"])
     await user.metadata.aset_item("role", "developer")
     await user.score.set(100)
-    
+
     # Load another instance
     user2 = await User.get(user.key)
     print(f"Name: {user2.name}")
     print(f"Tags: {user2.tags}")
     print(f"Metadata: {user2.metadata}")
     print(f"Score: {user2.score}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

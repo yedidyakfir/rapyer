@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class IntModel(BaseRedisModel):
@@ -102,7 +102,7 @@ async def test_redis_int_inheritance_sanity(real_redis_client):
     model = IntModel(count=42)
 
     # Assert
-    from redis_pydantic.types.integer import RedisInt
+    from rapyer.types.integer import RedisInt
 
     assert isinstance(model.count, RedisInt)
     assert isinstance(model.count, int)
@@ -131,7 +131,7 @@ async def test_redis_int_model_creation_functionality_sanity(real_redis_client):
     model = IntModel(count=42)
 
     # Assert
-    from redis_pydantic.types.integer import RedisInt
+    from rapyer.types.integer import RedisInt
 
     assert isinstance(model.count, RedisInt)
     assert hasattr(model.count, "redis_key")

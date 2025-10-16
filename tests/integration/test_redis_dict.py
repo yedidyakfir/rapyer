@@ -1,8 +1,8 @@
 import pytest
 import pytest_asyncio
 
-from redis_pydantic.base import BaseRedisModel
-from redis_pydantic.types.dct import RedisDict
+from rapyer.base import BaseRedisModel
+from rapyer.types.dct import RedisDict
 
 
 class UserModel(BaseRedisModel):
@@ -248,7 +248,7 @@ async def test_redis_dict__model_creation__check_redis_dict_instance(real_redis_
     user = UserModel(metadata={"key1": "value1"})
 
     # Assert
-    from redis_pydantic.types.dct import RedisDict
+    from rapyer.types.dct import RedisDict
 
     assert isinstance(user.metadata, RedisDict)
     assert hasattr(user.metadata, "redis_key")

@@ -4,12 +4,13 @@ from typing import Union
 from collections import namedtuple
 from dataclasses import dataclass
 
-from redis_pydantic.base import BaseRedisModel
-from redis_pydantic.types.any import AnyTypeRedis
+from rapyer.base import BaseRedisModel
+from rapyer.types.any import AnyTypeRedis
 
 
 # Define some unmapped types for testing
 CustomType = namedtuple("CustomType", ["value"])
+
 
 @dataclass
 class CustomDataClass:
@@ -33,7 +34,7 @@ async def real_redis_client(redis_client):
 async def test_unmapped_field_types_use_any_redis_type_sanity(real_redis_client):
     # Arrange & Act
     model = UnmappedTypesModel()
-    
+
     # Assert
     assert isinstance(model.custom_type_field, AnyTypeRedis)
     assert isinstance(model.dataclass_field, AnyTypeRedis)
@@ -50,7 +51,9 @@ test_data_args = [
 
 @pytest.mark.parametrize("test_data", test_data_args)
 @pytest.mark.asyncio
-async def test_unmapped_field_types_set_and_load_functionality_sanity(real_redis_client, test_data):
+async def test_unmapped_field_types_set_and_load_functionality_sanity(
+    real_redis_client, test_data
+):
     # Arrange
     model = UnmappedTypesModel()
     await model.save()

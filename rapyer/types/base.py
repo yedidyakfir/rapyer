@@ -4,7 +4,7 @@ from typing import get_args, Callable, Any
 
 from redis.asyncio.client import Redis
 
-from redis_pydantic.context import _context_var
+from rapyer.context import _context_var
 
 
 class RedisSerializer(ABC):

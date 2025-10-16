@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class UserModel(BaseRedisModel):
@@ -108,24 +108,26 @@ async def test_base_redis_model__delete__check_redis_delete_sanity(real_redis_cl
     user = UserModel(tags=["tag1", "tag2"])
     await user.save()
     loaded_user = await UserModel.get(user.key)
-    
+
     # Act
     await loaded_user.delete()
-    
+
     # Assert
     key_exists = await real_redis_client.exists(user.key)
     assert key_exists == 0
 
 
-@pytest.mark.asyncio 
-async def test_base_redis_model__try_delete_existing_key__check_returns_true_sanity(real_redis_client):
+@pytest.mark.asyncio
+async def test_base_redis_model__try_delete_existing_key__check_returns_true_sanity(
+    real_redis_client,
+):
     # Arrange
     user = UserModel(tags=["tag1", "tag2"])
     await user.save()
-    
+
     # Act
     result = await UserModel.try_delete(user.key)
-    
+
     # Assert
     assert result is True
     key_exists = await real_redis_client.exists(user.key)
@@ -133,12 +135,14 @@ async def test_base_redis_model__try_delete_existing_key__check_returns_true_san
 
 
 @pytest.mark.asyncio
-async def test_base_redis_model__try_delete_nonexistent_key__check_returns_false_sanity(real_redis_client):
+async def test_base_redis_model__try_delete_nonexistent_key__check_returns_false_sanity(
+    real_redis_client,
+):
     # Arrange
     mock_key = "UserModel:nonexistent_key"
-    
+
     # Act
     result = await UserModel.try_delete(mock_key)
-    
+
     # Assert
     assert result is False

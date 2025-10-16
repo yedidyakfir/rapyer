@@ -9,16 +9,18 @@ RedisPydantic provides powerful atomic operations through context managers that 
 The `lock()` context manager provides exclusive access to a Redis model instance, ensuring that only one process can modify the data at a time.
 
 ```python
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
+
 
 class User(BaseRedisModel):
     name: str
     score: int = 0
     metadata: dict[str, str] = {}
 
+
 async def update_user_safely():
     user = await User.get("User:123")
-    
+
     # Lock the user for exclusive access
     async with user.lock() as locked_user:
         # All operations within this block are performed exclusively

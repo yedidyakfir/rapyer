@@ -4,26 +4,26 @@ from typing import Any, get_origin
 
 from pydantic import BaseModel
 
-from redis_pydantic.types.any import AnyTypeRedis
-from redis_pydantic.types.base import PydanicSerializer
+from rapyer.types.any import AnyTypeRedis
+from rapyer.types.base import PydanicSerializer
 
 # from redis_pydantic.types.enm import EnumSerializer
-from redis_pydantic.types.lst import RedisList
-from redis_pydantic.types.dct import RedisDict
-from redis_pydantic.types.byte import RedisBytes
-from redis_pydantic.types.integer import RedisInt
-from redis_pydantic.types.boolean import RedisBool
-from redis_pydantic.types.string import RedisStr
-from redis_pydantic.types.datetime import RedisDatetime
+from rapyer.types.lst import RedisList
+from rapyer.types.dct import RedisDict
+from rapyer.types.byte import RedisBytes
+from rapyer.types.integer import RedisInt
+from rapyer.types.boolean import RedisBool
+from rapyer.types.string import RedisStr
+from rapyer.types.datetime import RedisDatetime
 
-from redis_pydantic.types.string import StringSerializer
-from redis_pydantic.types.integer import IntegerSerializer
-from redis_pydantic.types.boolean import BooleanSerializer
-from redis_pydantic.types.byte import ByteSerializer
-from redis_pydantic.types.any import AnySerializer
-from redis_pydantic.types.lst import ListSerializer
-from redis_pydantic.types.dct import DictSerializer
-from redis_pydantic.types.datetime import DatetimeSerializer
+from rapyer.types.string import StringSerializer
+from rapyer.types.integer import IntegerSerializer
+from rapyer.types.boolean import BooleanSerializer
+from rapyer.types.byte import ByteSerializer
+from rapyer.types.any import AnySerializer
+from rapyer.types.lst import ListSerializer
+from rapyer.types.dct import DictSerializer
+from rapyer.types.datetime import DatetimeSerializer
 
 
 ALL_TYPES = {

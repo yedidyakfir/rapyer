@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from pydantic import Field
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 
 class DatetimeModel(BaseRedisModel):
@@ -178,7 +178,7 @@ async def test_redis_datetime_model_creation_functionality_sanity(real_redis_cli
     model = DatetimeModel()
 
     # Assert
-    from redis_pydantic.types.datetime import RedisDatetime
+    from rapyer.types.datetime import RedisDatetime
 
     assert isinstance(model.created_at, RedisDatetime)
     assert hasattr(model.created_at, "redis_key")

@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from pydantic import Field, BaseModel
 
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 from tests.integration.test_nested_redis_models import (
     InnerRedisModel,
     ContainerModel,

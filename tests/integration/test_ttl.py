@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from redis_pydantic.base import BaseRedisModel, RedisConfig
+from rapyer.base import BaseRedisModel, RedisConfig
 
 
 class UserModelWithTTL(BaseRedisModel):

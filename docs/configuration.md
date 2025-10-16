@@ -12,11 +12,12 @@ Configure Redis connection in your model's `Meta` class:
 
 ```python
 import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
+
 
 class MyModel(BaseRedisModel):
     name: str
-    
+
     class Meta:
         redis = redis.from_url("redis://your-redis-host:6379/1")
 ```
@@ -26,13 +27,14 @@ class MyModel(BaseRedisModel):
 ```python
 import os
 import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
+
 class MyModel(BaseRedisModel):
     name: str
-    
+
     class Meta:
         redis = redis.from_url(redis_url)
 ```
@@ -41,11 +43,12 @@ class MyModel(BaseRedisModel):
 
 ```python
 import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
+
 
 class MyModel(BaseRedisModel):
     name: str
-    
+
     class Meta:
         redis = redis.from_url(
             "redis://username:password@your-redis-host:6379/0",
@@ -59,7 +62,7 @@ For high-concurrency applications, configure connection pooling:
 
 ```python
 import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
 
 # Create connection pool
 pool = redis.ConnectionPool.from_url(
@@ -67,9 +70,10 @@ pool = redis.ConnectionPool.from_url(
     max_connections=20
 )
 
+
 class MyModel(BaseRedisModel):
     name: str
-    
+
     class Meta:
         redis = redis.Redis(connection_pool=pool)
 ```
@@ -80,11 +84,12 @@ For secure connections:
 
 ```python
 import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
+
 
 class MyModel(BaseRedisModel):
     name: str
-    
+
     class Meta:
         redis = redis.from_url(
             "rediss://your-redis-host:6380/0",  # Note the 'rediss://' for SSL
@@ -160,17 +165,18 @@ Configure retry and timeout settings:
 
 ```python
 import redis.asyncio as redis
-from redis_pydantic.base import BaseRedisModel
+from rapyer.base import BaseRedisModel
+
 
 class MyModel(BaseRedisModel):
     name: str
-    
+
     class Meta:
         redis = redis.from_url(
             "redis://localhost:6379/0",
-            socket_timeout=5,        # 5 second socket timeout
-            socket_connect_timeout=5, # 5 second connection timeout
-            retry_on_timeout=True,   # Retry on timeout
+            socket_timeout=5,  # 5 second socket timeout
+            socket_connect_timeout=5,  # 5 second connection timeout
+            retry_on_timeout=True,  # Retry on timeout
             health_check_interval=30  # Health check interval
         )
 ```
