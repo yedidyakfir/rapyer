@@ -76,6 +76,10 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             self.redis_key, self.json_field_path(key), serialized_value
         )
 
+    def __ior__(self, other):
+        self.update(other)
+        return self
+
     def __setitem__(self, key, value):
         redis_type, kwargs = self.inner_type
         field_path = f"{self.field_path}.{key}"

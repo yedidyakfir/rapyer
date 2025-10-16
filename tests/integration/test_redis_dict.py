@@ -2,6 +2,7 @@ import pytest
 import pytest_asyncio
 
 from redis_pydantic.base import BaseRedisModel
+from redis_pydantic.types.dct import RedisDict
 
 
 class UserModel(BaseRedisModel):
@@ -258,3 +259,16 @@ async def test_redis_dict__model_creation__check_redis_dict_instance(real_redis_
     assert user.metadata.field_path == "metadata"
     assert user.metadata.json_path == "$.metadata"
     assert user.metadata.redis == real_redis_client
+
+
+@pytest.mark.asyncio
+async def test__redis_dict_model__ior(real_redis_client):
+    # Arrange
+    user = UserModel(metadata={"key1": "value1"})
+
+    # Act
+    user.metadata |= {"key2": "value2"}
+
+    # Assert
+    assert user.metadata == {"key1": "value1", "key2": "value2"}
+    assert isinstance(user.metadata, RedisDict)
