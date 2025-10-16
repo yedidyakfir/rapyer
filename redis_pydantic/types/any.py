@@ -22,6 +22,8 @@ class AnyTypeRedis(RedisType):
 
     def __init__(self, value, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if isinstance(value, AnyTypeRedis):
+            value = value.value
         self.value = value
 
     async def load(self):
@@ -33,9 +35,14 @@ class AnyTypeRedis(RedisType):
 
     def serialize_value(self, value):
         # If the value passed is this redis object itself, use self.value instead
-        if value is self:
-            value = self.value
+        if isinstance(value, AnyTypeRedis):
+            value = value.value
         return self.serializer.serialize_value(value)
+
+    def deserialize_value(self, value):
+        if isinstance(value, AnyTypeRedis):
+            value = value.value
+        return self.serializer.deserialize_value(value)
 
     async def set(self, value):
         self.value = value
