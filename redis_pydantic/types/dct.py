@@ -43,6 +43,11 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         GenericRedisType.__init__(self, **kwargs)
         super().__init__(value, *args)
 
+    @classmethod
+    def find_inner_type(cls, type_):
+        args = get_args(type_)
+        return args[1] if args else Any
+
     async def load(self):
         # Get all items from Redis dict
         redis_items = await self.client.json().get(self.redis_key, self.field_path)
