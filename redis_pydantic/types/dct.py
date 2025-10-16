@@ -161,9 +161,8 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
                 raise KeyError(key)
 
         # Key exists in Redis, pop from local dict (it should exist there too)
-        super().pop(
-            key, None
-        )  # Use None default to avoid KeyError if local is out of sync
+        super().pop(key, None)
+        # Use None default to avoid KeyError if local is out of sync
 
         # Deserialize the value using serializer
         parsed_result = self._parse_redis_json_value(result)
