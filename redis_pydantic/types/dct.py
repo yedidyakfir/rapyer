@@ -228,11 +228,6 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     def clone(self):
         return dict.copy(self)
 
-    @classmethod
-    def find_inner_type(cls, type_):
-        args = get_args(type_)
-        return args[1]
-
     def serialize_value(self, value):
         return {k: self.serializer.serialize_value(v) for k, v in value.items()}
 
