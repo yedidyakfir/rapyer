@@ -8,7 +8,7 @@ from typing import get_origin, Self, ClassVar, Any
 from pydantic import BaseModel, PrivateAttr
 
 from redis_pydantic.config import RedisConfig, RedisFieldConfig
-from redis_pydantic.context import _context_var
+from redis_pydantic.context import _context_var, _context_xx_pipe
 from redis_pydantic.types.any import AnyTypeRedis
 from redis_pydantic.types.init import create_serializer
 from redis_pydantic.types.base import GenericRedisType, RedisType
@@ -186,14 +186,22 @@ class BaseRedisModel(BaseModel):
             yield redis_model
 
     @contextlib.asynccontextmanager
-    async def pipeline(self):
+    async def pipeline(self, ignore_if_deleted: bool = True):
         async with self.Meta.redis.pipeline() as pipe:
-            redis_model = await self.__class__.get(self.key)
-            self.model_copy(update=redis_model.model_dump())
+            try:
+                redis_model = await self.__class__.get(self.key)
+                self.model_copy(update=redis_model.model_dump())
+            except (TypeError, IndexError):
+                if ignore_if_deleted:
+                    redis_model = self
+                else:
+                    raise
             _context_var.set(pipe)
+            _context_xx_pipe.set(ignore_if_deleted)
             yield redis_model
             await pipe.execute()
             _context_var.set(None)
+            _context_xx_pipe.set(False)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if value is None:
