@@ -303,5 +303,6 @@ class BaseRedisModel(BaseModel):
         else:
             val = redis_type(value, redis_key=redis_key, **saved_kwargs)
             if should_serialize:
-                val = val.deserialize_value(val)
+                value = val.deserialize_value(val)
+                val = redis_type(value, redis_key=redis_key, **saved_kwargs)
             return val
