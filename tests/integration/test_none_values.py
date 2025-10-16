@@ -3,10 +3,10 @@ from typing import List, Dict, Optional
 import pytest
 import pytest_asyncio
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class NoneTestModel(BaseRedisModel):
+class NoneTestModel(AtomicRedisModel):
     optional_string: Optional[str] = None
     optional_int: Optional[int] = None
     optional_bool: Optional[bool] = None

@@ -31,11 +31,11 @@ pip install rapyer
 
 ```python
 import asyncio
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 
 
-class User(BaseRedisModel):
+class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []

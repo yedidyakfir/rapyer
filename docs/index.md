@@ -15,12 +15,12 @@ A Python package that provides Pydantic models with Redis as the backend storage
 
 ```python
 import asyncio
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 from datetime import datetime
 
 
-class User(BaseRedisModel):
+class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []

@@ -5,10 +5,10 @@ from datetime import datetime, date
 from decimal import Decimal
 from pydantic import Field
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class AnyModel(BaseRedisModel):
+class AnyModel(AtomicRedisModel):
     simple_any: Any = "default"
     list_any: List[Any] = Field(default_factory=list)
     dict_any: Dict[str, Any] = Field(default_factory=dict)

@@ -21,7 +21,7 @@ from rapyer.utils import (
 )
 
 
-class BaseRedisModel(BaseModel):
+class AtomicRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     Meta: ClassVar[RedisConfig] = RedisConfig()
     field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
@@ -214,7 +214,7 @@ class BaseRedisModel(BaseModel):
             super().__setattr__(name, value)
             return
 
-        is_already_at_correct_type = isinstance(value, (RedisType, BaseRedisModel))
+        is_already_at_correct_type = isinstance(value, (RedisType, AtomicRedisModel))
         has_redis_type = name in self._redis_field_mapping
         if has_redis_type and not is_already_at_correct_type:
             type_definitions = self._redis_field_mapping[name]
@@ -244,7 +244,7 @@ class BaseRedisModel(BaseModel):
             value = getattr(self, field_name)
             if isinstance(value, RedisType):
                 value.redis_key = self.key
-            elif isinstance(value, BaseRedisModel):
+            elif isinstance(value, AtomicRedisModel):
                 value.pk = self.pk
 
     @classmethod
@@ -269,7 +269,7 @@ class BaseRedisModel(BaseModel):
                 ]
             else:
                 return [redis_type_class, {}]
-        elif safe_issubclass(type_, BaseRedisModel):
+        elif safe_issubclass(type_, AtomicRedisModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.class_key_initials()
             )
@@ -280,7 +280,7 @@ class BaseRedisModel(BaseModel):
             )
             new_base_model_type = type(
                 f"Redis{type_.__name__}",
-                (type_, BaseRedisModel),
+                (type_, AtomicRedisModel),
                 dict(field_config=field_conf),
             )
             return [new_base_model_type, {}]
@@ -290,7 +290,7 @@ class BaseRedisModel(BaseModel):
     @classmethod
     def create_redis_type(
         cls,
-        redis_type: type["BaseRedisModel | RedisType"],
+        redis_type: type["AtomicRedisModel | RedisType"],
         value: Any,
         redis_key: str = None,
         should_serialize: bool = False,

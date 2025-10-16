@@ -2,18 +2,18 @@ import pytest
 import pytest_asyncio
 from pydantic import Field, BaseModel
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class IntListModel(BaseRedisModel):
+class IntListModel(AtomicRedisModel):
     items: list[int] = Field(default_factory=list)
 
 
-class StrListModel(BaseRedisModel):
+class StrListModel(AtomicRedisModel):
     items: list[str] = Field(default_factory=list)
 
 
-class DictListModel(BaseRedisModel):
+class DictListModel(AtomicRedisModel):
     items: list[dict[str, str]] = Field(default_factory=list)
 
 
@@ -35,7 +35,7 @@ class NestedConfig(BaseModel):
     options: list[str] = Field(default_factory=list)
 
 
-class BaseModelListModel(BaseRedisModel):
+class BaseModelListModel(AtomicRedisModel):
     users: list[UserProfile] = Field(default_factory=list)
     products: list[Product] = Field(default_factory=list)
     configs: list[NestedConfig] = Field(default_factory=list)
@@ -363,7 +363,7 @@ async def test_redis_list_setitem_basemodel_products_type_checking_sanity(
 
     # Assert - should be a Redis BaseModel type
     list_item = model.products[1]
-    assert isinstance(list_item, BaseRedisModel)
+    assert isinstance(list_item, AtomicRedisModel)
     assert hasattr(list_item, "save")
     assert hasattr(list_item, "load")
     assert hasattr(list_item, "pk")
@@ -386,7 +386,7 @@ async def test_redis_list_setitem_basemodel_configs_type_checking_sanity(
 
     # Assert - should be a Redis BaseModel type
     list_item = model.configs[1]
-    assert isinstance(list_item, BaseRedisModel)
+    assert isinstance(list_item, AtomicRedisModel)
     assert hasattr(list_item, "save")
     assert hasattr(list_item, "load")
     assert hasattr(list_item, "pk")
@@ -407,7 +407,7 @@ async def test_redis_list_setitem_basemodel_redis_operations_sanity(real_redis_c
     model.users[0] = user
 
     # Assert - the setitem should create a Redis BaseModel
-    assert isinstance(model.users[0], BaseRedisModel)
+    assert isinstance(model.users[0], AtomicRedisModel)
     assert hasattr(model.users[0], "save")
     assert hasattr(model.users[0], "load")
 
@@ -459,7 +459,7 @@ async def test_redis_list_setitem_basemodel_nested_operations_sanity(real_redis_
     model.configs[0] = config
 
     # Assert - the setitem should create a Redis BaseModel with nested fields
-    assert isinstance(model.configs[0], BaseRedisModel)
+    assert isinstance(model.configs[0], AtomicRedisModel)
     assert model.configs[0].settings == {"theme": "light", "lang": "en"}
     assert model.configs[0].options == ["auto-save", "backup"]
 
@@ -498,7 +498,7 @@ async def test_redis_list_setitem_basemodel_multiple_items_sanity(real_redis_cli
     assert len(model.users) == 3
     for i, expected_user in enumerate(users):
         actual_user = model.users[i]
-        assert isinstance(actual_user, BaseRedisModel)
+        assert isinstance(actual_user, AtomicRedisModel)
         assert actual_user.name == expected_user.name
         assert actual_user.age == expected_user.age
         assert actual_user.email == expected_user.email
@@ -521,7 +521,7 @@ async def test_redis_list_setitem_basemodel_field_access_edge_case(real_redis_cl
     model.products[1] = product
 
     # Assert - verify we can access and modify all fields
-    assert isinstance(model.products[1], BaseRedisModel)
+    assert isinstance(model.products[1], AtomicRedisModel)
     assert model.products[1].name == "Tablet"
     assert model.products[1].price == 399
     # May be 1 instead of True due to Redis conversion

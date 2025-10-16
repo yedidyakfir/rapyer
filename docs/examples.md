@@ -7,11 +7,11 @@ Real-world examples showing how to use Rapyer in different scenarios.
 ```python
 import asyncio
 from datetime import datetime
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 
 
-class UserSession(BaseRedisModel):
+class UserSession(AtomicRedisModel):
     user_id: str
     session_data: Dict[str, str] = {}
     activity_log: List[str] = []
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 from pydantic import BaseModel, Field
 
@@ -67,7 +67,7 @@ class CartItem(BaseModel):
     quantity: int = 1
 
 
-class ShoppingCart(BaseRedisModel):
+class ShoppingCart(AtomicRedisModel):
     user_id: str
     items: List[str] = []  # product IDs
     quantities: Dict[str, int] = {}
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import Dict, List
 from pydantic import BaseModel, Field
 
@@ -145,7 +145,7 @@ class RateLimits(BaseModel):
     concurrent_connections: int = 100
 
 
-class AppConfig(BaseRedisModel):
+class AppConfig(AtomicRedisModel):
     features: Dict[str, bool] = {}
     limits: Dict[str, int] = {}
     allowed_ips: List[str] = []
@@ -211,11 +211,11 @@ if __name__ == "__main__":
 ```python
 import asyncio
 from datetime import datetime, timedelta
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import Dict, List
 
 
-class AnalyticsData(BaseRedisModel):
+class AnalyticsData(AtomicRedisModel):
     page_views: Dict[str, int] = {}
     user_actions: List[str] = []
     daily_stats: Dict[str, int] = {}
@@ -286,7 +286,7 @@ if __name__ == "__main__":
 ```python
 import asyncio
 from datetime import datetime
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 from pydantic import BaseModel, Field
 
@@ -299,7 +299,7 @@ class Message(BaseModel):
     message_type: str = "text"  # text, image, file
 
 
-class ChatRoom(BaseRedisModel):
+class ChatRoom(AtomicRedisModel):
     room_id: str
     name: str
     participants: List[str] = []
@@ -310,7 +310,7 @@ class ChatRoom(BaseRedisModel):
     message_count: int = 0
 
 
-class UserPresence(BaseRedisModel):
+class UserPresence(AtomicRedisModel):
     user_id: str
     online: bool = False
     last_seen: str = ""
@@ -384,7 +384,7 @@ if __name__ == "__main__":
 ```python
 import asyncio
 from datetime import datetime
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict, Optional
 from enum import Enum
 
@@ -397,7 +397,7 @@ class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class Task(BaseRedisModel):
+class Task(AtomicRedisModel):
     task_id: str
     name: str
     status: str = TaskStatus.PENDING
@@ -411,7 +411,7 @@ class Task(BaseRedisModel):
     completed_at: str = ""
 
 
-class TaskQueue(BaseRedisModel):
+class TaskQueue(AtomicRedisModel):
     queue_name: str
     pending_tasks: List[str] = []
     running_tasks: List[str] = []

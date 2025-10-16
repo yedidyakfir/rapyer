@@ -1,11 +1,11 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
 
 
-class UserModel(BaseRedisModel):
+class UserModel(AtomicRedisModel):
     metadata: dict[str, str] = {}
 
 

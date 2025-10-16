@@ -7,10 +7,10 @@ import pytest
 import pytest_asyncio
 from pydantic import Field
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class RichModel(BaseRedisModel):
+class RichModel(AtomicRedisModel):
     name: str = ""
     age: int = 0
     tags: List[str] = Field(default_factory=list)

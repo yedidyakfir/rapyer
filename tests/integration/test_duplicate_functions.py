@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from pydantic import Field, BaseModel
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from tests.integration.test_nested_redis_models import (
     InnerRedisModel,
     ContainerModel,
@@ -22,7 +22,7 @@ class MiddleModel(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
-class TestRedisModel(BaseRedisModel):
+class TestRedisModel(AtomicRedisModel):
     middle_model: MiddleModel = Field(default_factory=MiddleModel)
     user_data: dict[str, int] = Field(default_factory=dict)
     items: list[int] = Field(default_factory=list)

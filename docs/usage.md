@@ -5,11 +5,11 @@
 ### Creating Models
 
 ```python
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 
 
-class User(BaseRedisModel):
+class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []

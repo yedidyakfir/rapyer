@@ -1,10 +1,10 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import BaseRedisModel, RedisConfig
+from rapyer.base import AtomicRedisModel, RedisConfig
 
 
-class UserModelWithTTL(BaseRedisModel):
+class UserModelWithTTL(AtomicRedisModel):
     name: str = "test"
     age: int = 25
     active: bool = True
@@ -14,7 +14,7 @@ class UserModelWithTTL(BaseRedisModel):
     Meta = RedisConfig(ttl=300)
 
 
-class UserModelWithoutTTL(BaseRedisModel):
+class UserModelWithoutTTL(AtomicRedisModel):
     name: str = "test"
     age: int = 25
 

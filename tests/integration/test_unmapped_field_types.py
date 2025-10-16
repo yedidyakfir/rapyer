@@ -4,7 +4,7 @@ from typing import Union
 from collections import namedtuple
 from dataclasses import dataclass
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from rapyer.types.any import AnyTypeRedis
 
 
@@ -17,7 +17,7 @@ class CustomDataClass:
     value: str
 
 
-class UnmappedTypesModel(BaseRedisModel):
+class UnmappedTypesModel(AtomicRedisModel):
     custom_type_field: CustomType = CustomType("default")
     dataclass_field: CustomDataClass = CustomDataClass("default")
     union_field: Union[str, int, CustomType] = "default"

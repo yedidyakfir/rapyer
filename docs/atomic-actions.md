@@ -9,10 +9,10 @@ Rapyer provides powerful atomic operations through context managers that ensure 
 The `lock()` context manager provides exclusive access to a Redis model instance, ensuring that only one process can modify the data at a time.
 
 ```python
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class User(BaseRedisModel):
+class User(AtomicRedisModel):
     name: str
     score: int = 0
     metadata: dict[str, str] = {}

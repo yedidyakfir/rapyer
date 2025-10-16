@@ -2,18 +2,18 @@ import pytest
 import pytest_asyncio
 from pydantic import Field, BaseModel
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class IntDictModel(BaseRedisModel):
+class IntDictModel(AtomicRedisModel):
     metadata: dict[str, int] = Field(default_factory=dict)
 
 
-class StrDictModel(BaseRedisModel):
+class StrDictModel(AtomicRedisModel):
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
-class DictDictModel(BaseRedisModel):
+class DictDictModel(AtomicRedisModel):
     metadata: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
@@ -35,7 +35,7 @@ class Settings(BaseModel):
     features: list[str] = Field(default_factory=list)
 
 
-class BaseModelDictModel(BaseRedisModel):
+class BaseModelDictModel(AtomicRedisModel):
     addresses: dict[str, Address] = Field(default_factory=dict)
     companies: dict[str, Company] = Field(default_factory=dict)
     configs: dict[str, Settings] = Field(default_factory=dict)
@@ -405,7 +405,7 @@ async def test_redis_dict_setitem_basemodel_addresses_type_checking_sanity(
 
     # Assert - should be a Redis BaseModel type
     dict_item = model.addresses["home"]
-    assert isinstance(dict_item, BaseRedisModel)
+    assert isinstance(dict_item, AtomicRedisModel)
 
 
 @pytest.mark.asyncio
@@ -420,7 +420,7 @@ async def test_redis_dict_setitem_basemodel_redis_operations_sanity(real_redis_c
     model.addresses["work"] = address
 
     # Assert - the setitem should create a Redis BaseModel
-    assert isinstance(model.addresses["work"], BaseRedisModel)
+    assert isinstance(model.addresses["work"], AtomicRedisModel)
     assert hasattr(model.addresses["work"], "save")
     assert hasattr(model.addresses["work"], "load")
 
@@ -501,7 +501,7 @@ async def test_redis_dict_setitem_basemodel_multiple_keys_sanity(real_redis_clie
     assert len(model.addresses) == 3
     for key, expected_address in addresses.items():
         actual_address = model.addresses[key]
-        assert isinstance(actual_address, BaseRedisModel)
+        assert isinstance(actual_address, AtomicRedisModel)
         assert actual_address.street == expected_address.street
         assert actual_address.city == expected_address.city
         assert actual_address.zip_code == expected_address.zip_code
@@ -525,7 +525,7 @@ async def test_redis_dict_setitem_basemodel_persistence_across_instances_edge_ca
 
     # Assert - test local modification without persistence complexity
     company_item = model1.companies["mega"]
-    assert isinstance(company_item, BaseRedisModel)
+    assert isinstance(company_item, AtomicRedisModel)
     assert company_item.name == "MegaCorp"
     assert company_item.employees == 12000
     assert company_item.founded == 1990
@@ -552,7 +552,7 @@ async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity
     # Assert - check both setitem and aset_item work
     # setitem-created address should be a Redis BaseModel
     setitem_address = model.addresses["setitem_key"]
-    assert isinstance(setitem_address, BaseRedisModel)
+    assert isinstance(setitem_address, AtomicRedisModel)
     assert setitem_address.street == "555 Mixed St"
     assert setitem_address.city == "Denver"
     assert setitem_address.zip_code == "80201"

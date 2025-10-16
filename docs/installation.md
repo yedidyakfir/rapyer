@@ -47,10 +47,10 @@ Test your installation:
 
 ```python
 import asyncio
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class TestModel(BaseRedisModel):
+class TestModel(AtomicRedisModel):
     name: str = "test"
 
 

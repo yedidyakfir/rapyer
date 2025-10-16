@@ -1,10 +1,10 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class BoolModel(BaseRedisModel):
+class BoolModel(AtomicRedisModel):
     is_active: bool = False
     is_deleted: bool = True
 

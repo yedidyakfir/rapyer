@@ -8,11 +8,11 @@ Create your first Redis-backed Pydantic model:
 
 ```python
 import asyncio
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 
 
-class User(BaseRedisModel):
+class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []
@@ -73,11 +73,11 @@ key, value = await user.metadata.apopitem()
 
 ```python
 import asyncio
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 
 
-class User(BaseRedisModel):
+class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []

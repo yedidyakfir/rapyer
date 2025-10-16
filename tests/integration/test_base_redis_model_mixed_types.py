@@ -4,10 +4,10 @@ import pytest
 import pytest_asyncio
 from pydantic import Field
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class MixedTypesModel(BaseRedisModel):
+class MixedTypesModel(AtomicRedisModel):
     str_list: List[str] = Field(default_factory=list)
     bytes_list: List[bytes] = Field(default_factory=list)
     int_list: List[int] = Field(default_factory=list)

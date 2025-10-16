@@ -12,10 +12,10 @@ Configure Redis connection in your model's `Meta` class:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class MyModel(BaseRedisModel):
+class MyModel(AtomicRedisModel):
     name: str
 
     class Meta:
@@ -27,12 +27,12 @@ class MyModel(BaseRedisModel):
 ```python
 import os
 import redis.asyncio as redis
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 
-class MyModel(BaseRedisModel):
+class MyModel(AtomicRedisModel):
     name: str
 
     class Meta:
@@ -43,10 +43,10 @@ class MyModel(BaseRedisModel):
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class MyModel(BaseRedisModel):
+class MyModel(AtomicRedisModel):
     name: str
 
     class Meta:
@@ -62,7 +62,7 @@ For high-concurrency applications, configure connection pooling:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 # Create connection pool
 pool = redis.ConnectionPool.from_url(
@@ -71,7 +71,7 @@ pool = redis.ConnectionPool.from_url(
 )
 
 
-class MyModel(BaseRedisModel):
+class MyModel(AtomicRedisModel):
     name: str
 
     class Meta:
@@ -84,10 +84,10 @@ For secure connections:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class MyModel(BaseRedisModel):
+class MyModel(AtomicRedisModel):
     name: str
 
     class Meta:
@@ -165,10 +165,10 @@ Configure retry and timeout settings:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class MyModel(BaseRedisModel):
+class MyModel(AtomicRedisModel):
     name: str
 
     class Meta:

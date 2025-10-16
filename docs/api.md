@@ -395,10 +395,10 @@ Rapyer is fully typed. Common type annotations:
 
 ```python
 from typing import List, Dict, Optional, Any
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class TypedModel(BaseRedisModel):
+class TypedModel(AtomicRedisModel):
     name: str
     age: Optional[int] = None
     tags: List[str] = []

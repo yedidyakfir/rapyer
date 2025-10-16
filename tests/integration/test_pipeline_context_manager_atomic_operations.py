@@ -1,17 +1,17 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class ComprehensiveTestModel(BaseRedisModel):
+class ComprehensiveTestModel(AtomicRedisModel):
     tags: list[str] = []
     metadata: dict[str, str] = {}
     name: str = ""
     counter: int = 0
 
 
-class PipelineTestModel(BaseRedisModel):
+class PipelineTestModel(AtomicRedisModel):
     metadata: dict[str, str] = {}
     config: dict[str, int] = {}
 

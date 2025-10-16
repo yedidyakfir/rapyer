@@ -1,10 +1,10 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class StrModel(BaseRedisModel):
+class StrModel(AtomicRedisModel):
     name: str = ""
     description: str = "default"
 

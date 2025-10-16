@@ -1,10 +1,10 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import BaseRedisModel
+from rapyer.base import AtomicRedisModel
 
 
-class IntModel(BaseRedisModel):
+class IntModel(AtomicRedisModel):
     count: int = 0
     score: int = 100
 
