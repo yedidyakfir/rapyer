@@ -1,4 +1,10 @@
-# Rapyer
+<div align="center">
+  <img src="icon.png" alt="Rapyer Logo" width="120">
+  
+  # Rapyer
+  
+  **Redis Atomic Pydantic Engine Reactor**
+</div>
 
 A Python package that provides Pydantic models with Redis as the backend storage, enabling automatic synchronization between your Python objects and Redis with full type validation.
 
