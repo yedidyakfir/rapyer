@@ -96,4 +96,4 @@ class GenericRedisType(RedisType, ABC):
     @classmethod
     def find_inner_type(cls, type_):
         args = get_args(type_)
-        return args[0]
+        return args[0] if args else Any
