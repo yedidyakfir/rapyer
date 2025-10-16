@@ -1,6 +1,6 @@
 import abc
 from abc import ABC
-from typing import get_args, Callable
+from typing import get_args, Callable, Any
 
 from redis.asyncio.client import Redis
 
