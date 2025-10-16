@@ -29,17 +29,11 @@ theme:
 
 nav:
   - Home: index.md
-  - Getting Started:
-    - Installation: installation.md
-    - Quick Start: quickstart.md
-    - Configuration: configuration.md
-  - User Guide:
-    - Basic Usage: usage.md
-    - Supported Types: types.md
-    - Nested Models: nested-models.md
-    - Advanced Features: advanced.md
-    - Examples: examples.md
-  - API Reference: api.md
+  - Setup: setup.md
+  - Basic Operations: basic-operations.md
+  - Supported Types: supported-types.md
+  - Atomic Actions: atomic-actions.md
+  - Nested Models: nested-models.md
 
 markdown_extensions:
   - pymdownx.highlight:
