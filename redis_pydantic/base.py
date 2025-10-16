@@ -9,6 +9,7 @@ from pydantic import BaseModel, PrivateAttr
 
 from redis_pydantic.config import RedisConfig, RedisFieldConfig
 from redis_pydantic.context import _context_var, _context_xx_pipe
+from redis_pydantic.errors.base import KeyNotFound
 from redis_pydantic.types.any import AnyTypeRedis
 from redis_pydantic.types.init import create_serializer
 from redis_pydantic.types.base import GenericRedisType, RedisType
@@ -140,6 +141,8 @@ class BaseRedisModel(BaseModel):
     @classmethod
     async def get(cls, key: str) -> Self:
         model_dump = await cls.Meta.redis.json().get(key, "$")
+        if not model_dump:
+            raise KeyNotFound(f"{key} is missing in redis")
         model_dump = model_dump[0]
 
         instance = cls(**model_dump, should_serialize=True)
