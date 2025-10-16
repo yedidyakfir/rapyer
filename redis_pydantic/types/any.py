@@ -50,3 +50,8 @@ class AnyTypeRedis(RedisType):
         return await self.client.json().set(
             self.redis_key, self.json_path, serialized_value
         )
+
+    def __eq__(self, other):
+        if isinstance(other, AnyTypeRedis):
+            other = other.value
+        return self.value == other
