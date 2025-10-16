@@ -552,3 +552,20 @@ async def test_redis_list_setitem_inner_basemodel_save_raises_error(real_redis_c
     # Assert
     with pytest.raises(RuntimeError, match="Can only save from top level model"):
         await model.users[0].save()
+
+
+@pytest.mark.asyncio
+async def test_redis_list_apop_after_clear_sanity(real_redis_client):
+    # Arrange
+    model = StrListModel(items=["item1", "item2", "item3"])
+    await model.save()
+    
+    # Act
+    model.items = []
+    await model.save()
+    await model.items.aappend("new_item")
+    
+    popped_value = await model.items.apop()
+    
+    # Assert
+    assert popped_value == "new_item" or popped_value == '"new_item"'
