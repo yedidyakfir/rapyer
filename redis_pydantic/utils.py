@@ -52,3 +52,7 @@ def get_actual_type(annotation: Any) -> Any:
             return non_none_args[0]
         return annotation  # Return as-is for complex Union types
     return annotation
+
+
+def safe_issubclass(cls, class_or_tuple):
+    return isinstance(cls, type) and issubclass(cls, class_or_tuple)

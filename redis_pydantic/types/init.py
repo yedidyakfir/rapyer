@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from redis_pydantic.types.any import AnyTypeRedis
 from redis_pydantic.types.base import PydanicSerializer
+
 # from redis_pydantic.types.enm import EnumSerializer
 from redis_pydantic.types.lst import RedisList
 from redis_pydantic.types.dct import RedisDict
