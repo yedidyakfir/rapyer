@@ -2,7 +2,7 @@ from typing import TypeVar, Generic
 from typing import get_args
 
 from redis_pydantic.config import RedisFieldConfig
-from redis_pydantic.types.base import GenericRedisType, RedisSerializer
+from redis_pydantic.types.base import GenericRedisType, RedisSerializer, RedisType
 from redis_pydantic.types.utils import noop
 
 T = TypeVar("T")
@@ -139,7 +139,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         return await self.client.json().delete(self.redis_key, self.json_path)
 
     def clone(self):
-        return list.copy(self)
+        return [v.clone() if isinstance(v, RedisType) else v for v in self]
 
     def serialize_value(self, value):
         return [self.serializer.serialize_value(v) for v in value]
