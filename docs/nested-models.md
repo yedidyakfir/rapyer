@@ -1,6 +1,6 @@
 # Working with Nested Models
 
-RedisPydantic automatically supports nested Pydantic models by converting regular `BaseModel` classes into Redis-enabled versions. This allows you to use all Redis field operations on nested model fields.
+Rapyer automatically supports nested Pydantic models by converting regular `BaseModel` classes into Redis-enabled versions. This allows you to use all Redis field operations on nested model fields.
 
 ## Basic Nested Models
 
@@ -49,7 +49,7 @@ print(user.profile.settings)  # Reflects Redis state
 
 ## Deep Nesting Support
 
-RedisPydantic supports unlimited nesting depth:
+Rapyer supports unlimited nesting depth:
 
 ```python
 class InnerModel(BaseModel):

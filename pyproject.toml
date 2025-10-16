@@ -3,16 +3,16 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "redis-pydantic"
+name = "rapyer"
 version = "1.2.2"
 description = "Pydantic models with Redis as the backend"
 authors = ["YedidyaHKfir <your.email@example.com>"]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/YedidyaHKfir/redis-pydantic"
-repository = "https://github.com/YedidyaHKfir/redis-pydantic"
-documentation = "https://github.com/YedidyaHKfir/redis-pydantic"
-packages = [{include = "redis_pydantic"}]
+homepage = "https://github.com/YedidyaHKfir/rapyer"
+repository = "https://github.com/YedidyaHKfir/rapyer"
+documentation = "https://github.com/YedidyaHKfir/rapyer"
+packages = [{include = "rapyer"}]
 keywords = ["redis", "pydantic", "orm", "database", "async"]
 classifiers = [
     "Development Status :: 3 - Alpha",

@@ -1,9 +1,9 @@
-# RedisPydantic
+# Rapyer
 
 A Python package that provides Pydantic models with Redis as the backend storage, enabling automatic synchronization between your Python objects and Redis with full type validation.
 Our goal is to make redis action easy and accessible, and more importantly, to make it easy to use redis with race conditions and data consistency.
 
-📚 **[Full Documentation](https://yedidyakfir.github.io/redis-pydantic/)** | [Installation](https://yedidyakfir.github.io/redis-pydantic/installation/) | [Examples](https://yedidyakfir.github.io/redis-pydantic/examples/) | [API Reference](https://yedidyakfir.github.io/redis-pydantic/api/)
+📚 **[Full Documentation](https://yedidyakfir.github.io/rapyer/)** | [Installation](https://yedidyakfir.github.io/rapyer/installation/) | [Examples](https://yedidyakfir.github.io/rapyer/examples/) | [API Reference](https://yedidyakfir.github.io/rapyer/api/)
 
 ## Features
 
@@ -17,7 +17,7 @@ Our goal is to make redis action easy and accessible, and more importantly, to m
 ## Installation
 
 ```bash
-pip install redis-pydantic
+pip install rapyer
 ```
 
 ## Requirements
@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
 ## Redis Connection Setup
 
-By default, RedisPydantic connects to `redis://localhost:6379/0`.
+By default, Rapyer connects to `redis://localhost:6379/0`.
 
 ## Saving, loading and deleting models
 A BaseRedisModel automatically creates a key, you can use it to load and delete the model
@@ -100,7 +100,7 @@ delete_succeded = await User.try_delete(key)
 
 ## Type Support
 
-RedisPydantic supports **all Python types** with automatic serialization:
+Rapyer supports **all Python types** with automatic serialization:
 
 ### Natively Supported Types (Optimized)
 - `str`, `int`, `bool`, `bytes`, `datetime` - Redis-native operations
@@ -283,7 +283,7 @@ final_user = await User.get(user.key)
 
 ### Working with Nested Models
 
-RedisPydantic supports nested Pydantic models with full Redis functionality. For detailed examples and advanced usage, see the [nested models documentation](https://yedidyakfir.github.io/redis-pydantic/nested-models/).
+Rapyer supports nested Pydantic models with full Redis functionality. For detailed examples and advanced usage, see the [nested models documentation](https://yedidyakfir.github.io/rapyer/nested-models/).
 
 ### Working with Nested Types
 
@@ -340,7 +340,7 @@ await user.save()
 
 ### Automatic Type Conversion
 
-RedisPydantic handles serialization and deserialization automatically:
+Rapyer handles serialization and deserialization automatically:
 
 ```python
 class MyModel(BaseRedisModel):
@@ -368,7 +368,7 @@ await model.count.set(42)  # ✅ Valid
 
 ### Consistent Local and Redis State
 
-RedisPydantic keeps your local Python objects in sync with Redis:
+Rapyer keeps your local Python objects in sync with Redis:
 
 ```python
 user = User(tags=["python"])
@@ -471,7 +471,7 @@ await config.limits.aupdate(
 
 ## Model Duplication
 
-RedisPydantic provides built-in model duplication functionality for creating copies of existing models with new unique keys while preserving all data.
+Rapyer provides built-in model duplication functionality for creating copies of existing models with new unique keys while preserving all data.
 
 ### Basic Duplication
 

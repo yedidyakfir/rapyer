@@ -4,7 +4,7 @@
 
 ### Default Connection
 
-By default, RedisPydantic connects to `redis://localhost:6379/0`.
+By default, Rapyer connects to `redis://localhost:6379/0`.
 
 ### Custom Connection
 

@@ -1,4 +1,4 @@
-# RedisPydantic
+# Rapyer
 
 A Python package that provides Pydantic models with Redis as the backend storage, enabling automatic synchronization between your Python objects and Redis with full type validation.
 

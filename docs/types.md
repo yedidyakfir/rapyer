@@ -1,6 +1,6 @@
 # Supported Types
 
-RedisPydantic supports **all Python types** with automatic Redis serialization and type validation. Types fall into two categories:
+Rapyer supports **all Python types** with automatic Redis serialization and type validation. Types fall into two categories:
 
 1. **Natively supported types** - Optimized Redis storage with native operations
 2. **All other types** - Automatically handled using pickle serialization
@@ -157,7 +157,7 @@ await model.matrix.aappend([1, 2, 3])
 
 ### Nested Models
 
-RedisPydantic automatically supports nested Pydantic models:
+Rapyer automatically supports nested Pydantic models:
 
 ```python
 from pydantic import BaseModel, Field
@@ -274,7 +274,7 @@ class ValidatedModel(BaseRedisModel):
 
 ### Automatic Conversion
 
-RedisPydantic handles serialization automatically:
+Rapyer handles serialization automatically:
 
 ```python
 class MyModel(BaseRedisModel):

@@ -147,7 +147,7 @@ print(user.metadata)  # Current dict from Redis
 
 ### Local vs Redis State
 
-RedisPydantic keeps your local Python objects in sync with Redis:
+Rapyer keeps your local Python objects in sync with Redis:
 
 ```python
 user = User(name="John", tags=["python"])

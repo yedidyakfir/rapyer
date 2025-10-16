@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API reference for RedisPydantic.
+Complete API reference for Rapyer.
 
 ## BaseRedisModel
 
@@ -374,7 +374,7 @@ redis_client = redis.from_url(
 
 ### Redis Exceptions
 
-RedisPydantic uses the standard redis-py exceptions:
+Rapyer uses the standard redis-py exceptions:
 
 - `redis.exceptions.ConnectionError`: Connection failed
 - `redis.exceptions.TimeoutError`: Operation timed out
@@ -391,7 +391,7 @@ RedisPydantic uses the standard redis-py exceptions:
 
 ## Type Hints
 
-RedisPydantic is fully typed. Common type annotations:
+Rapyer is fully typed. Common type annotations:
 
 ```python
 from typing import List, Dict, Optional, Any

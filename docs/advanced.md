@@ -215,7 +215,7 @@ assert duplicate.name == "John Copy"
 
 ## Working with Nested Models
 
-RedisPydantic automatically supports nested Pydantic models by converting regular `BaseModel` classes into Redis-enabled versions:
+Rapyer automatically supports nested Pydantic models by converting regular `BaseModel` classes into Redis-enabled versions:
 
 ```python
 from pydantic import BaseModel, Field
@@ -262,7 +262,7 @@ print(user.profile.settings)  # Reflects Redis state
 
 ### Deep Nesting Support
 
-RedisPydantic supports unlimited nesting depth:
+Rapyer supports unlimited nesting depth:
 
 ```python
 class InnerModel(BaseModel):

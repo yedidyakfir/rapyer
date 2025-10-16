@@ -1,6 +1,6 @@
 # Examples
 
-Real-world examples showing how to use RedisPydantic in different scenarios.
+Real-world examples showing how to use Rapyer in different scenarios.
 
 ## User Session Management
 
@@ -339,7 +339,7 @@ async def chat_example():
 
     await user1.online.set(True)
     await user1.current_rooms.aappend("general")
-    await user1.status_message.set("Working on RedisPydantic")
+    await user1.status_message.set("Working on Rapyer")
 
     await user2.online.set(True)
     await user2.current_rooms.aappend("general")
@@ -561,4 +561,4 @@ These examples demonstrate:
 - **Chat**: Real-time messaging, user presence, room management
 - **Task Processing**: Background jobs, progress tracking, queue management
 
-Each pattern shows best practices for using RedisPydantic in production applications.
+Each pattern shows best practices for using Rapyer in production applications.

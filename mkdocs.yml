@@ -1,8 +1,8 @@
-site_name: RedisPydantic
+site_name: Rapyer
 site_description: A Python package that provides Pydantic models with Redis as the backend storage
-site_url: https://yedidyakfir.github.io/RedisPydantic/
-repo_url: https://github.com/yedidyakfir/RedisPydantic
-repo_name: yedidyakfir/RedisPydantic
+site_url: https://yedidyakfir.github.io/rapyer/
+repo_url: https://github.com/yedidyakfir/rapyer
+repo_name: yedidyakfir/rapyer
 
 theme:
   name: material
@@ -63,4 +63,4 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yedidyakfir/RedisPydantic
+      link: https://github.com/yedidyakfir/rapyer

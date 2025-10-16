@@ -1,6 +1,6 @@
 # Atomic Actions
 
-RedisPydantic provides powerful atomic operations through context managers that ensure data consistency when performing multiple Redis operations. These operations guarantee that either all changes are applied together or none at all, preventing race conditions in concurrent environments.
+Rapyer provides powerful atomic operations through context managers that ensure data consistency when performing multiple Redis operations. These operations guarantee that either all changes are applied together or none at all, preventing race conditions in concurrent environments.
 
 ## Available Context Managers
 

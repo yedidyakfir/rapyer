@@ -10,12 +10,12 @@
 ## Install from PyPI
 
 ```bash
-pip install redis-pydantic
+pip install rapyer
 ```
 
 ## Redis Setup
 
-RedisPydantic requires a Redis server with the JSON module enabled. You can either:
+Rapyer requires a Redis server with the JSON module enabled. You can either:
 
 ### Using Redis Stack
 

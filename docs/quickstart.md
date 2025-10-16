@@ -1,6 +1,6 @@
 # Quick Start
 
-This guide will get you up and running with RedisPydantic in minutes.
+This guide will get you up and running with Rapyer in minutes.
 
 ## Basic Model
 
