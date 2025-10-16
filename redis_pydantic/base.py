@@ -16,6 +16,7 @@ from redis_pydantic.utils import (
     acquire_lock,
     get_public_instance_annotations,
     get_actual_type,
+    safe_issubclass,
 )
 
 
@@ -242,7 +243,7 @@ class BaseRedisModel(BaseModel):
             redis_type_class = cls.Meta.redis_type[origin_type]
 
             # If it's a GenericRedisType, create its serializer
-            if issubclass(redis_type_class, GenericRedisType):
+            if safe_issubclass(redis_type_class, GenericRedisType):
                 return [
                     redis_type_class,
                     {
@@ -254,12 +255,12 @@ class BaseRedisModel(BaseModel):
                 ]
             else:
                 return [redis_type_class, {}]
-        elif issubclass(type_, BaseRedisModel):
+        elif safe_issubclass(type_, BaseRedisModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.class_key_initials()
             )
             return [type_, {"_field_config_override": field_conf}]
-        elif issubclass(type_, BaseModel):
+        elif safe_issubclass(type_, BaseModel):
             field_conf = RedisFieldConfig(
                 field_path=field_name, override_class_name=cls.class_key_initials()
             )
