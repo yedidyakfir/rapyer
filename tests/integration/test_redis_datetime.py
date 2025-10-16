@@ -275,3 +275,18 @@ async def test_redis_datetime_isoformat_compatibility_edge_case(real_redis_clien
 
     # Assert
     assert loaded_value == test_datetime
+
+
+@pytest.mark.parametrize("test_datetime", date_values)
+@pytest.mark.asyncio
+async def test_redis_datetime_model_save_load_sanity(real_redis_client, test_datetime):
+    # Arrange
+    model = DatetimeModel(created_at=test_datetime)
+    await model.save()
+
+    # Act
+    loaded_model = await DatetimeModel.get(model.key)
+
+    # Assert
+    assert loaded_model.created_at == test_datetime
+    assert loaded_model.updated_at == test_datetime
