@@ -77,7 +77,9 @@ class BaseRedisModel(BaseModel):
             resolved_inner_type = cls._resolve_redis_type(full_field_name, actual_type)
             cls._redis_field_mapping[field_name] = resolved_inner_type
 
-    def __init__(self, _field_config_override=None, **data):
+    def __init__(
+        self, should_serialize: bool = False, _field_config_override=None, **data
+    ):
         super().__init__(**data)
         self._field_config_override = _field_config_override
 
@@ -99,6 +101,7 @@ class BaseRedisModel(BaseModel):
                 redis_key=self.key,
                 field_path=full_field_path,
                 redis=self.Meta.redis,
+                should_serialize=should_serialize,
                 **type_definitions[1],
             )
 
@@ -139,7 +142,7 @@ class BaseRedisModel(BaseModel):
         model_dump = await cls.Meta.redis.json().get(key, "$")
         model_dump = model_dump[0]
 
-        instance = cls(**model_dump)
+        instance = cls(**model_dump, should_serialize=True)
         # Extract pk from key format: "ClassName:pk"
         pk = key.split(":", 1)[1]
         instance._pk = pk
@@ -287,6 +290,7 @@ class BaseRedisModel(BaseModel):
         redis_type: type["BaseRedisModel | RedisType"],
         value: Any,
         redis_key: str = None,
+        should_serialize: bool = False,
         **saved_kwargs,
     ):
         # Handle nested models - convert user model to Redis model
@@ -297,4 +301,7 @@ class BaseRedisModel(BaseModel):
             instance.pk = pk
             return instance
         else:
-            return redis_type(value, redis_key=redis_key, **saved_kwargs)
+            val = redis_type(value, redis_key=redis_key, **saved_kwargs)
+            if should_serialize:
+                val = val.deserialize_value(val)
+            return val
