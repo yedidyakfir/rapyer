@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "redis-pydantic"
-version = "1.2.1"
+version = "1.2.2"
 description = "Pydantic models with Redis as the backend"
 authors = ["YedidyaHKfir <your.email@example.com>"]
 readme = "README.md"
