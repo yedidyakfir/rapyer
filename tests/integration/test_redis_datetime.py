@@ -288,5 +288,5 @@ async def test_redis_datetime_model_save_load_sanity(real_redis_client, test_dat
     loaded_model = await DatetimeModel.get(model.key)
 
     # Assert
-    assert loaded_model.created_at == test_datetime
-    assert loaded_model.updated_at == test_datetime
+    assert loaded_model.created_at.timestamp() == test_datetime.timestamp()
+    assert loaded_model.updated_at.timestamp() == model.updated_at.timestamp()

@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 from redis_pydantic.types.base import RedisType, RedisSerializer
 
@@ -23,12 +24,25 @@ class DatetimeSerializer(RedisSerializer):
         return None
 
 
-class RedisDatetime(RedisType):
+class RedisDatetime(datetime, RedisType):
     serializer = DatetimeSerializer(datetime, None)
 
-    def __init__(self, value=None, **kwargs):
+    def __new__(cls, value=None, *args, **kwargs):
+        return super().__new__(
+            cls,
+            value.year,
+            value.month,
+            value.day,
+            value.hour,
+            value.minute,
+            value.second,
+            value.microsecond,
+            value.tzinfo,
+        )
+
+    def __init__(self, *args, **kwargs):
+        datetime.__init__(self)
         RedisType.__init__(self, **kwargs)
-        self._value = value
 
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
@@ -46,4 +60,4 @@ class RedisDatetime(RedisType):
         )
 
     def clone(self):
-        return self._value
+        return copy.copy(self)
