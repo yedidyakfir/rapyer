@@ -109,11 +109,11 @@ class AtomicRedisModel(BaseModel):
             # Set it directly on the instance
             object.__setattr__(self, field_name, redis_instance)
 
-    def is_ineer_model(self):
+    def is_inner_model(self):
         return self.inst_field_conf.field_path is not None
 
     async def save(self) -> Self:
-        if self.is_ineer_model():
+        if self.is_inner_model():
             raise RuntimeError("Can only save from top level model")
 
         model_dump = self.redis_dump()
@@ -123,7 +123,7 @@ class AtomicRedisModel(BaseModel):
         return self
 
     async def duplicate(self) -> Self:
-        if self.is_ineer_model():
+        if self.is_inner_model():
             raise RuntimeError("Can only duplicate from top level model")
 
         duplicated = self.__class__(**self.model_dump())
@@ -131,7 +131,7 @@ class AtomicRedisModel(BaseModel):
         return duplicated
 
     async def duplicate_many(self, num: int) -> list[Self]:
-        if self.is_ineer_model():
+        if self.is_inner_model():
             raise RuntimeError("Can only duplicate from top level model")
 
         duplicated_models = [self.__class__(**self.model_dump()) for _ in range(num)]
