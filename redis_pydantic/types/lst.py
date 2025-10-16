@@ -111,7 +111,8 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         return await noop()
 
     async def apop(self, index=-1):
-        super().pop(index)
+        if self:
+            super().pop(index)
         arrpop = await self.client.json().arrpop(self.redis_key, self.json_path, index)
         return (
             self.serializer.deserialize_value(arrpop[0])
