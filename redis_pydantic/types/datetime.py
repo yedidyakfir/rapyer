@@ -60,4 +60,4 @@ class RedisDatetime(datetime, RedisType):
         )
 
     def clone(self):
-        return copy.copy(self)
+        return datetime.fromtimestamp(self.timestamp())
