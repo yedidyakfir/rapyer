@@ -18,7 +18,7 @@ class RedisConfig:
     redis: Redis = dataclasses.field(
         default_factory=lambda: redis.asyncio.from_url(DEFAULT_CONNECTION)
     )
-    redis_type: dict[str, type] = dataclasses.field(default_factory=create_all_types)
+    redis_type: dict[type, type] = dataclasses.field(default_factory=create_all_types)
     ttl: int | None = None
 
 
