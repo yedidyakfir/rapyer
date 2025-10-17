@@ -23,15 +23,18 @@ Rapyer requires Redis with the JSON module enabled. Here are several options:
 #### Option 1: Redis Stack (Recommended)
 Redis Stack includes the JSON module by default:
 
+##### Using Docker
 ```bash
-# Using Docker
 docker run -d --name redis-stack -p 6379:6379 redis/redis-stack-server:latest
+```
 
-# Using package managers
-# Ubuntu/Debian
+##### Ubuntu/Debian
+```bash
 sudo apt install redis-stack-server
+```
 
-# macOS
+##### macOS
+```bash
 brew install redis-stack
 ```
 
@@ -94,7 +97,7 @@ class User(AtomicRedisModel):
     name: str
     
     class Meta:
-        redis = redis_client
+        redis = redis_client  # This is the default option with no user initialization
 ```
 
 ### Environment Variables
