@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import uuid
 from datetime import timedelta
-from typing import get_origin, ClassVar, Union, get_args, Any
+from typing import get_origin, ClassVar, Union, get_args, Any, Annotated
 
 from pydantic.fields import ModelPrivateAttr
 from redis.asyncio import Redis
@@ -56,3 +56,49 @@ def get_actual_type(annotation: Any) -> Any:
 
 def safe_issubclass(cls, class_or_tuple):
     return isinstance(cls, type) and issubclass(cls, class_or_tuple)
+
+
+def replace_types_in_annotation(annotation: Any, type_mapping: dict[type, type]) -> Any:
+    """
+    Recursively traverse a type annotation and replace types according to the mapping.
+    Handles Union, Optional, Annotated, and other generic types.
+    """
+    # Direct type replacement
+    if annotation in type_mapping:
+        return type_mapping[annotation]
+
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    # If no origin, it's a simple type (already checked mapping above)
+    if origin is None:
+        return annotation
+
+    # Handle Annotated specially - preserve metadata
+    if origin is Annotated:
+        # First arg is the actual type, rest are metadata
+        actual_type = args[0]
+        metadata = args[1:]
+
+        # Recursively replace in the actual type
+        new_type = replace_types_in_annotation(actual_type, type_mapping)
+
+        # Reconstruct Annotated with new type and original metadata
+        return Annotated[new_type, *metadata]
+
+    # Handle Union, Optional, and other generic types
+    if args:
+        # Recursively replace types in all arguments
+        new_args = tuple(
+            replace_types_in_annotation(arg, type_mapping)
+            for arg in args
+        )
+
+        # Reconstruct the generic type with new arguments
+        try:
+            return origin[new_args]
+        except TypeError:
+            # Some origins don't support item syntax, return as-is
+            return annotation
+
+    return annotation
