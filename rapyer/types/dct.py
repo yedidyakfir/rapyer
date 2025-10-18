@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, get_args
+from typing import TypeVar, Generic, get_args, Any
 
 from rapyer.config import RedisFieldConfig
 from rapyer.types.base import GenericRedisType, RedisSerializer, RedisType
