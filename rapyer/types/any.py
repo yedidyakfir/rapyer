@@ -20,11 +20,11 @@ class AnySerializer(RedisSerializer):
 class AnyTypeRedis(RedisType):
     serializer = AnySerializer(object, None)
 
-    def __init__(self, value, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if isinstance(value, AnyTypeRedis):
-            value = value.value
-        self.value = value
+    # def __init__(self, value, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     if isinstance(value, AnyTypeRedis):
+    #         value = value.value
+    #     self.value = value
 
     async def load(self):
         redis_items = await self.client.json().get(self.redis_key, self.field_path)

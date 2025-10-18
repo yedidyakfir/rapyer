@@ -19,14 +19,15 @@ class IntegerSerializer(RedisSerializer):
 
 class RedisInt(int, RedisType):
     serializer = IntegerSerializer(int, None)
+    original_type = int
 
-    def __new__(cls, value=0, **kwargs):
-        if value is None:
-            value = 0
-        return super().__new__(cls, value)
-
-    def __init__(self, value=0, **kwargs):
-        RedisType.__init__(self, **kwargs)
+    # def __new__(cls, value=0, **kwargs):
+    #     if value is None:
+    #         value = 0
+    #     return super().__new__(cls, value)
+    #
+    # def __init__(self, value=0, **kwargs):
+    #     RedisType.__init__(self, **kwargs)
 
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)

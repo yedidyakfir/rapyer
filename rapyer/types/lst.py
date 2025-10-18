@@ -9,9 +9,9 @@ T = TypeVar("T")
 
 
 class ListSerializer(RedisSerializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.inner_serializer = self._create_inner_serializer()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.inner_serializer = self._create_inner_serializer()
 
     def _create_inner_serializer(self):
         args = get_args(self.full_type)
@@ -36,6 +36,8 @@ class ListSerializer(RedisSerializer):
 
 
 class RedisList(list[T], GenericRedisType, Generic[T]):
+    original_type = list
+    
     def __init__(self, value, *args, **kwargs):
         super().__init__(value)
         GenericRedisType.__init__(self, *args, **kwargs)

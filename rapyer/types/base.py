@@ -2,8 +2,11 @@ import abc
 from abc import ABC
 from typing import get_args, Callable, Any
 
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
 from redis.asyncio.client import Redis
 
+from rapyer.config import RedisConfig
 from rapyer.context import _context_var
 
 
@@ -29,20 +32,42 @@ class PydanicSerializer(RedisSerializer):
         return self.full_type(**value)
 
 
-class RedisType(ABC):
-    serializer: RedisSerializer = None
+class BaseRedisType(ABC):
+    redis_config: RedisConfig
+    field_path: str = ""
 
-    def __init__(
-        self,
-        *args,
-        redis_key: str = "",
-        field_path: str = "",
-        redis: Redis = None,
-        **kwargs,
-    ):
-        self.redis_key = redis_key
-        self.field_path = field_path
-        self.redis = redis
+
+class RedisType(BaseRedisType):
+    serializer: RedisSerializer = None
+    original_type: type = None
+
+    @property
+    def redis(self):
+        return self.redis_config.redis
+
+    @property
+    def redis_key(self):
+        return self.redis_config.redis_key
+
+    # def __init__(
+    #     self,
+    #     *args,
+    #     redis_key: str = "",
+    #     field_path: str = "",
+    #     redis: Redis = None,
+    #     **kwargs,
+    # ):
+    #     self.redis_key = redis_key
+    #     self.field_path = field_path
+    #     self.redis = redis
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_after_validator_function(
+            cls, handler(cls.original_type)
+        )
 
     @property
     def pipeline(self):
@@ -75,23 +100,23 @@ class RedisType(ABC):
 
 
 class GenericRedisType(RedisType, ABC):
-    def __init__(
-        self,
-        serializer_creator: Callable,
-        type_creator: Callable,
-        inst_init: Callable,
-        full_type: type,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.serializer_creator = serializer_creator
-        self.type_creator = type_creator
-        self.inst_init = inst_init
-        self.full_type = full_type
-        inner_type = self.find_inner_type(full_type)
-        self.serializer = serializer_creator(inner_type)
-        self.inner_type = self.type_creator("lst", inner_type)
+    # def __init__(
+    #     self,
+    #     serializer_creator: Callable,
+    #     type_creator: Callable,
+    #     inst_init: Callable,
+    #     full_type: type,
+    #     *args,
+    #     **kwargs,
+    # ):
+    #     super().__init__(*args, **kwargs)
+    #     self.serializer_creator = serializer_creator
+    #     self.type_creator = type_creator
+    #     self.inst_init = inst_init
+    #     self.full_type = full_type
+    #     inner_type = self.find_inner_type(full_type)
+    #     self.serializer = serializer_creator(inner_type)
+    #     self.inner_type = self.type_creator("lst", inner_type)
 
     @classmethod
     def find_inner_type(cls, type_):

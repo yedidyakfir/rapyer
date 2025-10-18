@@ -1,6 +1,6 @@
 import pytest
 from typing import Optional, Union, Annotated, Any
-from rapyer.utils import replace_types_in_annotation
+from rapyer.utils import replace_to_redis_types_in_annotation
 
 
 class NewStr:
@@ -59,7 +59,7 @@ def type_mapping():
 def test_simple_type_replacement_sanity(type_mapping, original_type, expected_type):
     # Arrange
     # Act
-    result = replace_types_in_annotation(original_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(original_type, type_mapping)
 
     # Assert
     assert result == expected_type
@@ -70,7 +70,7 @@ def test_unmapped_type_unchanged_sanity(type_mapping):
     unmapped_type = bytes
 
     # Act
-    result = replace_types_in_annotation(unmapped_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(unmapped_type, type_mapping)
 
     # Assert
     assert result == bytes
@@ -89,7 +89,7 @@ def test_optional_type_replacement_sanity(
 ):
     # Arrange
     # Act
-    result = replace_types_in_annotation(optional_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(optional_type, type_mapping)
 
     # Assert
     assert result == Optional[expected_inner_type]
@@ -106,7 +106,7 @@ def test_optional_type_replacement_sanity(
 def test_union_type_replacement_sanity(type_mapping, union_type, expected_result):
     # Arrange
     # Act
-    result = replace_types_in_annotation(union_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(union_type, type_mapping)
 
     # Assert
     assert result == expected_result
@@ -125,7 +125,7 @@ def test_pipe_union_type_replacement_limitation_edge_case(
 ):
     # Arrange
     # Act
-    result = replace_types_in_annotation(pipe_union_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(pipe_union_type, type_mapping)
 
     # Assert
     # Pipe union syntax (types.UnionType) is not supported for reconstruction
@@ -139,7 +139,7 @@ def test_annotated_type_with_metadata_preservation_sanity(type_mapping):
     annotated_type = Annotated[str, metadata]
 
     # Act
-    result = replace_types_in_annotation(annotated_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(annotated_type, type_mapping)
 
     # Assert
     assert result == Annotated[NewStr, metadata]
@@ -151,7 +151,7 @@ def test_annotated_optional_type_preservation_sanity(type_mapping):
     annotated_type = Annotated[Optional[str], metadata]
 
     # Act
-    result = replace_types_in_annotation(annotated_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(annotated_type, type_mapping)
 
     # Assert
     assert result == Annotated[Optional[NewStr], metadata]
@@ -169,7 +169,7 @@ def test_annotated_optional_type_preservation_sanity(type_mapping):
 def test_generic_type_replacement_sanity(type_mapping, generic_type, expected_result):
     # Arrange
     # Act
-    result = replace_types_in_annotation(generic_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(generic_type, type_mapping)
 
     # Assert
     assert result == expected_result
@@ -189,7 +189,7 @@ def test_nested_generic_type_replacement_sanity(
 ):
     # Arrange
     # Act
-    result = replace_types_in_annotation(nested_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(nested_type, type_mapping)
 
     # Assert
     assert result == expected_result
@@ -202,7 +202,7 @@ def test_complex_annotated_nested_type_replacement_sanity(type_mapping):
     expected = Annotated[Optional[tuple[NewStr, dict[NewInt, NewList]]], metadata]
 
     # Act
-    result = replace_types_in_annotation(complex_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(complex_type, type_mapping)
 
     # Assert
     assert result == expected
@@ -214,7 +214,7 @@ def test_deeply_nested_type_replacement_sanity(type_mapping):
     expected = dict[NewStr, dict[NewInt, list[tuple[NewStr, NewBool]]]]
 
     # Act
-    result = replace_types_in_annotation(deep_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(deep_type, type_mapping)
 
     # Assert
     assert result == expected
@@ -226,7 +226,7 @@ def test_union_with_optional_replacement_sanity(type_mapping):
     expected = Union[NewStr, Optional[NewInt], NewBool]
 
     # Act
-    result = replace_types_in_annotation(union_optional, type_mapping)
+    result = replace_to_redis_types_in_annotation(union_optional, type_mapping)
 
     # Assert
     assert result == expected
@@ -238,7 +238,7 @@ def test_annotated_with_pipe_union_limitation_edge_case(type_mapping):
     annotated_union = Annotated[str | int | None, metadata]
 
     # Act
-    result = replace_types_in_annotation(annotated_union, type_mapping)
+    result = replace_to_redis_types_in_annotation(annotated_union, type_mapping)
 
     # Assert
     # Pipe union within Annotated is not supported for reconstruction
@@ -252,7 +252,7 @@ def test_empty_type_mapping_unchanged_sanity():
     annotation = Optional[dict[str, list[int]]]
 
     # Act
-    result = replace_types_in_annotation(annotation, empty_mapping)
+    result = replace_to_redis_types_in_annotation(annotation, empty_mapping)
 
     # Assert
     assert result == annotation
@@ -263,7 +263,7 @@ def test_any_type_unchanged_sanity(type_mapping):
     any_annotation = Any
 
     # Act
-    result = replace_types_in_annotation(any_annotation, type_mapping)
+    result = replace_to_redis_types_in_annotation(any_annotation, type_mapping)
 
     # Assert
     assert result == Any
@@ -277,7 +277,7 @@ def test_multiple_annotations_with_same_metadata_sanity(type_mapping):
     expected = Annotated[NewStr, metadata1, metadata2]
 
     # Act
-    result = replace_types_in_annotation(annotated_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(annotated_type, type_mapping)
 
     # Assert
     assert result == expected
@@ -289,7 +289,7 @@ def test_nested_optional_with_union_replacement_sanity(type_mapping):
     expected = Optional[Union[NewStr, dict[NewInt, list[NewBool]]]]
 
     # Act
-    result = replace_types_in_annotation(nested_complex, type_mapping)
+    result = replace_to_redis_types_in_annotation(nested_complex, type_mapping)
 
     # Assert
     assert result == expected
@@ -301,7 +301,7 @@ def test_tuple_with_ellipsis_replacement_sanity(type_mapping):
     expected = tuple[NewStr, ...]
 
     # Act
-    result = replace_types_in_annotation(tuple_ellipsis, type_mapping)
+    result = replace_to_redis_types_in_annotation(tuple_ellipsis, type_mapping)
 
     # Assert
     assert result == expected
@@ -331,7 +331,7 @@ def test_extremely_complex_type_scenarios_edge_case(type_mapping, complex_scenar
     input_type, expected_type = complex_scenario
 
     # Act
-    result = replace_types_in_annotation(input_type, type_mapping)
+    result = replace_to_redis_types_in_annotation(input_type, type_mapping)
 
     # Assert
     assert result == expected_type
@@ -344,7 +344,7 @@ def test_pipe_union_in_generic_partial_replacement_edge_case(type_mapping):
     expected = dict[str | int, list[Optional[NewBool]]]
 
     # Act
-    result = replace_types_in_annotation(pipe_union_generic, type_mapping)
+    result = replace_to_redis_types_in_annotation(pipe_union_generic, type_mapping)
 
     # Assert
     # The function replaces what it can (bool -> NewBool) but leaves pipe union unchanged
@@ -357,7 +357,7 @@ def test_recursive_type_with_none_values_edge_case(type_mapping):
     expected = Union[NewStr, None, dict[NewInt, Union[NewBool, None]]]
 
     # Act
-    result = replace_types_in_annotation(type_with_none, type_mapping)
+    result = replace_to_redis_types_in_annotation(type_with_none, type_mapping)
 
     # Assert
     assert result == expected
@@ -368,7 +368,7 @@ def test_annotated_none_type_edge_case(type_mapping):
     annotated_none = Annotated[None, "nullable field"]
 
     # Act
-    result = replace_types_in_annotation(annotated_none, type_mapping)
+    result = replace_to_redis_types_in_annotation(annotated_none, type_mapping)
 
     # Assert
     assert result == annotated_none  # None should remain unchanged
@@ -381,7 +381,7 @@ def test_partial_mapping_edge_case():
     expected = dict[NewStr, list[bool]]  # only str gets replaced
 
     # Act
-    result = replace_types_in_annotation(mixed_type, partial_mapping)
+    result = replace_to_redis_types_in_annotation(mixed_type, partial_mapping)
 
     # Assert
     assert result == expected

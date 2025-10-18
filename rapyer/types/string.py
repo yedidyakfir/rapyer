@@ -1,3 +1,5 @@
+from pydantic_core import core_schema
+
 from rapyer.types.base import RedisType, RedisSerializer
 
 
@@ -16,14 +18,15 @@ class StringSerializer(RedisSerializer):
 
 class RedisStr(str, RedisType):
     serializer = StringSerializer(str, None)
+    original_type = str
 
-    def __new__(cls, value="", **kwargs):
-        if value is None:
-            value = ""
-        return super().__new__(cls, value)
-
-    def __init__(self, value="", **kwargs):
-        RedisType.__init__(self, **kwargs)
+    # def __new__(cls, value="", **kwargs):
+    #     if value is None:
+    #         value = ""
+    #     return super().__new__(cls, value)
+    #
+    # def __init__(self, value="", **kwargs):
+    #     RedisType.__init__(self, **kwargs)
 
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
@@ -42,3 +45,9 @@ class RedisStr(str, RedisType):
 
     def clone(self):
         return str(self)
+
+    # @classmethod
+    # def __get_pydantic_core_schema__(
+    #     cls, source_type, handler
+    # ) -> core_schema.CoreSchema:
+    #     return core_schema.no_info_after_validator_function(cls, handler(str))

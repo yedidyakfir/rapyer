@@ -7,6 +7,10 @@ from typing import get_origin, ClassVar, Union, get_args, Any, Annotated
 from pydantic.fields import ModelPrivateAttr
 from redis.asyncio import Redis
 
+from rapyer.config import RedisConfig
+from rapyer.types.base import BaseRedisType
+from rapyer.typing import TypeTransformer
+
 
 @contextlib.asynccontextmanager
 async def acquire_lock(
@@ -58,14 +62,18 @@ def safe_issubclass(cls, class_or_tuple):
     return isinstance(cls, type) and issubclass(cls, class_or_tuple)
 
 
-def replace_types_in_annotation(annotation: Any, type_mapping: dict[type, type]) -> Any:
+def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: TypeTransformer, redis_config: RedisConfig, field_name: str) -> Any:
     """
     Recursively traverse a type annotation and replace types according to the mapping.
     Handles Union, Optional, Annotated, and other generic types.
     """
     # Direct type replacement
     if annotation in type_mapping:
-        return type_mapping[annotation]
+        new_type = type_mapping(annotation)
+        field_specific_type = create_redis_type_for_field(
+            new_type, redis_config, field_name
+        )
+        return field_specific_type
 
     origin = get_origin(annotation)
     args = get_args(annotation)
@@ -81,7 +89,7 @@ def replace_types_in_annotation(annotation: Any, type_mapping: dict[type, type])
         metadata = args[1:]
 
         # Recursively replace in the actual type
-        new_type = replace_types_in_annotation(actual_type, type_mapping)
+        new_type = replace_to_redis_types_in_annotation(actual_type, type_mapping, redis_config, field_name)
 
         # Reconstruct Annotated with new type and original metadata
         return Annotated[new_type, *metadata]
@@ -90,7 +98,7 @@ def replace_types_in_annotation(annotation: Any, type_mapping: dict[type, type])
     if args:
         # Recursively replace types in all arguments
         new_args = tuple(
-            replace_types_in_annotation(arg, type_mapping)
+            replace_to_redis_types_in_annotation(arg, type_mapping, redis_config, field_name)
             for arg in args
         )
 
@@ -102,3 +110,11 @@ def replace_types_in_annotation(annotation: Any, type_mapping: dict[type, type])
             return annotation
 
     return annotation
+
+
+def create_redis_type_for_field(redis_type: type[BaseRedisType], redis_config: RedisConfig, field_name: str):
+    return type(
+        f"{field_name.title()}{redis_type.__name__}",
+        (redis_type,),
+        dict(redis_config=redis_config, field_path=field_name),
+    )
