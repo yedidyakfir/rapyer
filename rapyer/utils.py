@@ -121,7 +121,7 @@ class RedisTypeTransformer:
         return type(
             f"{self.field_name.title()}{redis_type.__name__}",
             (redis_type,),
-            dict(redis_config=self.redis_config, field_path=self.field_name),
+            dict(field_path=self.field_name, original_tyep=item),
         )
 
     def __contains__(self, item: type[BaseRedisType]):
