@@ -187,20 +187,23 @@ class AtomicRedisModel(BaseModel):
 
     @classmethod
     @contextlib.asynccontextmanager
-    async def lock_from_key(cls, key: str, action: str = "default"):
+    async def lock_from_key(
+        cls, key: str, action: str = "default", save_at_end: bool = True
+    ):
         async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
             redis_model = await cls.get(key)
             yield redis_model
-            await redis_model.save()
+            if save_at_end:
+                await redis_model.save()
 
     @contextlib.asynccontextmanager
-    async def lock(self, action: str = "default"):
-        async with self.lock_from_key(self.key, action) as redis_model:
+    async def lock(self, **kwargs):
+        async with self.lock_from_key(self.key, **kwargs) as redis_model:
             self.model_copy(update=redis_model.model_dump())
             yield redis_model
 
     @contextlib.asynccontextmanager
-    async def pipeline(self, ignore_if_deleted: bool = True):
+    async def pipeline(self, ignore_if_deleted: bool = False):
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.get(self.key)

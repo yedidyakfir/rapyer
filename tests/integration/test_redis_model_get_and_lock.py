@@ -170,3 +170,24 @@ async def test_redis_model_lock_from_key_with_concurrent_access_functionality(
     # The second enter should be after the first exit (sequential execution due to lock)
     assert second_enter_time > first_exit_time
     assert second_model_dump.date1 != "initial_date"
+
+
+@pytest.mark.asyncio
+async def test_redis_model_lock_with_save_at_end_true_saves_changes_functionality(real_redis_client):
+    # Arrange
+    model = RichModel(name="save_at_end_test", age=25, tags=["initial"], date1="2023-01-01")
+    await model.save()
+    
+    # Act
+    async with RichModel.lock_from_key(model.key, save_at_end=True) as locked_model:
+        locked_model.name = "modified_name"
+        locked_model.age = 30
+        locked_model.tags.append("new_tag")
+        locked_model.date1 = "2023-12-31"
+    
+    # Assert
+    retrieved_model = await RichModel.get(model.key)
+    assert retrieved_model.name == "modified_name"
+    assert retrieved_model.age == 30
+    assert retrieved_model.tags == ["initial", "new_tag"]
+    assert retrieved_model.date1 == "2023-12-31"

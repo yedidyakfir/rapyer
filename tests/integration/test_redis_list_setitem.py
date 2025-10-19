@@ -569,3 +569,18 @@ async def test_redis_list_apop_after_clear_sanity(real_redis_client):
 
     # Assert
     assert popped_value == "new_item" or popped_value == '"new_item"'
+
+
+@pytest.mark.asyncio
+async def test_redis_list__apop_empty_redis__check_default_returned_sanity(
+    real_redis_client,
+):
+    # Arrange
+    model = StrListModel()
+    await model.save()
+
+    # Act
+    result = await model.items.apop()
+
+    # Assert
+    assert result is None

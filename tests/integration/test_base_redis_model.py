@@ -69,9 +69,8 @@ async def test_base_redis_model__list_clear__check_redis_clear(real_redis_client
     await user.tags.aclear()
 
     # Assert
-    actual_lst = await real_redis_client.json().get(user.key, user.tags.json_path)
-    assert len(user.tags) == 0
-    assert actual_lst is None or len(actual_lst) == 0
+    loaded_user = await UserModel.get(user.key)
+    assert loaded_user.tags == []
 
 
 @pytest.mark.asyncio

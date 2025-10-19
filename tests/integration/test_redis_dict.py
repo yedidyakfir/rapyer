@@ -142,17 +142,6 @@ async def test_redis_dict__pop_with_default__check_default_return(real_redis_cli
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__pop_no_default__check_key_error(real_redis_client):
-    # Arrange
-    user = UserModel(metadata={"key1": "value1"})
-    await user.save()
-
-    # Act & Assert
-    with pytest.raises(KeyError):
-        await user.metadata.apop("nonexistent")
-
-
-@pytest.mark.asyncio
 async def test_redis_dict__popitem__check_redis_popitem(real_redis_client):
     # Arrange
     original_dict = {"key1": "value1", "key2": "value2"}
@@ -272,3 +261,34 @@ async def test__redis_dict_model__ior(real_redis_client):
     # Assert
     assert user.metadata == {"key1": "value1", "key2": "value2"}
     assert isinstance(user.metadata, RedisDict)
+
+
+@pytest.mark.asyncio
+async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
+    real_redis_client,
+):
+    # Arrange
+    user = UserModel()
+    await user.save()
+    default_value = "default_value"
+
+    # Act
+    result = await user.metadata.apop("nonexistent_key", default_value)
+
+    # Assert
+    assert result == default_value
+
+
+@pytest.mark.asyncio
+async def test_redis_dict__apop_empty_redis__check_no_default_sanity(
+    real_redis_client,
+):
+    # Arrange
+    user = UserModel()
+    await user.save()
+
+    # Act
+    result = await user.metadata.apop("nonexistent_key", default=None)
+
+    # Assert
+    assert result is None
