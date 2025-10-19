@@ -34,7 +34,6 @@ class AtomicRedisModel(BaseModel):
     @pk.setter
     def pk(self, value: str):
         self._pk = value
-        self._update_redis_field_parameters()
 
     @functools.cached_property
     def inst_field_conf(self) -> RedisFieldConfig:
@@ -118,7 +117,6 @@ class AtomicRedisModel(BaseModel):
         pk = key.split(":", 1)[1]
         instance._pk = pk
         # Update Redis field parameters to use the correct redis_key
-        instance._update_redis_field_parameters()
         return instance
 
     @classmethod
@@ -186,37 +184,18 @@ class AtomicRedisModel(BaseModel):
             return
 
         is_already_at_correct_type = isinstance(value, (RedisType, AtomicRedisModel))
-        has_redis_type = name in self._redis_field_mapping
-        if has_redis_type and not is_already_at_correct_type:
-            type_definitions = self._redis_field_mapping[name]
-            full_field_path = (
-                f"{self.inst_field_conf.field_path}.{name}"
-                if self.inst_field_conf.field_path
-                else name
-            )
+        if name in self.model_fields and not is_already_at_correct_type:
+            field_info = self.model_fields[name]
+            field_type = field_info.annotation
 
-            redis_instance = self.create_redis_type(
-                redis_type=type_definitions[0],
-                value=value,
-                redis_key=self.key,
-                field_path=full_field_path,
-                redis=self.Meta.redis,
-                **type_definitions[1],
-            )
+            if isinstance(field_type, RedisType):
+                value = field_type(value)
 
             # Set the converted Redis instance
-            super().__setattr__(name, redis_instance)
+            super().__setattr__(name, value)
         else:
             # Use the parent's __setattr__ for all other cases
             super().__setattr__(name, value)
-
-    def _update_redis_field_parameters(self):
-        for field_name in self.model_fields:
-            value = getattr(self, field_name)
-            if isinstance(value, RedisType):
-                value.redis_key = self.key
-            elif isinstance(value, AtomicRedisModel):
-                value.pk = self.pk
 
     @classmethod
     def _resolve_redis_type(cls, field_name, type_):
