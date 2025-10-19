@@ -9,7 +9,6 @@ from redis.asyncio import Redis
 
 from rapyer.config import RedisConfig
 from rapyer.types.base import BaseRedisType
-from rapyer.typing import TypeTransformer
 
 
 @contextlib.asynccontextmanager
@@ -100,6 +99,8 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
         )
 
         # Reconstruct the generic type with new arguments
+        if origin in type_mapping:
+            origin = type_mapping[origin]
         try:
             return origin[new_args]
         except TypeError:
