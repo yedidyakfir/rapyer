@@ -109,9 +109,21 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: dict) ->
     return annotation
 
 
-def create_redis_type_for_field(redis_type: type[BaseRedisType], redis_config: RedisConfig, field_name: str):
-    return type(
-        f"{field_name.title()}{redis_type.__name__}",
-        (redis_type,),
-        dict(redis_config=redis_config, field_path=field_name),
-    )
+
+class RedisTypeTransformer:
+    def __init__(self, field_name: str, redis_config: RedisConfig, mapping: dict[type, type]):
+        self.field_name = field_name
+        self.redis_config = redis_config
+        self.mapping = mapping
+
+
+    def __getitem__(self, item: type[BaseRedisType]):
+        redis_type = self.mapping[item]
+        return type(
+            f"{self.field_name.title()}{redis_type.__name__}",
+            (redis_type,),
+            dict(redis_config=self.redis_config, field_path=self.field_name),
+        )
+
+    def __contains__(self, item: type[BaseRedisType]):
+        return item in self.mapping
