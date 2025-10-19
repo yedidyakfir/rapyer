@@ -40,26 +40,20 @@ class BaseRedisType(ABC):
 class RedisType(BaseRedisType):
     serializer: RedisSerializer = None
     original_type: type = None
+    field_path: str = None
 
     @property
     def redis(self):
-        return self.redis_config.redis
+        return self.base_model_link.Meta.redis
 
     @property
     def redis_key(self):
-        return self.redis_config.redis_key
+        return self.base_model_link.key
 
-    # def __init__(
-    #     self,
-    #     *args,
-    #     redis_key: str = "",
-    #     field_path: str = "",
-    #     redis: Redis = None,
-    #     **kwargs,
-    # ):
-    #     self.redis_key = redis_key
-    #     self.field_path = field_path
-    #     self.redis = redis
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to redis key
+        self.base_model_link = None
 
     @classmethod
     def __get_pydantic_core_schema__(
