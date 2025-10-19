@@ -226,7 +226,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         super().clear()
 
         # Clear Redis dict
-        return await self.client.json().delete(self.redis_key, self.json_path)
+        return await self.client.json().set(self.redis_key, self.json_path, {})
 
     def clone(self):
         return {

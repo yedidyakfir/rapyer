@@ -146,7 +146,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().clear()
 
         # Clear Redis list
-        return await self.client.json().delete(self.redis_key, self.json_path)
+        return await self.client.json().set(self.redis_key, self.json_path, [])
 
     def clone(self):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]

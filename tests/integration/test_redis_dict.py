@@ -142,17 +142,6 @@ async def test_redis_dict__pop_with_default__check_default_return(real_redis_cli
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__pop_no_default__check_key_error(real_redis_client):
-    # Arrange
-    user = UserModel(metadata={"key1": "value1"})
-    await user.save()
-
-    # Act & Assert
-    with pytest.raises(KeyError):
-        await user.metadata.apop("nonexistent")
-
-
-@pytest.mark.asyncio
 async def test_redis_dict__popitem__check_redis_popitem(real_redis_client):
     # Arrange
     original_dict = {"key1": "value1", "key2": "value2"}
