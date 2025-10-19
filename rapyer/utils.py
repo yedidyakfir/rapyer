@@ -120,7 +120,7 @@ class RedisTypeTransformer:
     def __getitem__(self, item: type[BaseRedisType]):
         redis_type = self.redis_config.redis_type[item]
         return type(
-            f"{self.field_name.title()}{redis_type.__name__}",
+            redis_type.__name__,
             (redis_type,),
             dict(field_path=self.field_name, original_tyep=item),
         )
