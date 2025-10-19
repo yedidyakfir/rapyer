@@ -195,7 +195,7 @@ class AtomicRedisModel(BaseModel):
             yield redis_model
 
     @contextlib.asynccontextmanager
-    async def pipeline(self, ignore_if_deleted: bool = True):
+    async def pipeline(self, ignore_if_deleted: bool = False):
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.get(self.key)
