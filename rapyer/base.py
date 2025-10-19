@@ -11,14 +11,13 @@ from rapyer.config import RedisConfig, RedisFieldConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
 from rapyer.types.any import AnyTypeRedis
-from rapyer.types.init import create_serializer
 from rapyer.types.base import GenericRedisType, RedisType
+from rapyer.types.init import create_serializer
 from rapyer.utils import (
     acquire_lock,
-    get_public_instance_annotations,
-    get_actual_type,
     safe_issubclass,
     replace_to_redis_types_in_annotation,
+    RedisTypeTransformer,
 )
 
 
@@ -64,58 +63,19 @@ class AtomicRedisModel(BaseModel):
     def __init_subclass__(cls, **kwargs):
         cls.__annotations__ = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type, cls.Meta.redis_type
+                field_type, RedisTypeTransformer(field_name, cls.Meta)
             )
             for field_name, field_type in cls.__annotations__.items()
         }
         super().__init_subclass__(**kwargs)
-        # cls.model_rebuild(force=True)
 
-        # # Store Redis field mappings for later use
-        # cls._redis_field_mapping = {}
-        # full_annotation = get_public_instance_annotations(cls)
-        #
-        # # Replace field types with Redis types and create descriptors
-        # for field_name, field_type in full_annotation.items():
-        #     actual_type = get_actual_type(field_type)
-        #     full_field_name = (
-        #         f"{cls.field_config.field_path}.{field_name}"
-        #         if cls.field_config.field_path
-        #         else field_name
-        #     )
-        #     resolved_inner_type = cls._resolve_redis_type(full_field_name, actual_type)
-        #     cls._redis_field_mapping[field_name] = resolved_inner_type
-
-    def __init__(
-        self, should_serialize: bool = False, _field_config_override=None, **data
-    ):
+    def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)
         self._field_config_override = _field_config_override
-
-        # # Initialize Redis fields after Pydantic initialization
-        # for field_name, type_definitions in self._redis_field_mapping.items():
-        #     # Get the current value (from Pydantic initialization)
-        #     current_value = getattr(self, field_name, None)
-        #     if current_value is None:
-        #         continue
-        #
-        #     full_field_path = (
-        #         f"{self.inst_field_conf.field_path}.{field_name}"
-        #         if self.inst_field_conf.field_path
-        #         else field_name
-        #     )
-        #     redis_instance = self.create_redis_type(
-        #         redis_type=type_definitions[0],
-        #         value=current_value,
-        #         redis_key=self.key,
-        #         field_path=full_field_path,
-        #         redis=self.Meta.redis,
-        #         should_serialize=should_serialize,
-        #         **type_definitions[1],
-        #     )
-        #
-        #     # Set it directly on the instance
-        #     object.__setattr__(self, field_name, redis_instance)
+        for field_name in self.model_fields:
+            attr = getattr(self, field_name)
+            if isinstance(attr, RedisType):
+                attr.base_model_link = self
 
     def is_inner_model(self):
         return self.inst_field_conf.field_path is not None
@@ -124,7 +84,7 @@ class AtomicRedisModel(BaseModel):
         if self.is_inner_model():
             raise RuntimeError("Can only save from top level model")
 
-        model_dump = self.redis_dump()
+        model_dump = self.model_dump(mode="json")
         await self.Meta.redis.json().set(self.key, "$", model_dump)
         if self.Meta.ttl is not None:
             await self.Meta.redis.expire(self.key, self.Meta.ttl)
