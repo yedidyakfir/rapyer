@@ -157,17 +157,12 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         result = await self.client.eval(
             pop_script, 1, self.redis_key, self.json_path, key
         )
+        # Key exists in Redis, pop from local dict (it should exist there too)
+        super().pop(key, None)
 
         if result is None:
             # Key doesn't exist in Redis
-            if default is not None:
-                return default
-            else:
-                raise KeyError(key)
-
-        # Key exists in Redis, pop from local dict (it should exist there too)
-        super().pop(key, None)
-        # Use None default to avoid KeyError if local is out of sync
+            return default
 
         # Deserialize the value using serializer
         parsed_result = self._parse_redis_json_value(result)

@@ -114,6 +114,15 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         if self:
             super().pop(index)
         arrpop = await self.client.json().arrpop(self.redis_key, self.json_path, index)
+
+        # Handle empty list case
+        if arrpop is None or (isinstance(arrpop, list) and len(arrpop) == 0):
+            return None
+
+        # Handle case where arrpop returns [None] for empty list
+        if isinstance(arrpop, list) and len(arrpop) == 1 and arrpop[0] is None:
+            return None
+
         return (
             self.serializer.deserialize_value(arrpop[0])
             if self.serializer
