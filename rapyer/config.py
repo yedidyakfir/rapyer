@@ -20,7 +20,6 @@ class RedisConfig:
     )
     redis_type: dict[type, type] = dataclasses.field(default_factory=create_all_types)
     ttl: int | None = None
-    redis_key: str = None
 
 
 @dataclasses.dataclass
