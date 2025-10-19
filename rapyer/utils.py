@@ -62,7 +62,7 @@ def safe_issubclass(cls, class_or_tuple):
     return isinstance(cls, type) and issubclass(cls, class_or_tuple)
 
 
-def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: dict) -> Any:
+def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> Any:
     """
     Recursively traverse a type annotation and replace types according to the mapping.
     Handles Union, Optional, Annotated, and other generic types.
@@ -111,14 +111,13 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: dict) ->
 
 
 class RedisTypeTransformer:
-    def __init__(self, field_name: str, redis_config: RedisConfig, mapping: dict[type, type]):
+    def __init__(self, field_name: str, redis_config: RedisConfig):
         self.field_name = field_name
         self.redis_config = redis_config
-        self.mapping = mapping
 
 
     def __getitem__(self, item: type[BaseRedisType]):
-        redis_type = self.mapping[item]
+        redis_type = self.redis_config.redis_type[item]
         return type(
             f"{self.field_name.title()}{redis_type.__name__}",
             (redis_type,),
@@ -126,4 +125,4 @@ class RedisTypeTransformer:
         )
 
     def __contains__(self, item: type[BaseRedisType]):
-        return item in self.mapping
+        return item in self.redis_config.redis_type
