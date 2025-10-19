@@ -62,18 +62,15 @@ def safe_issubclass(cls, class_or_tuple):
     return isinstance(cls, type) and issubclass(cls, class_or_tuple)
 
 
-def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: TypeTransformer, redis_config: RedisConfig, field_name: str) -> Any:
+def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: dict) -> Any:
     """
     Recursively traverse a type annotation and replace types according to the mapping.
     Handles Union, Optional, Annotated, and other generic types.
     """
     # Direct type replacement
     if annotation in type_mapping:
-        new_type = type_mapping(annotation)
-        field_specific_type = create_redis_type_for_field(
-            new_type, redis_config, field_name
-        )
-        return field_specific_type
+        new_type = type_mapping[annotation]
+        return new_type
 
     origin = get_origin(annotation)
     args = get_args(annotation)
@@ -89,7 +86,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: TypeTran
         metadata = args[1:]
 
         # Recursively replace in the actual type
-        new_type = replace_to_redis_types_in_annotation(actual_type, type_mapping, redis_config, field_name)
+        new_type = replace_to_redis_types_in_annotation(actual_type, type_mapping)
 
         # Reconstruct Annotated with new type and original metadata
         return Annotated[new_type, *metadata]
@@ -98,7 +95,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: TypeTran
     if args:
         # Recursively replace types in all arguments
         new_args = tuple(
-            replace_to_redis_types_in_annotation(arg, type_mapping, redis_config, field_name)
+            replace_to_redis_types_in_annotation(arg, type_mapping)
             for arg in args
         )
 
