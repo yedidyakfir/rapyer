@@ -3,19 +3,16 @@ import contextlib
 import dataclasses
 import functools
 import uuid
-from typing import get_origin, Self, ClassVar, Any
+from typing import Self, ClassVar, Any
 
 from pydantic import BaseModel, PrivateAttr
 
 from rapyer.config import RedisConfig, RedisFieldConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
-from rapyer.types.any import AnyTypeRedis
-from rapyer.types.base import GenericRedisType, RedisType
-from rapyer.types.init import create_serializer
+from rapyer.types.base import RedisType
 from rapyer.utils import (
     acquire_lock,
-    safe_issubclass,
     replace_to_redis_types_in_annotation,
     RedisTypeTransformer,
 )
@@ -196,46 +193,6 @@ class AtomicRedisModel(BaseModel):
         else:
             # Use the parent's __setattr__ for all other cases
             super().__setattr__(name, value)
-
-    @classmethod
-    def _resolve_redis_type(cls, field_name, type_):
-        # Handle generic types
-        origin_type = get_origin(type_) or type_
-
-        # Check if this type has a Redis equivalent
-        if origin_type in cls.Meta.redis_type:
-            redis_type_class = cls.Meta.redis_type[origin_type]
-
-            # If it's a GenericRedisType, create its serializer
-            if safe_issubclass(redis_type_class, GenericRedisType):
-                return [
-                    redis_type_class,
-                    {
-                        "serializer_creator": create_serializer,
-                        "full_type": type_,
-                        "inst_init": cls.create_redis_type,
-                        "type_creator": cls._resolve_redis_type,
-                    },
-                ]
-            else:
-                return [redis_type_class, {}]
-        elif safe_issubclass(type_, AtomicRedisModel):
-            field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.class_key_initials()
-            )
-            return [type_, {"_field_config_override": field_conf}]
-        elif safe_issubclass(type_, BaseModel):
-            field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.class_key_initials()
-            )
-            new_base_model_type = type(
-                f"Redis{type_.__name__}",
-                (type_, AtomicRedisModel),
-                dict(field_config=field_conf),
-            )
-            return [new_base_model_type, {}]
-        else:
-            return [AnyTypeRedis, {}]
 
     @classmethod
     def create_redis_type(

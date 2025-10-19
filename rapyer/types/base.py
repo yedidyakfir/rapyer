@@ -4,7 +4,6 @@ from typing import get_args, Callable, Any
 
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
-from redis.asyncio.client import Redis
 
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var
