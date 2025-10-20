@@ -7,16 +7,18 @@ from typing import Self, ClassVar, Any
 
 from pydantic import BaseModel, PrivateAttr
 from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 
 from rapyer.config import RedisConfig, RedisFieldConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
-from rapyer.types.base import RedisType
+from rapyer.types.base import RedisType, BaseRedisType
 from rapyer.utils import (
     acquire_lock,
     replace_to_redis_types_in_annotation,
     RedisTypeTransformer,
     find_first_type_in_annotation,
+    safe_issubclass,
 )
 
 
@@ -81,20 +83,26 @@ class AtomicRedisModel(BaseModel):
                 continue
             orig_type = original_annotations[attr_name]
             redis_type = cls.__annotations__[attr_name]
+            if not safe_issubclass(redis_type, BaseRedisType):
+                continue
+            redis_type: type[BaseRedisType]
+
             # Handle Field(default=...)
             if isinstance(value, FieldInfo):
-                if value.default is not dataclasses.MISSING:
-                    value.default = redis_type(value.default)
-                elif value.default_factory is not dataclasses.MISSING and callable(
+                if value.default != PydanticUndefined:
+                    value.default = redis_type.from_orig(value.default)
+                elif value.default_factory != PydanticUndefined and callable(
                     value.default_factory
                 ):
                     test_value = value.default_factory()
                     if isinstance(test_value, real_type):
                         continue
                     original_factory = value.default_factory
-                    value.default_factory = lambda of=original_factory: redis_type(of())
+                    value.default_factory = (
+                        lambda of=original_factory: redis_type.from_orig(of())
+                    )
             elif orig_type in cls.Meta.redis_type:
-                setattr(cls, attr_name, redis_type(value))
+                setattr(cls, attr_name, redis_type.from_orig(value))
 
     def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)
