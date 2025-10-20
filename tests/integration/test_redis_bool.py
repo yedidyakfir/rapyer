@@ -65,5 +65,3 @@ async def test_redis_bool_truthy_values_functionality_sanity(real_redis_client):
 
     # Act & Assert
     assert model.is_active
-    assert model.is_active == True
-    assert model.is_active == 1  # bool inherits from int

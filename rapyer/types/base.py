@@ -50,7 +50,6 @@ class RedisType(BaseRedisType):
         return self.base_model_link.key
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to redis key
         self.base_model_link = None
 

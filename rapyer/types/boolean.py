@@ -20,14 +20,6 @@ class RedisBool(int, RedisType):
     serializer = BooleanSerializer(bool, None)
     original_type = bool
 
-    # def __new__(cls, value=False, **kwargs):
-    #     if value is None:
-    #         value = False
-    #     return super().__new__(cls, bool(value))
-    #
-    # def __init__(self, value=False, **kwargs):
-    #     RedisType.__init__(self, **kwargs)
-
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
@@ -45,3 +37,6 @@ class RedisBool(int, RedisType):
 
     def clone(self):
         return bool(self)
+
+    def __repr__(self):
+        return f"{bool(self)}"
