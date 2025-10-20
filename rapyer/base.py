@@ -6,7 +6,7 @@ import uuid
 from typing import Self, ClassVar, Any
 
 from pydantic import BaseModel, PrivateAttr
-from dataclasses import Field as DCField
+from pydantic.fields import FieldInfo
 
 from rapyer.config import RedisConfig, RedisFieldConfig
 from rapyer.context import _context_var, _context_xx_pipe
@@ -16,6 +16,7 @@ from rapyer.utils import (
     acquire_lock,
     replace_to_redis_types_in_annotation,
     RedisTypeTransformer,
+    find_first_type_in_annotation,
 )
 
 
@@ -68,28 +69,32 @@ class AtomicRedisModel(BaseModel):
         super().__init_subclass__(**kwargs)
 
         for attr_name, attr_type in cls.__annotations__.items():
+            if original_annotations[attr_name] == attr_type:
+                continue
             value = getattr(cls, attr_name)
             if value is None:
                 continue
 
-            if isinstance(value, attr_type):
+            real_type = find_first_type_in_annotation(attr_type)
+
+            if isinstance(value, real_type):
                 continue
             orig_type = original_annotations[attr_name]
             redis_type = cls.__annotations__[attr_name]
-            if orig_type in cls.Meta.redis_type:
-                setattr(cls, attr_name, redis_type(value))
             # Handle Field(default=...)
-            elif isinstance(value, DCField):
+            if isinstance(value, FieldInfo):
                 if value.default is not dataclasses.MISSING:
                     value.default = redis_type(value.default)
                 elif value.default_factory is not dataclasses.MISSING and callable(
                     value.default_factory
                 ):
                     test_value = value.default_factory()
-                    if isinstance(test_value, attr_type):
+                    if isinstance(test_value, real_type):
                         continue
                     original_factory = value.default_factory
                     value.default_factory = lambda of=original_factory: redis_type(of())
+            elif orig_type in cls.Meta.redis_type:
+                setattr(cls, attr_name, redis_type(value))
 
     def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)

@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import inspect
 import uuid
 from datetime import timedelta
 from typing import get_origin, ClassVar, Union, get_args, Any, Annotated
@@ -94,8 +95,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
     if args:
         # Recursively replace types in all arguments
         new_args = tuple(
-            replace_to_redis_types_in_annotation(arg, type_mapping)
-            for arg in args
+            replace_to_redis_types_in_annotation(arg, type_mapping) for arg in args
         )
 
         # Reconstruct the generic type with new arguments
@@ -110,12 +110,24 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
     return annotation
 
 
+def find_first_type_in_annotation(annotation: Any) -> type | None:
+    origin = get_origin(annotation)
+    if origin is None:
+        return annotation
+    if inspect.isclass(origin):
+        return origin
+    args = get_args(annotation)
+
+    if args:
+        return find_first_type_in_annotation(args[0])
+
+    return None
+
 
 class RedisTypeTransformer:
     def __init__(self, field_name: str, redis_config: RedisConfig):
         self.field_name = field_name
         self.redis_config = redis_config
-
 
     def __getitem__(self, item: type[BaseRedisType]):
         redis_type = self.redis_config.redis_type[item]
@@ -127,5 +139,3 @@ class RedisTypeTransformer:
 
     def __contains__(self, item: type[BaseRedisType]):
         return item in self.redis_config.redis_type
-
-
