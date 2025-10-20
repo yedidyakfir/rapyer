@@ -37,10 +37,6 @@ class ListSerializer(RedisSerializer):
 
 class RedisList(list[T], GenericRedisType, Generic[T]):
     original_type = list
-    
-    def __init__(self, value, *args, **kwargs):
-        super().__init__(value)
-        GenericRedisType.__init__(self, *args, **kwargs)
 
     async def load(self):
         # Get all items from Redis list

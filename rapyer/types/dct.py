@@ -39,11 +39,6 @@ class DictSerializer(RedisSerializer):
 
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     original_type = dict
-    
-    # def __init__(self, value=None, *args, **kwargs):
-    #     # Extract value if passed as keyword argument
-    #     GenericRedisType.__init__(self, **kwargs)
-    #     super().__init__(value, *args)
 
     @classmethod
     def find_inner_type(cls, type_):
