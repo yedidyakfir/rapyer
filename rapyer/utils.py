@@ -129,18 +129,3 @@ class RedisTypeTransformer:
         return item in self.redis_config.redis_type
 
 
-class TypeConverter:
-    def __init__(self, redis_config: RedisConfig):
-        self.redis_config = redis_config
-
-    def __getitem__(self, item: type[BaseRedisType]):
-        origin = get_origin(item)
-        if origin is Annotated:
-            item = get_args(item)[0]
-        return self.redis_config.redis_type[item]
-
-    def __contains__(self, item):
-        origin = get_origin(item)
-        if origin is Annotated:
-            item = get_args(item)[0]
-        return item in self.redis_config.redis_type
