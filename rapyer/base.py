@@ -180,7 +180,7 @@ class AtomicRedisModel(BaseModel):
     @classmethod
     @contextlib.asynccontextmanager
     async def lock_from_key(
-        cls, key: str, action: str = "default", save_at_end: bool = True
+        cls, key: str, action: str = "default", save_at_end: bool = False
     ):
         async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
             redis_model = await cls.get(key)
