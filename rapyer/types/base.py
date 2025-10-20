@@ -35,6 +35,10 @@ class BaseRedisType(ABC):
     redis_config: RedisConfig
     field_path: str = ""
 
+    @classmethod
+    def from_orig(cls, orig):
+        return cls(orig)
+
 
 class RedisType(BaseRedisType):
     serializer: RedisSerializer = None

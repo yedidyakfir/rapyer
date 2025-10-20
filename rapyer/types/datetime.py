@@ -28,23 +28,6 @@ class RedisDatetime(datetime, RedisType):
     serializer = DatetimeSerializer(datetime, None)
     original_type = datetime
 
-    # def __new__(cls, value=None, *args, **kwargs):
-    #     return super().__new__(
-    #         cls,
-    #         value.year,
-    #         value.month,
-    #         value.day,
-    #         value.hour,
-    #         value.minute,
-    #         value.second,
-    #         value.microsecond,
-    #         value.tzinfo,
-    #     )
-    #
-    # def __init__(self, *args, **kwargs):
-    #     datetime.__init__(self)
-    #     RedisType.__init__(self, **kwargs)
-
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:
@@ -62,3 +45,7 @@ class RedisDatetime(datetime, RedisType):
 
     def clone(self):
         return datetime.fromtimestamp(self.timestamp())
+
+    @classmethod
+    def from_orig(cls, orig):
+        return cls.fromtimestamp(orig.timestamp(), tz=orig.tzinfo)
