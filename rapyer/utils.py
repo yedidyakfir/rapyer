@@ -59,7 +59,7 @@ def get_actual_type(annotation: Any) -> Any:
 
 
 def safe_issubclass(cls, class_or_tuple):
-    return isinstance(cls, type) and issubclass(cls, class_or_tuple)
+    return inspect.isclass(cls) and issubclass(cls, class_or_tuple)
 
 
 def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> Any:
