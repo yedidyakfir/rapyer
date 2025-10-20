@@ -15,6 +15,7 @@ from rapyer.utils import (
     acquire_lock,
     replace_to_redis_types_in_annotation,
     RedisTypeTransformer,
+    TypeConverter,
 )
 
 
@@ -64,6 +65,23 @@ class AtomicRedisModel(BaseModel):
             for field_name, field_type in cls.__annotations__.items()
         }
         super().__init_subclass__(**kwargs)
+
+        types_converter = TypeConverter(cls.Meta)
+        for field_name, field_info in cls.model_fields.items():
+            if field_info.annotation in types_converter:
+                redis_type = types_converter[field_info.annotation]
+                # Handle Field(default=...)
+                if field_info.default is not None and not isinstance(
+                    field_info.default, redis_type
+                ):
+                    field_info.default = redis_type(field_info.default)
+
+                # Handle Field(default_factory=...)
+                if field_info.default_factory is not None:
+                    original_factory = field_info.default_factory
+                    field_info.default_factory = lambda f=original_factory: redis_type(
+                        f()
+                    )
 
     def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)
