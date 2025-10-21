@@ -3,6 +3,7 @@ import contextlib
 import inspect
 import uuid
 from datetime import timedelta
+from types import UnionType
 from typing import get_origin, ClassVar, Union, get_args, Any, Annotated
 
 from pydantic.fields import ModelPrivateAttr
@@ -101,6 +102,8 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
         # Reconstruct the generic type with new arguments
         if origin in type_mapping:
             origin = type_mapping[origin]
+        if origin is UnionType:
+            origin = Union
         try:
             return origin[new_args]
         except TypeError:

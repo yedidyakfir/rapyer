@@ -1,6 +1,10 @@
 import pytest
-from typing import Optional, Union, Annotated, Any
+from typing import Optional, Union, Annotated, Any, Generic, TypeVar, TypeVarTuple
 from rapyer.utils import replace_to_redis_types_in_annotation
+
+T = TypeVar("T")
+V = TypeVar("V")
+Ts = TypeVarTuple("Ts")
 
 
 class NewStr:
@@ -11,15 +15,15 @@ class NewInt:
     pass
 
 
-class NewDict:
+class NewDict(Generic[T, V]):
     pass
 
 
-class NewList:
+class NewList(Generic[T]):
     pass
 
 
-class NewTuple:
+class NewTuple(Generic[*Ts]):
     pass
 
 
@@ -112,27 +116,6 @@ def test_union_type_replacement_sanity(type_mapping, union_type, expected_result
     assert result == expected_result
 
 
-@pytest.mark.parametrize(
-    "pipe_union_type",
-    [
-        str | int,
-        str | int | bool,
-        str | bytes,  # bytes unmapped
-    ],
-)
-def test_pipe_union_type_replacement_limitation_edge_case(
-    type_mapping, pipe_union_type
-):
-    # Arrange
-    # Act
-    result = replace_to_redis_types_in_annotation(pipe_union_type, type_mapping)
-
-    # Assert
-    # Pipe union syntax (types.UnionType) is not supported for reconstruction
-    # The function returns the original annotation unchanged
-    assert result == pipe_union_type
-
-
 def test_annotated_type_with_metadata_preservation_sanity(type_mapping):
     # Arrange
     metadata = "field documentation"
@@ -160,10 +143,10 @@ def test_annotated_optional_type_preservation_sanity(type_mapping):
 @pytest.mark.parametrize(
     "generic_type, expected_result",
     [
-        (list[str], list[NewStr]),
-        (dict[str, int], dict[NewStr, NewInt]),
-        (tuple[str, int], tuple[NewStr, NewInt]),
-        (tuple[str, ...], tuple[NewStr, ...]),
+        (list[str], NewList[NewStr]),
+        (dict[str, int], NewDict[NewStr, NewInt]),
+        (tuple[str, int], NewTuple[NewStr, NewInt]),
+        (tuple[str, ...], NewTuple[NewStr, ...]),
     ],
 )
 def test_generic_type_replacement_sanity(type_mapping, generic_type, expected_result):
@@ -176,12 +159,12 @@ def test_generic_type_replacement_sanity(type_mapping, generic_type, expected_re
 
 
 @pytest.mark.parametrize(
-    "nested_type, expected_result",
+    ["nested_type","expected_result"],
     [
-        (dict[str, list[int]], dict[NewStr, list[NewInt]]),
-        (list[dict[str, int]], list[dict[NewStr, NewInt]]),
-        (tuple[str, dict[int, list]], tuple[NewStr, dict[NewInt, NewList]]),
-        (Optional[dict[str, list[int]]], Optional[dict[NewStr, list[NewInt]]]),
+        (dict[str, list[int]], NewDict[NewStr, NewList[NewInt]]),
+        (list[dict[str, int]], NewList[NewDict[NewStr, NewInt]]),
+        (tuple[str, dict[int, list]], NewTuple[NewStr, NewDict[NewInt, NewList]]),
+        (Optional[dict[str, list[int]]], Optional[NewDict[NewStr, NewList[NewInt]]]),
     ],
 )
 def test_nested_generic_type_replacement_sanity(
@@ -199,7 +182,7 @@ def test_complex_annotated_nested_type_replacement_sanity(type_mapping):
     # Arrange
     metadata = "complex field"
     complex_type = Annotated[Optional[tuple[str, dict[int, list]]], metadata]
-    expected = Annotated[Optional[tuple[NewStr, dict[NewInt, NewList]]], metadata]
+    expected = Annotated[Optional[NewTuple[NewStr, NewDict[NewInt, NewList]]], metadata]
 
     # Act
     result = replace_to_redis_types_in_annotation(complex_type, type_mapping)
@@ -211,7 +194,7 @@ def test_complex_annotated_nested_type_replacement_sanity(type_mapping):
 def test_deeply_nested_type_replacement_sanity(type_mapping):
     # Arrange
     deep_type = dict[str, dict[int, list[tuple[str, bool]]]]
-    expected = dict[NewStr, dict[NewInt, list[tuple[NewStr, NewBool]]]]
+    expected = NewDict[NewStr, NewDict[NewInt, NewList[NewTuple[NewStr, NewBool]]]]
 
     # Act
     result = replace_to_redis_types_in_annotation(deep_type, type_mapping)
@@ -230,20 +213,6 @@ def test_union_with_optional_replacement_sanity(type_mapping):
 
     # Assert
     assert result == expected
-
-
-def test_annotated_with_pipe_union_limitation_edge_case(type_mapping):
-    # Arrange
-    metadata = "union field"
-    annotated_union = Annotated[str | int | None, metadata]
-
-    # Act
-    result = replace_to_redis_types_in_annotation(annotated_union, type_mapping)
-
-    # Assert
-    # Pipe union within Annotated is not supported for reconstruction
-    # The function returns the original annotation unchanged
-    assert result == annotated_union
 
 
 def test_empty_type_mapping_unchanged_sanity():
@@ -286,7 +255,7 @@ def test_multiple_annotations_with_same_metadata_sanity(type_mapping):
 def test_nested_optional_with_union_replacement_sanity(type_mapping):
     # Arrange
     nested_complex = Optional[Union[str, dict[int, list[bool]]]]
-    expected = Optional[Union[NewStr, dict[NewInt, list[NewBool]]]]
+    expected = Optional[Union[NewStr, NewDict[NewInt, NewList[NewBool]]]]
 
     # Act
     result = replace_to_redis_types_in_annotation(nested_complex, type_mapping)
@@ -298,7 +267,7 @@ def test_nested_optional_with_union_replacement_sanity(type_mapping):
 def test_tuple_with_ellipsis_replacement_sanity(type_mapping):
     # Arrange
     tuple_ellipsis = tuple[str, ...]
-    expected = tuple[NewStr, ...]
+    expected = NewTuple[NewStr, ...]
 
     # Act
     result = replace_to_redis_types_in_annotation(tuple_ellipsis, type_mapping)
@@ -308,28 +277,25 @@ def test_tuple_with_ellipsis_replacement_sanity(type_mapping):
 
 
 @pytest.mark.parametrize(
-    "complex_scenario",
+    ["input_type", "expected_type"],
     [
-        (
+        [
             Annotated[
                 Optional[Union[str, dict[int, list[tuple[bool, float]]]]],
                 "very complex",
             ],
             Annotated[
-                Optional[Union[NewStr, dict[NewInt, list[tuple[NewBool, NewFloat]]]]],
+                Optional[Union[NewStr, NewDict[NewInt, NewList[NewTuple[NewBool, NewFloat]]]]],
                 "very complex",
             ],
-        ),
-        (
+        ],
+        [
             Union[Annotated[str, "doc1"], Annotated[int, "doc2"]],
             Union[Annotated[NewStr, "doc1"], Annotated[NewInt, "doc2"]],
-        ),
+        ],
     ],
 )
-def test_extremely_complex_type_scenarios_edge_case(type_mapping, complex_scenario):
-    # Arrange
-    input_type, expected_type = complex_scenario
-
+def test_extremely_complex_type_scenarios_edge_case(type_mapping, input_type, expected_type):
     # Act
     result = replace_to_redis_types_in_annotation(input_type, type_mapping)
 
@@ -341,7 +307,7 @@ def test_pipe_union_in_generic_partial_replacement_edge_case(type_mapping):
     # Arrange
     pipe_union_generic = dict[str | int, list[Optional[bool]]]
     # bool gets replaced, pipe union doesn't
-    expected = dict[str | int, list[Optional[NewBool]]]
+    expected = NewDict[NewStr | NewInt, NewList[Optional[NewBool]]]
 
     # Act
     result = replace_to_redis_types_in_annotation(pipe_union_generic, type_mapping)
@@ -354,7 +320,7 @@ def test_pipe_union_in_generic_partial_replacement_edge_case(type_mapping):
 def test_recursive_type_with_none_values_edge_case(type_mapping):
     # Arrange
     type_with_none = Union[str, None, dict[int, Union[bool, None]]]
-    expected = Union[NewStr, None, dict[NewInt, Union[NewBool, None]]]
+    expected = Union[NewStr, None, NewDict[NewInt, Union[NewBool, None]]]
 
     # Act
     result = replace_to_redis_types_in_annotation(type_with_none, type_mapping)
