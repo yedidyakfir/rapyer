@@ -215,21 +215,9 @@ class AtomicRedisModel(BaseModel):
             _context_var.set(None)
             _context_xx_pipe.set(False)
 
-    # def __setattr__(self, name: str, value: Any) -> None:
-    #     if value is None:
-    #         super().__setattr__(name, value)
-    #         return
-    #
-    #     is_already_at_correct_type = isinstance(value, (RedisType, AtomicRedisModel))
-    #     if name in self.model_fields and not is_already_at_correct_type:
-    #         field_info = self.model_fields[name]
-    #         field_type = field_info.annotation
-    #
-    #         if safe_issubclass(field_type, RedisType):
-    #             value = field_type.from_orig(value)
-    #
-    #         # Set the converted Redis instance
-    #         super().__setattr__(name, value)
-    #     else:
-    #         # Use the parent's __setattr__ for all other cases
-    #         super().__setattr__(name, value)
+    def __setattr__(self, name: str, value: Any) -> None:
+        super().__setattr__(name, value)
+        if value is not None:
+            attr = getattr(self, name)
+            if isinstance(attr, RedisType):
+                attr.base_model_link = self

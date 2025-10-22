@@ -25,8 +25,14 @@ class DatetimeSerializer(RedisSerializer):
 
 
 class RedisDatetime(datetime, RedisType):
-    serializer = DatetimeSerializer(datetime, None)
     original_type = datetime
+
+    def __new__(cls, value, *args, **kwargs):
+        if isinstance(value, datetime):
+            # Support init from a datetime
+            return datetime.__new__(cls, *value.timetuple()[:6])
+        else:
+            return datetime.__new__(cls, value, *args, *kwargs)
 
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
