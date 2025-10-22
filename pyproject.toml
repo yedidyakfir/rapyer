@@ -13,7 +13,7 @@ homepage = "https://github.com/YedidyaHKfir/rapyer"
 repository = "https://github.com/YedidyaHKfir/rapyer"
 documentation = "https://github.com/YedidyaHKfir/rapyer"
 packages = [{include = "rapyer"}]
-keywords = ["redis", "pydantic", "orm", "database", "async"]
+keywords = ["redis", "pydantic", "orm", "database", "async", "nosql", "cache", "key-value", "data-modeling", "python", "backend", "storage", "serialization", "validation"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
