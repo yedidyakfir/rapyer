@@ -384,6 +384,7 @@ async def test_assignment_datetime_field_converts_to_redis_datetime_sanity(
     # Assert
     assert isinstance(datetime_model_with_values.created_at, RedisDatetime)
     assert datetime_model_with_values.created_at.timestamp() == new_datetime.timestamp()
+    assert datetime_model_with_values.created_at.base_model_link is datetime_model_with_values
 
 
 @pytest.mark.asyncio
