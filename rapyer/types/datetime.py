@@ -51,7 +51,3 @@ class RedisDatetime(datetime, RedisType):
 
     def clone(self):
         return datetime.fromtimestamp(self.timestamp())
-
-    @classmethod
-    def from_orig(cls, orig):
-        return cls.fromtimestamp(orig.timestamp(), tz=orig.tzinfo)

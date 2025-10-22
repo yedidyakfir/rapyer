@@ -34,10 +34,6 @@ class PydanicSerializer(RedisSerializer):
 class BaseRedisType(ABC):
     field_path: str = ""
 
-    @classmethod
-    def from_orig(cls, orig):
-        return cls(orig)
-
 
 class RedisType(BaseRedisType):
     original_type: type = None

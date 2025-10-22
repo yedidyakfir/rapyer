@@ -91,7 +91,7 @@ class AtomicRedisModel(BaseModel):
             # Handle Field(default=...)
             if isinstance(value, FieldInfo):
                 if value.default != PydanticUndefined:
-                    value.default = redis_type.from_orig(value.default)
+                    value.default = redis_type(value.default)
                 elif value.default_factory != PydanticUndefined and callable(
                     value.default_factory
                 ):
@@ -99,11 +99,9 @@ class AtomicRedisModel(BaseModel):
                     if isinstance(test_value, real_type):
                         continue
                     original_factory = value.default_factory
-                    value.default_factory = (
-                        lambda of=original_factory: redis_type.from_orig(of())
-                    )
+                    value.default_factory = lambda of=original_factory: redis_type(of())
             elif orig_type in cls.Meta.redis_type:
-                setattr(cls, attr_name, redis_type.from_orig(value))
+                setattr(cls, attr_name, redis_type(value))
 
     def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)

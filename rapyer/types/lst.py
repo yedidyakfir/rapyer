@@ -44,11 +44,11 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         new_type = self.create_new_type(key)
         if new_type is Any:
             return value
-        return new_type.from_orig(value)
+        return new_type(value)
 
     def __setitem__(self, key, value):
         new_type = self.create_new_type(key)
-        new_val = new_type.from_orig(value)
+        new_val = new_type(value)
         super().__setitem__(key, new_val)
 
     async def aappend(self, __object):
