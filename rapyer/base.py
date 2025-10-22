@@ -224,8 +224,8 @@ class AtomicRedisModel(BaseModel):
             field_info = self.model_fields[name]
             field_type = field_info.annotation
 
-            if isinstance(field_type, RedisType):
-                value = field_type(value)
+            if safe_issubclass(field_type, RedisType):
+                value = field_type.from_orig(value)
 
             # Set the converted Redis instance
             super().__setattr__(name, value)
