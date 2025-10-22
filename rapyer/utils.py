@@ -133,11 +133,14 @@ class RedisTypeTransformer:
         self.redis_config = redis_config
 
     def __getitem__(self, item: type[BaseRedisType]):
+        if item is Any:
+            return item
+
         redis_type = self.redis_config.redis_type[item]
         return type(
             redis_type.__name__,
             (redis_type,),
-            dict(field_path=self.field_name, original_tyep=item),
+            dict(field_path=self.field_name, original_type=item),
         )
 
     def __contains__(self, item: type[BaseRedisType]):

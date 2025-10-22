@@ -32,7 +32,6 @@ class PydanicSerializer(RedisSerializer):
 
 
 class BaseRedisType(ABC):
-    redis_config: RedisConfig
     field_path: str = ""
 
     @classmethod
@@ -41,8 +40,8 @@ class BaseRedisType(ABC):
 
 
 class RedisType(BaseRedisType):
-    serializer: RedisSerializer = None
     original_type: type = None
+    full_type: type = None
     field_path: str = None
 
     @property
@@ -52,6 +51,10 @@ class RedisType(BaseRedisType):
     @property
     def redis_key(self):
         return self.base_model_link.key
+
+    @property
+    def Meta(self):
+        return self.base_model_link.Meta
 
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to redis key
@@ -88,11 +91,11 @@ class RedisType(BaseRedisType):
     def clone(self):
         pass
 
-    def serialize_value(self, value):
-        return self.serializer.serialize_value(value)
-
-    def deserialize_value(self, value):
-        return self.serializer.deserialize_value(value)
+    # def serialize_value(self, value):
+    #     return self.serializer.serialize_value(value)
+    #
+    # def deserialize_value(self, value):
+    #     return self.serializer.deserialize_value(value)
 
 
 class GenericRedisType(RedisType, ABC):

@@ -1,38 +1,20 @@
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Any
 from typing import get_args
 
-from rapyer.config import RedisFieldConfig
 from rapyer.types.base import GenericRedisType, RedisSerializer, RedisType
 from rapyer.types.utils import noop
+from rapyer.utils import RedisTypeTransformer
 
 T = TypeVar("T")
 
 
 class ListSerializer(RedisSerializer):
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     self.inner_serializer = self._create_inner_serializer()
-
     def _create_inner_serializer(self):
         args = get_args(self.full_type)
         if args:
             inner_type = args[0]
             return self.serializer_creator(inner_type)
         return None
-
-    def serialize_value(self, value):
-        if value is None:
-            return None
-        if self.inner_serializer:
-            return [self.inner_serializer.serialize_value(v) for v in value]
-        return list(value)
-
-    def deserialize_value(self, value):
-        if value is None:
-            return None
-        if self.inner_serializer:
-            return [self.inner_serializer.deserialize_value(v) for v in value]
-        return list(value)
 
 
 class RedisList(list[T], GenericRedisType, Generic[T]):
@@ -45,65 +27,54 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         if redis_items is None:
             redis_items = []
 
-        # Deserialize items using serializer
-        deserialized_items = []
-        for item in redis_items:
-            if self.serializer is not None:
-                deserialized_item = self.serializer.deserialize_value(item)
-                deserialized_items.append(deserialized_item)
-            else:
-                # Fallback to decode bytes if no serializer
-                decoded_item = item.decode() if isinstance(item, bytes) else item
-                deserialized_items.append(decoded_item)
-
         # Clear local list and populate with Redis data
         super().clear()
-        super().extend(deserialized_items)
+        super().extend(redis_items)
 
     def json_field_path(self, field_name: str):
         return f"{self.json_path}[{field_name}]"
 
+    def create_new_type(self, key):
+        inner_original_type = self.find_inner_type(self.original_type)
+        type_transformer = RedisTypeTransformer(self.json_field_path(key), self.Meta)
+        new_type = type_transformer[inner_original_type]
+        return new_type
+
+    def create_new_value(self, key, value):
+        new_type = self.create_new_type(key)
+        if new_type is Any:
+            return value
+        return new_type.from_orig(value)
+
     def __setitem__(self, key, value):
-        redis_type, kwargs = self.inner_type
-        field_path = f"{self.field_path}[{key}]"
-        new_val = self.inst_init(
-            redis_type,
-            value,
-            self.redis_key,
-            **kwargs,
-            redis=self.redis,
-            field_path=field_path,
-            _field_config_override=RedisFieldConfig(field_path=field_path),
-        )
-        return super().__setitem__(key, new_val)
+        new_type = self.create_new_type(key)
+        new_val = new_type.from_orig(value)
+        super().__setitem__(key, new_val)
 
     async def aappend(self, __object):
-        super().append(__object)
+        key = len(self)
+        new_val = self.create_new_value(key, __object)
+        super().append(new_val)
 
         # Serialize the object for Redis storage
-        serialized_object = (
-            self.serializer.serialize_value(__object) if self.serializer else __object
-        )
         return await self.client.json().arrappend(
-            self.redis_key, self.json_path, serialized_object
+            self.redis_key, self.json_path, __object
         )
 
     async def aextend(self, __iterable):
         items = list(__iterable)
-        super().extend(items)
+        base_idx = len(self)
+        redis_items = [
+            self.create_new_value(base_idx + i, item) for i, item in enumerate(items)
+        ]
+        super().extend(redis_items)
 
         # Convert iterable to list and serialize items
         if items:
-            # Serialize all items for Redis storage
-            serialized_items = [
-                self.serializer.serialize_value(item) if self.serializer else item
-                for item in items
-            ]
-
             return await self.client.json().arrappend(
                 self.redis_key,
                 self.json_path,
-                *serialized_items,
+                *items,
             )
 
         return await noop()
@@ -128,15 +99,12 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         )
 
     async def ainsert(self, index, __object):
-        super().insert(index, __object)
-
-        # Serialize the object for Redis storage
-        serialized_object = (
-            self.serializer.serialize_value(__object) if self.serializer else __object
-        )
+        key = len(self)
+        new_val = self.create_new_value(key, __object)
+        super().insert(index, new_val)
 
         return await self.client.json().arrinsert(
-            self.redis_key, self.json_path, index, serialized_object
+            self.redis_key, self.json_path, index, __object
         )
 
     async def aclear(self):
@@ -148,9 +116,3 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     def clone(self):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]
-
-    def serialize_value(self, value):
-        return [self.serializer.serialize_value(v) for v in value]
-
-    def deserialize_value(self, value):
-        return [self.serializer.deserialize_value(v) for v in value]
