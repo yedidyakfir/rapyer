@@ -41,7 +41,7 @@ class BaseModelListModel(AtomicRedisModel):
     configs: list[NestedConfig] = Field(default_factory=list)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     IntListModel.Meta.redis = redis_client
     StrListModel.Meta.redis = redis_client
@@ -114,7 +114,7 @@ def sample_nested_config():
 
 @pytest.mark.asyncio
 async def test_redis_list_setitem_int_type_checking_sanity(
-    real_redis_client, int_list_model_with_items
+    int_list_model_with_items
 ):
     # Arrange
     model = int_list_model_with_items
@@ -131,7 +131,7 @@ async def test_redis_list_setitem_int_type_checking_sanity(
 
 @pytest.mark.asyncio
 async def test_redis_list_setitem_str_type_checking_sanity(
-    real_redis_client, str_list_model_with_items
+    str_list_model_with_items
 ):
     # Arrange
     model = str_list_model_with_items
@@ -148,7 +148,7 @@ async def test_redis_list_setitem_str_type_checking_sanity(
 
 @pytest.mark.asyncio
 async def test_redis_list_setitem_dict_type_checking_sanity(
-    real_redis_client, dict_list_model_with_items
+    dict_list_model_with_items
 ):
     # Arrange
     model = dict_list_model_with_items
@@ -173,7 +173,7 @@ async def test_redis_list_setitem_dict_type_checking_sanity(
 )
 @pytest.mark.asyncio
 async def test_redis_list_setitem_int_operations_sanity(
-    real_redis_client, index, test_value
+    index, test_value
 ):
     # Arrange
     model = IntListModel(items=[0, 0, 0])
@@ -201,7 +201,7 @@ async def test_redis_list_setitem_int_operations_sanity(
 )
 @pytest.mark.asyncio
 async def test_redis_list_setitem_str_operations_sanity(
-    real_redis_client, index, test_value
+    index, test_value
 ):
     # Arrange
     model = StrListModel(items=["", "", ""])
@@ -229,7 +229,7 @@ async def test_redis_list_setitem_str_operations_sanity(
 )
 @pytest.mark.asyncio
 async def test_redis_list_setitem_dict_operations_sanity(
-    real_redis_client, index, test_value
+    index, test_value
 ):
     # Arrange
     model = DictListModel(items=[{}, {}, {}])
@@ -250,7 +250,7 @@ async def test_redis_list_setitem_dict_operations_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_int_arithmetic_operations_sanity(real_redis_client):
+async def test_redis_list_setitem_int_arithmetic_operations_sanity():
     # Arrange
     model = IntListModel(items=[0, 0, 0])
     await model.save()
@@ -266,7 +266,7 @@ async def test_redis_list_setitem_int_arithmetic_operations_sanity(real_redis_cl
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_str_operations_edge_case(real_redis_client):
+async def test_redis_list_setitem_str_operations_edge_case():
     # Arrange
     model = StrListModel(items=["", "", ""])
     await model.save()
@@ -281,7 +281,7 @@ async def test_redis_list_setitem_str_operations_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_dict_key_access_edge_case(real_redis_client):
+async def test_redis_list_setitem_dict_key_access_edge_case():
     # Arrange
     model = DictListModel(items=[{}, {}, {}])
     await model.save()
@@ -296,7 +296,7 @@ async def test_redis_list_setitem_dict_key_access_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_redis_field_paths_sanity(real_redis_client):
+async def test_redis_list_setitem_redis_field_paths_sanity():
     # Arrange
     model = IntListModel(items=[0, 0, 0])
     await model.save()
@@ -311,7 +311,7 @@ async def test_redis_list_setitem_redis_field_paths_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_multiple_indices_sanity(real_redis_client):
+async def test_redis_list_setitem_multiple_indices_sanity():
     # Arrange
     model = IntListModel(items=[0, 0, 0, 0, 0])
     await model.save()
@@ -330,9 +330,7 @@ async def test_redis_list_setitem_multiple_indices_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_persistence_across_instances_edge_case(
-    real_redis_client,
-):
+async def test_redis_list_setitem_persistence_across_instances_edge_case():
     # Arrange
     model1 = IntListModel(items=[1, 2, 3])
     await model1.save()
@@ -351,7 +349,7 @@ async def test_redis_list_setitem_persistence_across_instances_edge_case(
 
 @pytest.mark.asyncio
 async def test_redis_list_setitem_basemodel_products_type_checking_sanity(
-    real_redis_client, basemodel_list_model_with_products, sample_product
+    basemodel_list_model_with_products, sample_product
 ):
     # Arrange
     model = basemodel_list_model_with_products
@@ -374,7 +372,7 @@ async def test_redis_list_setitem_basemodel_products_type_checking_sanity(
 
 @pytest.mark.asyncio
 async def test_redis_list_setitem_basemodel_configs_type_checking_sanity(
-    real_redis_client, basemodel_list_model_with_configs, sample_nested_config
+    basemodel_list_model_with_configs, sample_nested_config
 ):
     # Arrange
     model = basemodel_list_model_with_configs
@@ -395,7 +393,7 @@ async def test_redis_list_setitem_basemodel_configs_type_checking_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_basemodel_redis_operations_sanity(real_redis_client):
+async def test_redis_list_setitem_basemodel_redis_operations_sanity():
     # Arrange
     model = BaseModelListModel()
     model.users = [UserProfile(name="Ori", age=2, email="Myemail")]
@@ -422,7 +420,7 @@ async def test_redis_list_setitem_basemodel_redis_operations_sanity(real_redis_c
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_basemodel_field_paths_sanity(real_redis_client):
+async def test_redis_list_setitem_basemodel_field_paths_sanity():
     # Arrange
     model = BaseModelListModel(
         products=[
@@ -446,7 +444,7 @@ async def test_redis_list_setitem_basemodel_field_paths_sanity(real_redis_client
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_basemodel_nested_operations_sanity(real_redis_client):
+async def test_redis_list_setitem_basemodel_nested_operations_sanity():
     # Arrange
     model = BaseModelListModel(configs=[NestedConfig(settings={}, options=[])])
     await model.save()
@@ -473,7 +471,7 @@ async def test_redis_list_setitem_basemodel_nested_operations_sanity(real_redis_
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_basemodel_multiple_items_sanity(real_redis_client):
+async def test_redis_list_setitem_basemodel_multiple_items_sanity():
     # Arrange
     model = BaseModelListModel(
         users=[
@@ -505,7 +503,7 @@ async def test_redis_list_setitem_basemodel_multiple_items_sanity(real_redis_cli
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_basemodel_field_access_edge_case(real_redis_client):
+async def test_redis_list_setitem_basemodel_field_access_edge_case():
     # Arrange
     model = BaseModelListModel(
         products=[
@@ -539,7 +537,7 @@ async def test_redis_list_setitem_basemodel_field_access_edge_case(real_redis_cl
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_inner_basemodel_save_raises_error(real_redis_client):
+async def test_redis_list_setitem_inner_basemodel_save_raises_error():
     # Arrange
     model = BaseModelListModel(users=[UserProfile(name="Ori", age=2, email="Myemail")])
     await model.save()
@@ -555,7 +553,7 @@ async def test_redis_list_setitem_inner_basemodel_save_raises_error(real_redis_c
 
 
 @pytest.mark.asyncio
-async def test_redis_list_apop_after_clear_sanity(real_redis_client):
+async def test_redis_list_apop_after_clear_sanity():
     # Arrange
     model = StrListModel(items=["item1", "item2", "item3"])
     await model.save()
@@ -572,9 +570,7 @@ async def test_redis_list_apop_after_clear_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_list__apop_empty_redis__check_default_returned_sanity(
-    real_redis_client,
-):
+async def test_redis_list__apop_empty_redis__check_default_returned_sanity():
     # Arrange
     model = StrListModel()
     await model.save()

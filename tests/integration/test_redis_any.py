@@ -14,7 +14,7 @@ class AnyModel(AtomicRedisModel):
     dict_any: Dict[str, Any] = Field(default_factory=dict)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     AnyModel.Meta.redis = redis_client
     yield redis_client
@@ -39,7 +39,7 @@ test_data_args = [
 
 @pytest.mark.parametrize("test_data", test_data_args)
 @pytest.mark.asyncio
-async def test_redis_any_set_functionality_sanity(real_redis_client, test_data):
+async def test_redis_any_set_functionality_sanity(test_data):
     # Arrange
     model = AnyModel()
     await model.save()
@@ -60,7 +60,7 @@ async def test_redis_any_set_functionality_sanity(real_redis_client, test_data):
     test_data_args,
 )
 @pytest.mark.asyncio
-async def test_redis_any_load_functionality_sanity(real_redis_client, test_data):
+async def test_redis_any_load_functionality_sanity(test_data):
     # Arrange
     model = AnyModel()
     await model.save()
@@ -77,7 +77,7 @@ async def test_redis_any_load_functionality_sanity(real_redis_client, test_data)
 
 
 @pytest.mark.asyncio
-async def test_redis_any_load_with_no_redis_data_edge_case(real_redis_client):
+async def test_redis_any_load_with_no_redis_data_edge_case():
     # Arrange
     model = AnyModel()
 
@@ -99,7 +99,7 @@ async def test_redis_any_load_with_no_redis_data_edge_case(real_redis_client):
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_list_any_set_functionality_sanity(real_redis_client, list_data):
+async def test_redis_list_any_set_functionality_sanity(list_data):
     # Arrange
     model = AnyModel()
     await model.save()
@@ -139,7 +139,7 @@ async def test_redis_list_any_set_functionality_sanity(real_redis_client, list_d
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_dict_any_set_functionality_sanity(real_redis_client, dict_data):
+async def test_redis_dict_any_set_functionality_sanity(dict_data):
     # Arrange
     model = AnyModel()
     await model.save()
@@ -165,7 +165,7 @@ async def test_redis_dict_any_set_functionality_sanity(real_redis_client, dict_d
 
 
 @pytest.mark.asyncio
-async def test_redis_any_inheritance_sanity(real_redis_client):
+async def test_redis_any_inheritance_sanity():
     # Arrange & Act
     model = AnyModel(simple_any="test")
 
@@ -176,7 +176,7 @@ async def test_redis_any_inheritance_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_any_clone_functionality_sanity(real_redis_client):
+async def test_redis_any_clone_functionality_sanity():
     # Arrange
     test_value = {"complex": [1, 2, {"nested": "value"}]}
     model = AnyModel(simple_any=test_value)
@@ -209,7 +209,7 @@ async def test_redis_any_model_creation_functionality_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_any_persistence_across_instances_edge_case(real_redis_client):
+async def test_redis_any_persistence_across_instances_edge_case():
     # Arrange
     original_value = {"modified": True, "number": 42}
     model1 = AnyModel(simple_any="original")
@@ -226,7 +226,7 @@ async def test_redis_any_persistence_across_instances_edge_case(real_redis_clien
 
 
 @pytest.mark.asyncio
-async def test_redis_list_any_empty_list_functionality_edge_case(real_redis_client):
+async def test_redis_list_any_empty_list_functionality_edge_case():
     # Arrange
     model = AnyModel()
     await model.save()
@@ -246,7 +246,7 @@ async def test_redis_list_any_empty_list_functionality_edge_case(real_redis_clie
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_any_empty_dict_functionality_edge_case(real_redis_client):
+async def test_redis_dict_any_empty_dict_functionality_edge_case():
     # Arrange
     model = AnyModel()
     await model.save()
@@ -286,7 +286,7 @@ async def test_redis_dict_any_empty_dict_functionality_edge_case(real_redis_clie
 )
 @pytest.mark.asyncio
 async def test_redis_any_complex_nested_structures_edge_case(
-    real_redis_client, complex_data
+    complex_data
 ):
     # Arrange
     model = AnyModel()
@@ -304,9 +304,7 @@ async def test_redis_any_complex_nested_structures_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_redis_any_serialization_deserialization_consistency_edge_case(
-    real_redis_client,
-):
+async def test_redis_any_serialization_deserialization_consistency_edge_case():
     # Arrange
     test_data = {
         "string": "test",
@@ -334,7 +332,7 @@ async def test_redis_any_serialization_deserialization_consistency_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_redis_any_overwrite_different_types_edge_case(real_redis_client):
+async def test_redis_any_overwrite_different_types_edge_case():
     # Arrange
     model = AnyModel()
     await model.save()

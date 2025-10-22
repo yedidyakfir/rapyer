@@ -23,7 +23,7 @@ class UnmappedTypesModel(AtomicRedisModel):
     union_field: Union[str, int, CustomType] = "default"
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     UnmappedTypesModel.Meta.redis = redis_client
     yield redis_client
@@ -31,7 +31,7 @@ async def real_redis_client(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_unmapped_field_types_use_any_redis_type_sanity(real_redis_client):
+async def test_unmapped_field_types_use_any_redis_type_sanity():
     # Arrange & Act
     model = UnmappedTypesModel()
 
@@ -51,9 +51,7 @@ test_data_args = [
 
 @pytest.mark.parametrize("test_data", test_data_args)
 @pytest.mark.asyncio
-async def test_unmapped_field_types_set_and_load_functionality_sanity(
-    real_redis_client, test_data
-):
+async def test_unmapped_field_types_set_and_load_functionality_sanity(test_data):
     # Arrange
     model = UnmappedTypesModel()
     await model.save()
@@ -70,7 +68,7 @@ async def test_unmapped_field_types_set_and_load_functionality_sanity(
 
 
 @pytest.mark.asyncio
-async def test_unmapped_field_types_persistence_edge_case(real_redis_client):
+async def test_unmapped_field_types_persistence_edge_case():
     # Arrange
     custom_data = CustomType("persistent_value")
     model = UnmappedTypesModel()
@@ -89,7 +87,7 @@ async def test_unmapped_field_types_persistence_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_unmapped_dataclass_field_functionality_sanity(real_redis_client):
+async def test_unmapped_dataclass_field_functionality_sanity():
     # Arrange
     dataclass_data = CustomDataClass("dataclass_test")
     model = UnmappedTypesModel()

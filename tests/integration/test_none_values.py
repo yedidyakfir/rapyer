@@ -15,7 +15,7 @@ class NoneTestModel(AtomicRedisModel):
     optional_dict: Optional[Dict[str, str]] = None
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     NoneTestModel.Meta.redis = redis_client
     yield redis_client
@@ -34,7 +34,7 @@ async def real_redis_client(redis_client):
     ],
 )
 @pytest.mark.asyncio
-async def test_none_values_persistence_sanity(real_redis_client, field_name):
+async def test_none_values_persistence_sanity(field_name):
     # Arrange
     model = NoneTestModel()
     assert getattr(model, field_name) is None
@@ -48,7 +48,7 @@ async def test_none_values_persistence_sanity(real_redis_client, field_name):
 
 
 @pytest.mark.asyncio
-async def test_all_none_values_model_persistence_sanity(real_redis_client):
+async def test_all_none_values_model_persistence_sanity():
     # Arrange
     model = NoneTestModel()
 
@@ -66,7 +66,7 @@ async def test_all_none_values_model_persistence_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_mixed_none_and_values_persistence_edge_case(real_redis_client):
+async def test_mixed_none_and_values_persistence_edge_case():
     # Arrange
     model = NoneTestModel(
         optional_string="test",
@@ -91,7 +91,7 @@ async def test_mixed_none_and_values_persistence_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_set_value_to_none_after_initialization_edge_case(real_redis_client):
+async def test_set_value_to_none_after_initialization_edge_case():
     # Arrange
     model = NoneTestModel(
         optional_string="initial_value",

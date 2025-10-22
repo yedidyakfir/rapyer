@@ -9,7 +9,7 @@ class UserModel(AtomicRedisModel):
     metadata: dict[str, str] = {}
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     UserModel.Meta.redis = redis_client
     yield redis_client
@@ -17,7 +17,7 @@ async def real_redis_client(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__setitem__check_local_consistency(real_redis_client):
+async def test_redis_dict__setitem__check_local_consistency():
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
     await user.save()
@@ -34,7 +34,7 @@ async def test_redis_dict__setitem__check_local_consistency(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__delitem__check_local_consistency(real_redis_client):
+async def test_redis_dict__delitem__check_local_consistency():
     # Arrange
     user = UserModel(metadata={"key1": "value1", "key2": "value2"})
     await user.save()
@@ -51,7 +51,7 @@ async def test_redis_dict__delitem__check_local_consistency(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__update__check_local_consistency(real_redis_client):
+async def test_redis_dict__update__check_local_consistency():
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
     await user.save()
@@ -68,7 +68,7 @@ async def test_redis_dict__update__check_local_consistency(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__clear__check_local_consistency(real_redis_client):
+async def test_redis_dict__clear__check_local_consistency():
     # Arrange
     user = UserModel(metadata={"key1": "value1", "key2": "value2"})
     await user.save()
@@ -86,7 +86,7 @@ async def test_redis_dict__clear__check_local_consistency(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__load__check_redis_load(real_redis_client):
+async def test_redis_dict__load__check_redis_load():
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
     await user.save()
@@ -109,7 +109,7 @@ async def test_redis_dict__load__check_redis_load(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__pop__check_redis_pop(real_redis_client):
+async def test_redis_dict__pop__check_redis_pop():
     # Arrange
     user = UserModel(metadata={"key1": "value1", "key2": "value2"})
     await user.save()
@@ -128,7 +128,7 @@ async def test_redis_dict__pop__check_redis_pop(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__pop_with_default__check_default_return(real_redis_client):
+async def test_redis_dict__pop_with_default__check_default_return():
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
     await user.save()
@@ -142,7 +142,7 @@ async def test_redis_dict__pop_with_default__check_default_return(real_redis_cli
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__popitem__check_redis_popitem(real_redis_client):
+async def test_redis_dict__popitem__check_redis_popitem():
     # Arrange
     original_dict = {"key1": "value1", "key2": "value2"}
     user = UserModel(metadata=original_dict)
@@ -161,9 +161,7 @@ async def test_redis_dict__popitem__check_redis_popitem(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__update_with_dict_arg__check_local_consistency(
-    real_redis_client,
-):
+async def test_redis_dict__update_with_dict_arg__check_local_consistency():
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
     await user.save()
@@ -181,9 +179,7 @@ async def test_redis_dict__update_with_dict_arg__check_local_consistency(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__update_with_kwargs__check_local_consistency(
-    real_redis_client,
-):
+async def test_redis_dict__update_with_kwargs__check_local_consistency():
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
     await user.save()
@@ -201,7 +197,7 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__clone__check_clone_functionality(real_redis_client):
+async def test_redis_dict__clone__check_clone_functionality():
     # Arrange
     user = UserModel(metadata={"key1": "value1", "key2": "value2"})
 
@@ -221,7 +217,7 @@ async def test_redis_dict__clone__check_clone_functionality(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__popitem_empty_dict__check_key_error(real_redis_client):
+async def test_redis_dict__popitem_empty_dict__check_key_error():
     # Arrange
     user = UserModel(metadata={})
     await user.save()
@@ -251,7 +247,7 @@ async def test_redis_dict__model_creation__check_redis_dict_instance(real_redis_
 
 
 @pytest.mark.asyncio
-async def test__redis_dict_model__ior(real_redis_client):
+async def test__redis_dict_model__ior():
     # Arrange
     user = UserModel(metadata={"key1": "value1"})
 
@@ -264,9 +260,7 @@ async def test__redis_dict_model__ior(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
-    real_redis_client,
-):
+async def test_redis_dict__apop_empty_redis__check_default_returned_sanity():
     # Arrange
     user = UserModel()
     await user.save()
@@ -280,9 +274,7 @@ async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__apop_empty_redis__check_no_default_sanity(
-    real_redis_client,
-):
+async def test_redis_dict__apop_empty_redis__check_no_default_sanity():
     # Arrange
     user = UserModel()
     await user.save()

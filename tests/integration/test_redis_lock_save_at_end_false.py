@@ -13,7 +13,7 @@ class LockTestModel(AtomicRedisModel):
     active: bool = True
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     LockTestModel.Meta.redis = redis_client
     yield redis_client
@@ -21,9 +21,7 @@ async def real_redis_client(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_lock_model_changes_not_saved_with_save_at_end_false_sanity(
-    real_redis_client,
-):
+async def test_lock_model_changes_not_saved_with_save_at_end_false_sanity():
     # Arrange
     original_model = LockTestModel(name="original", age=25, tags=["tag1"], active=True)
     await original_model.save()
@@ -46,9 +44,7 @@ async def test_lock_model_changes_not_saved_with_save_at_end_false_sanity(
 
 
 @pytest.mark.asyncio
-async def test_lock_redis_operations_still_work_with_save_at_end_false_sanity(
-    real_redis_client,
-):
+async def test_lock_redis_operations_still_work_with_save_at_end_false_sanity():
     # Arrange
     original_model = LockTestModel(name="original", age=25, tags=["tag1"], active=True)
     await original_model.save()
@@ -67,9 +63,7 @@ async def test_lock_redis_operations_still_work_with_save_at_end_false_sanity(
 
 
 @pytest.mark.asyncio
-async def test_lock_model_deletion_persists_with_save_at_end_false_sanity(
-    real_redis_client,
-):
+async def test_lock_model_deletion_persists_with_save_at_end_false_sanity():
     # Arrange
     model = LockTestModel(name="to_delete", age=25)
     await model.save()
@@ -91,9 +85,7 @@ async def test_lock_model_deletion_persists_with_save_at_end_false_sanity(
 
 
 @pytest.mark.asyncio
-async def test_lock_model_field_modifications_vs_redis_operations_with_save_at_end_false_edge_case(
-    real_redis_client,
-):
+async def test_lock_model_field_modifications_vs_redis_operations_with_save_at_end_false_edge_case():
     # Arrange
     model = LockTestModel(name="test", age=20, tags=["initial"])
     await model.save()

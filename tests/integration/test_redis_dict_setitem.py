@@ -41,7 +41,7 @@ class BaseModelDictModel(AtomicRedisModel):
     configs: dict[str, Settings] = Field(default_factory=dict)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     IntDictModel.Meta.redis = redis_client
     StrDictModel.Meta.redis = redis_client
@@ -87,9 +87,7 @@ def sample_settings():
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_int_type_checking_sanity(
-    real_redis_client, int_dict_model
-):
+async def test_redis_dict_setitem_int_type_checking_sanity(int_dict_model):
     # Arrange
     model = int_dict_model
     await model.save()
@@ -104,9 +102,7 @@ async def test_redis_dict_setitem_int_type_checking_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_str_type_checking_sanity(
-    real_redis_client, str_dict_model
-):
+async def test_redis_dict_setitem_str_type_checking_sanity(str_dict_model):
     # Arrange
     model = str_dict_model
     await model.save()
@@ -121,9 +117,7 @@ async def test_redis_dict_setitem_str_type_checking_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_dict_type_checking_sanity(
-    real_redis_client, dict_dict_model
-):
+async def test_redis_dict_setitem_dict_type_checking_sanity(dict_dict_model):
     # Arrange
     model = dict_dict_model
     await model.save()
@@ -146,9 +140,7 @@ async def test_redis_dict_setitem_dict_type_checking_sanity(
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_int_operations_sanity(
-    real_redis_client, key, test_value
-):
+async def test_redis_dict_setitem_int_operations_sanity(key, test_value):
     # Arrange
     model = IntDictModel()
     await model.save()
@@ -174,9 +166,7 @@ async def test_redis_dict_setitem_int_operations_sanity(
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_str_operations_sanity(
-    real_redis_client, key, test_value
-):
+async def test_redis_dict_setitem_str_operations_sanity(key, test_value):
     # Arrange
     model = StrDictModel()
     await model.save()
@@ -202,9 +192,7 @@ async def test_redis_dict_setitem_str_operations_sanity(
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_nested_dict_operations_sanity(
-    real_redis_client, key, test_value
-):
+async def test_redis_dict_setitem_nested_dict_operations_sanity(key, test_value):
     # Arrange
     model = DictDictModel()
     await model.save()
@@ -224,7 +212,7 @@ async def test_redis_dict_setitem_nested_dict_operations_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_int_arithmetic_operations_sanity(real_redis_client):
+async def test_redis_dict_setitem_int_arithmetic_operations_sanity():
     # Arrange
     model = IntDictModel()
     await model.save()
@@ -240,7 +228,7 @@ async def test_redis_dict_setitem_int_arithmetic_operations_sanity(real_redis_cl
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_str_operations_edge_case(real_redis_client):
+async def test_redis_dict_setitem_str_operations_edge_case():
     # Arrange
     model = StrDictModel()
     await model.save()
@@ -255,7 +243,7 @@ async def test_redis_dict_setitem_str_operations_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_nested_dict_key_access_edge_case(real_redis_client):
+async def test_redis_dict_setitem_nested_dict_key_access_edge_case():
     # Arrange
     model = DictDictModel()
     await model.save()
@@ -270,7 +258,7 @@ async def test_redis_dict_setitem_nested_dict_key_access_edge_case(real_redis_cl
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_redis_field_paths_sanity(real_redis_client):
+async def test_redis_dict_setitem_redis_field_paths_sanity():
     # Arrange
     model = IntDictModel()
     await model.save()
@@ -285,7 +273,7 @@ async def test_redis_dict_setitem_redis_field_paths_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_multiple_keys_sanity(real_redis_client):
+async def test_redis_dict_setitem_multiple_keys_sanity():
     # Arrange
     model = IntDictModel()
     await model.save()
@@ -303,9 +291,7 @@ async def test_redis_dict_setitem_multiple_keys_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_persistence_across_instances_edge_case(
-    real_redis_client,
-):
+async def test_redis_dict_setitem_persistence_across_instances_edge_case():
     # Arrange
     model1 = IntDictModel()
     await model1.save()
@@ -323,9 +309,7 @@ async def test_redis_dict_setitem_persistence_across_instances_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_with_existing_redis_operations_sanity(
-    real_redis_client,
-):
+async def test_redis_dict_setitem_with_existing_redis_operations_sanity():
     # Arrange
     model = StrDictModel()
     model.metadata = {"existing_key": "existing_value"}
@@ -349,7 +333,7 @@ async def test_redis_dict_setitem_with_existing_redis_operations_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_overwrite_existing_key_sanity(real_redis_client):
+async def test_redis_dict_setitem_overwrite_existing_key_sanity():
     # Arrange
     model = IntDictModel()
     model.metadata = {"key1": 10}
@@ -367,7 +351,7 @@ async def test_redis_dict_setitem_overwrite_existing_key_sanity(real_redis_clien
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_mixed_operations_sanity(real_redis_client):
+async def test_redis_dict_setitem_mixed_operations_sanity():
     # Arrange
     model = StrDictModel()
     await model.save()
@@ -393,7 +377,7 @@ async def test_redis_dict_setitem_mixed_operations_sanity(real_redis_client):
 # BaseModel setitem tests for dict
 @pytest.mark.asyncio
 async def test_redis_dict_setitem_basemodel_addresses_type_checking_sanity(
-    real_redis_client, basemodel_dict_model, sample_address
+    basemodel_dict_model, sample_address
 ):
     # Arrange
     model = basemodel_dict_model
@@ -409,7 +393,7 @@ async def test_redis_dict_setitem_basemodel_addresses_type_checking_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_basemodel_redis_operations_sanity(real_redis_client):
+async def test_redis_dict_setitem_basemodel_redis_operations_sanity():
     # Arrange
     model = BaseModelDictModel()
     await model.save()
@@ -435,7 +419,7 @@ async def test_redis_dict_setitem_basemodel_redis_operations_sanity(real_redis_c
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_basemodel_field_paths_sanity(real_redis_client):
+async def test_redis_dict_setitem_basemodel_field_paths_sanity():
     # Arrange
     model = BaseModelDictModel()
     await model.save()
@@ -456,7 +440,7 @@ async def test_redis_dict_setitem_basemodel_field_paths_sanity(real_redis_client
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_basemodel_nested_operations_sanity(real_redis_client):
+async def test_redis_dict_setitem_basemodel_nested_operations_sanity():
     # Arrange
     model = BaseModelDictModel()
     await model.save()
@@ -482,7 +466,7 @@ async def test_redis_dict_setitem_basemodel_nested_operations_sanity(real_redis_
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_basemodel_multiple_keys_sanity(real_redis_client):
+async def test_redis_dict_setitem_basemodel_multiple_keys_sanity():
     # Arrange
     model = BaseModelDictModel()
     await model.save()
@@ -508,9 +492,7 @@ async def test_redis_dict_setitem_basemodel_multiple_keys_sanity(real_redis_clie
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_basemodel_persistence_across_instances_edge_case(
-    real_redis_client,
-):
+async def test_redis_dict_setitem_basemodel_persistence_across_instances_edge_case():
     # Arrange
     model1 = BaseModelDictModel()
     await model1.save()
@@ -532,9 +514,7 @@ async def test_redis_dict_setitem_basemodel_persistence_across_instances_edge_ca
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity(
-    real_redis_client,
-):
+async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity():
     # Arrange
     model = BaseModelDictModel()
     await model.save()
@@ -566,7 +546,7 @@ async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity
 
 
 @pytest.mark.asyncio
-async def test_redis_dict_setitem_inner_basemodel_save_raises_error(real_redis_client):
+async def test_redis_dict_setitem_inner_basemodel_save_raises_error():
     # Arrange
     model = BaseModelDictModel()
     await model.save()

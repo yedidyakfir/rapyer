@@ -18,7 +18,7 @@ class RichModel(AtomicRedisModel):
     date1: str = ""
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     RichModel.Meta.redis = redis_client
     yield redis_client
@@ -26,7 +26,7 @@ async def real_redis_client(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_model_get_functionality(real_redis_client):
+async def test_redis_model_get_functionality():
     # Arrange
     original_model = RichModel(
         name="test_user", age=25, tags=["tag1", "tag2"], active=True, date1="2023-01-01"
@@ -46,7 +46,7 @@ async def test_redis_model_get_functionality(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_model_lock_with_concurrent_access_functionality(real_redis_client):
+async def test_redis_model_lock_with_concurrent_access_functionality():
     # Arrange
     model = RichModel(name="lock_test", date1="initial_date")
     await model.save()
@@ -91,7 +91,7 @@ async def test_redis_model_lock_with_concurrent_access_functionality(real_redis_
 
 
 @pytest.mark.asyncio
-async def test_redis_model_lock_from_key_functionality(real_redis_client):
+async def test_redis_model_lock_from_key_functionality():
     # Arrange
     model = RichModel(name="lock_from_key_test", age=30, date1="initial_date")
     await model.save()
@@ -110,7 +110,7 @@ async def test_redis_model_lock_from_key_functionality(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_model_lock_from_key_with_action_functionality(real_redis_client):
+async def test_redis_model_lock_from_key_with_action_functionality():
     # Arrange
     model = RichModel(name="lock_action_test", tags=["initial"])
     await model.save()
@@ -129,9 +129,7 @@ async def test_redis_model_lock_from_key_with_action_functionality(real_redis_cl
 
 
 @pytest.mark.asyncio
-async def test_redis_model_lock_from_key_with_concurrent_access_functionality(
-    real_redis_client,
-):
+async def test_redis_model_lock_from_key_with_concurrent_access_functionality():
     # Arrange
     model = RichModel(name="concurrent_lock_from_key", date1="initial_date")
     await model.save()
@@ -175,9 +173,7 @@ async def test_redis_model_lock_from_key_with_concurrent_access_functionality(
 
 
 @pytest.mark.asyncio
-async def test_redis_model_lock_with_save_at_end_true_saves_changes_functionality(
-    real_redis_client,
-):
+async def test_redis_model_lock_with_save_at_end_true_saves_changes_functionality():
     # Arrange
     model = RichModel(
         name="save_at_end_test", age=25, tags=["initial"], date1="2023-01-01"

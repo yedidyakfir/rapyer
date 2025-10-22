@@ -9,7 +9,7 @@ class BytesModel(AtomicRedisModel):
     binary_content: bytes = b"default"
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     BytesModel.Meta.redis = redis_client
     yield redis_client
@@ -28,7 +28,7 @@ async def real_redis_client(redis_client):
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_bytes_set_functionality_sanity(real_redis_client, test_values):
+async def test_redis_bytes_set_functionality_sanity(test_values):
     # Arrange
     model = BytesModel()
     await model.save()
@@ -47,7 +47,7 @@ async def test_redis_bytes_set_functionality_sanity(real_redis_client, test_valu
     "test_values", [b"hello", b"world", b"", b"\x00\x01\x02\x03", b"\xff\xfe\xfd"]
 )
 @pytest.mark.asyncio
-async def test_redis_bytes_load_functionality_sanity(real_redis_client, test_values):
+async def test_redis_bytes_load_functionality_sanity(test_values):
     # Arrange
     model = BytesModel()
     await model.save()
@@ -63,7 +63,7 @@ async def test_redis_bytes_load_functionality_sanity(real_redis_client, test_val
 
 
 @pytest.mark.asyncio
-async def test_redis_bytes_load_with_none_value_edge_case(real_redis_client):
+async def test_redis_bytes_load_with_none_value_edge_case():
     # Arrange
     model = BytesModel()
     await model.save()
@@ -85,7 +85,7 @@ async def test_redis_bytes_load_with_none_value_edge_case(real_redis_client):
 )
 @pytest.mark.asyncio
 async def test_redis_bytes_load_type_conversion_edge_case(
-    real_redis_client, redis_values
+    redis_values
 ):
     # Arrange
     redis_value, expected = redis_values
@@ -115,7 +115,7 @@ async def test_redis_bytes_load_type_conversion_edge_case(
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_bytes_operations_sanity(real_redis_client, operations):
+async def test_redis_bytes_operations_sanity(operations):
     # Arrange
     model = BytesModel(data=b"hello")
     operation, expected = operations
