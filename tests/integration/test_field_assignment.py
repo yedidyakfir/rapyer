@@ -1,9 +1,11 @@
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from pydantic import ValidationError
 
 from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
+from rapyer.types.datetime import RedisDatetime
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
@@ -14,9 +16,12 @@ from tests.integration.test_base_redis_model import UserModel as BaseUserModel
 from tests.integration.test_base_redis_model_mixed_types import MixedTypesModel
 from tests.integration.test_redis_bool import BoolModel
 from tests.integration.test_redis_bytes import BytesModel
+from tests.integration.test_redis_datetime import DatetimeModel
 from tests.integration.test_redis_dict import UserModel as DictUserModel
+from tests.integration.test_redis_enum import TaskModel, TaskStatus, Priority
 from tests.integration.test_redis_int import IntModel
 from tests.integration.test_redis_str import StrModel
+from tests.integration.test_nested_redis_models import InnerMostModel, MiddleModel, OuterModel
 from tests.integration.test_none_values import NoneTestModel
 
 
@@ -66,6 +71,27 @@ async def dict_model_with_values(redis_client):
 async def none_model_with_values(redis_client):
     NoneTestModel.Meta.redis = redis_client
     yield NoneTestModel(optional_string="test", optional_int=42)
+
+
+@pytest_asyncio.fixture
+async def datetime_model_with_values(redis_client):
+    DatetimeModel.Meta.redis = redis_client
+    initial_datetime = datetime(2023, 1, 1, 12, 0, 0)
+    yield DatetimeModel(created_at=initial_datetime, updated_at=initial_datetime)
+
+
+@pytest_asyncio.fixture
+async def task_model_with_values(redis_client):
+    TaskModel.Meta.redis = redis_client
+    yield TaskModel(name="test_task", status=TaskStatus.PENDING, priority=Priority.MEDIUM)
+
+
+@pytest_asyncio.fixture
+async def outer_model_with_values(redis_client):
+    OuterModel.Meta.redis = redis_client
+    inner_model = InnerMostModel(lst=["item1"], counter=5)
+    middle_model = MiddleModel(inner_model=inner_model, tags=["tag1"], metadata={"key": "value"})
+    yield OuterModel(middle_model=middle_model, user_data={"user": 100}, items=[1, 2])
 
 
 # Constructor initialization tests
@@ -343,3 +369,62 @@ async def test_assignment_none_to_non_nullable_field_validation_error():
     # Arrange & Act
     with pytest.raises(ValidationError):
         StrModel(name=None)
+
+
+@pytest.mark.asyncio
+async def test_assignment_datetime_field_converts_to_redis_datetime_sanity(
+    datetime_model_with_values,
+):
+    # Arrange
+    new_datetime = datetime(2024, 6, 15, 14, 30, 0)
+    
+    # Act
+    datetime_model_with_values.created_at = new_datetime
+    
+    # Assert
+    assert isinstance(datetime_model_with_values.created_at, RedisDatetime)
+    assert datetime_model_with_values.created_at.timestamp() == new_datetime.timestamp()
+
+
+@pytest.mark.asyncio
+async def test_assignment_enum_field_type_unchanged_value_changed_sanity(
+    task_model_with_values,
+):
+    # Arrange
+    original_type = type(task_model_with_values.status)
+    
+    # Act
+    task_model_with_values.status = TaskStatus.COMPLETED
+    task_model_with_values.priority = Priority.HIGH
+    
+    # Assert
+    assert type(task_model_with_values.status) == original_type
+    assert type(task_model_with_values.priority) == type(Priority.HIGH)
+    assert task_model_with_values.status == TaskStatus.COMPLETED
+    assert task_model_with_values.priority == Priority.HIGH
+    assert task_model_with_values.status.value == "completed"
+    assert task_model_with_values.priority.value == "high"
+
+
+@pytest.mark.asyncio
+async def test_assignment_base_model_field_preserves_structure_sanity(
+    outer_model_with_values,
+):
+    # Arrange
+    new_inner_model = InnerMostModel(lst=["new_item1", "new_item2"], counter=10)
+    new_middle_model = MiddleModel(
+        inner_model=new_inner_model, 
+        tags=["new_tag1", "new_tag2"], 
+        metadata={"new_key": "new_value"}
+    )
+    
+    # Act
+    outer_model_with_values.middle_model = new_middle_model
+    
+    # Assert
+    assert isinstance(outer_model_with_values.middle_model, MiddleModel)
+    assert isinstance(outer_model_with_values.middle_model.inner_model, InnerMostModel)
+    assert outer_model_with_values.middle_model.inner_model.lst == ["new_item1", "new_item2"]
+    assert outer_model_with_values.middle_model.inner_model.counter == 10
+    assert outer_model_with_values.middle_model.tags == ["new_tag1", "new_tag2"]
+    assert outer_model_with_values.middle_model.metadata == {"new_key": "new_value"}
