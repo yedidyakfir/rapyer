@@ -27,14 +27,6 @@ class RedisBytes(bytes, RedisType):
     serializer = ByteSerializer(bytes, None)
     original_type = bytes
 
-    # def __new__(cls, value=b"", **kwargs):
-    #     if value is None:
-    #         value = b""
-    #     return super().__new__(cls, value)
-    #
-    # def __init__(self, value=b"", **kwargs):
-    #     RedisType.__init__(self, **kwargs)
-
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
         if redis_value is not None:

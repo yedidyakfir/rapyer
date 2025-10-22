@@ -232,26 +232,3 @@ class AtomicRedisModel(BaseModel):
         else:
             # Use the parent's __setattr__ for all other cases
             super().__setattr__(name, value)
-
-    @classmethod
-    def create_redis_type(
-        cls,
-        redis_type: type["AtomicRedisModel | RedisType"],
-        value: Any,
-        redis_key: str = None,
-        should_serialize: bool = False,
-        **saved_kwargs,
-    ):
-        # Handle nested models - convert user model to Redis model
-        if isinstance(value, BaseModel):
-            pk = redis_key.split(":", 1)[1]
-            model_data = value.model_dump()
-            instance = redis_type(**model_data, **saved_kwargs)
-            instance.pk = pk
-            return instance
-        else:
-            val = redis_type(value, redis_key=redis_key, **saved_kwargs)
-            if should_serialize:
-                value = val.deserialize_value(val)
-                val = redis_type(value, redis_key=redis_key, **saved_kwargs)
-            return val
