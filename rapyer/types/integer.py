@@ -1,40 +1,18 @@
-from rapyer.types.base import RedisType, RedisSerializer
-
-
-class IntegerSerializer(RedisSerializer):
-    def serialize_value(self, value):
-        return int(value) if value is not None else None
-
-    def deserialize_value(self, value):
-        if isinstance(value, (int, float)):
-            return int(value)
-        elif isinstance(value, str):
-            try:
-                return int(value)
-            except ValueError:
-                return 0
-        else:
-            return 0
+from rapyer.types.base import RedisType
 
 
 class RedisInt(int, RedisType):
-    serializer = IntegerSerializer(int, None)
     original_type = int
 
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
-        if redis_value is not None:
-            return self.serializer.deserialize_value(redis_value)
-        return 0
+        return redis_value
 
     async def set(self, value: int):
         if not isinstance(value, int):
             raise TypeError("Value must be int")
 
-        serialized_value = self.serializer.serialize_value(value)
-        return await self.client.json().set(
-            self.redis_key, self.json_path, serialized_value
-        )
+        return await self.client.json().set(self.redis_key, self.json_path, value)
 
     async def increase(self, amount: int = 1):
         result = await self.client.json().numincrby(
