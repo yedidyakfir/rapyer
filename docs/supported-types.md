@@ -332,18 +332,96 @@ await mappings.int_to_str.aset_item(1, "first")
 await mappings.nested_data.aset_item("tags", ["python", "redis"])
 ```
 
+## Important: Primitive vs Complex Type Behavior
+
+**⚠️ Critical Distinction:** Primitive types (`str`, `int`, `bool`, `bytes`, `datetime`) have different behavior than complex types (`List`, `Dict`, nested models) when using operations like `set()` and `load()`.
+
+### Primitive Types (str, int, bool, bytes, datetime)
+
+For primitive types, `set()` and `load()` operations **only affect the Redis value**, not the Python model instance:
+
+```python
+class User(AtomicRedisModel):
+    name: str = "John"
+    age: int = 25
+
+user = User()
+await user.save()
+
+# ❌ This updates Redis but NOT the Python model
+await user.name.set("Jane")
+print(user.name)  # Still prints "John" - Python model unchanged!
+
+# ❌ This loads from Redis but does NOT update the Python model
+redis_name = await user.name.load()
+print(redis_name)  # Prints "Jane" - the Redis value
+print(user.name)   # Still prints "John" - Python model unchanged!
+
+# ✅ To update the Python model, you must assign directly:
+user.name = "Jane"  # This updates the Python model
+await user.save()   # This persists to Redis
+```
+
+### Complex Types (List, Dict, nested models)
+
+For complex types, operations **do update** both Redis and the Python model:
+
+```python
+class User(AtomicRedisModel):
+    tags: List[str] = []
+    metadata: Dict[str, str] = {}
+
+user = User()
+await user.save()
+
+# ✅ This updates BOTH Redis AND the Python model
+await user.tags.aappend("python")
+print(user.tags)  # Prints ["python"] - Python model is updated!
+
+# ✅ This updates BOTH Redis AND the Python model  
+await user.metadata.aupdate(role="admin")
+print(user.metadata)  # Prints {"role": "admin"} - Python model is updated!
+```
+
+### Why This Difference Exists
+
+- **Primitive types** are immutable in Python, so operations return new values rather than modifying in place
+- **Complex types** (lists, dicts) are mutable and can be modified in place, maintaining reference consistency
+- **Nested models** inherit the behavior of complex types
+
+### Best Practices
+
+1. **For primitive types**: Use direct assignment to update the Python model, then save:
+   ```python
+   user.name = "New Name"  # Updates Python model
+   await user.save()       # Persists to Redis
+   ```
+
+2. **For complex types**: Use atomic operations which update both:
+   ```python
+   await user.tags.aappend("new_tag")        # Updates both
+   await user.metadata.aupdate(key="value")  # Updates both
+   ```
+
+3. **To sync primitive types from Redis**:
+   ```python
+   await user.load()  # Loads ALL fields from Redis to Python model
+   ```
+
 ## Type Behavior Summary
 
-| Type | Storage | Atomic Ops | Index Assignment | Complex Nesting |
-|------|---------|------------|------------------|-----------------|
-| `str` | Native | ✅ | N/A | N/A |
-| `int` | Native | ✅ | N/A | N/A |
-| `bool` | Native | ✅ | N/A | N/A |
-| `bytes` | Native | ✅ | N/A | N/A |
-| `datetime` | Native | ✅ | N/A | N/A |
-| `List[T]` | Native | ✅ | ✅ | ✅ |
-| `Dict[K,V]` | Native | ✅ | ✅ | ✅ |
-| Custom Types | Serialized | ✅ | N/A | ✅ |
+| Type | Storage | Atomic Ops | Index Assignment | Complex Nesting | Model Update |
+|------|---------|------------|------------------|-----------------|--------------|
+| `str` | Native | ✅ | N/A | N/A | Redis only* |
+| `int` | Native | ✅ | N/A | N/A | Redis only* |
+| `bool` | Native | ✅ | N/A | N/A | Redis only* |
+| `bytes` | Native | ✅ | N/A | N/A | Redis only* |
+| `datetime` | Native | ✅ | N/A | N/A | Redis only* |
+| `List[T]` | Native | ✅ | ✅ | ✅ | Both |
+| `Dict[K,V]` | Native | ✅ | ✅ | ✅ | Both |
+| Custom Types | Serialized | ✅ | N/A | ✅ | Redis only* |
+
+*\* Use `model.load()` to sync primitive types from Redis to Python model*
 
 ## Performance Considerations
 
