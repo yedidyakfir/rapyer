@@ -178,9 +178,10 @@ async def test_redis_list_setitem_int_operations_sanity(index, test_value):
     # Assert
     fresh_model = IntListModel()
     fresh_model.pk = model.pk
-    await fresh_model.items.load()
+    load_result = await fresh_model.items.load()
     # After loading, items are regular Python types, not Redis types
     assert fresh_model.items[index] == test_value + 50
+    assert load_result == fresh_model.items
 
 
 @pytest.mark.parametrize(
