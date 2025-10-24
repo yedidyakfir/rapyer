@@ -5,7 +5,6 @@ from typing import get_args, Callable, Any
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
-from rapyer.config import RedisConfig
 from rapyer.context import _context_var
 
 
@@ -87,32 +86,8 @@ class RedisType(BaseRedisType):
     def clone(self):
         pass
 
-    # def serialize_value(self, value):
-    #     return self.serializer.serialize_value(value)
-    #
-    # def deserialize_value(self, value):
-    #     return self.serializer.deserialize_value(value)
-
 
 class GenericRedisType(RedisType, ABC):
-    # def __init__(
-    #     self,
-    #     serializer_creator: Callable,
-    #     type_creator: Callable,
-    #     inst_init: Callable,
-    #     full_type: type,
-    #     *args,
-    #     **kwargs,
-    # ):
-    #     super().__init__(*args, **kwargs)
-    #     self.serializer_creator = serializer_creator
-    #     self.type_creator = type_creator
-    #     self.inst_init = inst_init
-    #     self.full_type = full_type
-    #     inner_type = self.find_inner_type(full_type)
-    #     self.serializer = serializer_creator(inner_type)
-    #     self.inner_type = self.type_creator("lst", inner_type)
-
     @classmethod
     def find_inner_type(cls, type_):
         args = get_args(type_)
