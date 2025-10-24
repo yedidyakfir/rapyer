@@ -11,7 +11,6 @@ from pydantic.fields import ModelPrivateAttr
 from redis.asyncio import Redis
 
 from rapyer.config import RedisConfig
-from rapyer.types.base import BaseRedisType
 
 
 @contextlib.asynccontextmanager
@@ -133,7 +132,7 @@ class RedisTypeTransformer:
         self.field_name = field_name
         self.redis_config = redis_config
 
-    def __getitem__(self, item: type[BaseRedisType]):
+    def __getitem__(self, item: type):
         origin = get_origin(item) or item
         if origin is Any:
             return item
@@ -149,7 +148,7 @@ class RedisTypeTransformer:
             dict(field_path=self.field_name, original_type=item, full_type=full_type),
         )
 
-    def __contains__(self, item: type[BaseRedisType]):
+    def __contains__(self, item: type):
         return item in self.redis_config.redis_type
 
 
