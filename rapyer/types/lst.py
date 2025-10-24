@@ -16,7 +16,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         if redis_items is None:
             redis_items = []
 
-        # Clear local list and populate with Redis data using type adapter
+        # Clear the local list and populate with Redis data using type adapter
         super().clear()
         if redis_items:
             adapter = self.inner_adapter()
