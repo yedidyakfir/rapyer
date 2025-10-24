@@ -101,7 +101,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
 
         # Reconstruct the generic type with new arguments
         if origin in type_mapping:
-            origin = type_mapping[origin]
+            origin = type_mapping[annotation]
         if origin is UnionType:
             origin = Union
         try:
@@ -133,10 +133,11 @@ class RedisTypeTransformer:
         self.redis_config = redis_config
 
     def __getitem__(self, item: type[BaseRedisType]):
-        if item is Any:
+        origin = get_origin(item) or item
+        if origin is Any:
             return item
 
-        redis_type = self.redis_config.redis_type[item]
+        redis_type = self.redis_config.redis_type[origin]
         return type(
             redis_type.__name__,
             (redis_type,),
