@@ -1,3 +1,4 @@
+import json
 from typing import TypeVar, Generic, Any
 
 from rapyer.types.base import GenericRedisType, RedisType
@@ -26,7 +27,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
-        type_transformer = RedisTypeTransformer(self.json_field_path(key), self.Meta)
+        type_transformer = RedisTypeTransformer(self.sub_field_path(key), self.Meta)
         new_type = type_transformer[inner_original_type]
         return new_type
 
@@ -79,14 +80,13 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
             return None
 
         # Handle case where arrpop returns [None] for empty list
-        if isinstance(arrpop, list) and len(arrpop) == 1 and arrpop[0] is None:
+        if arrpop[0] is None:
             return None
 
-        return (
-            self.serializer.deserialize_value(arrpop[0])
-            if self.serializer
-            else arrpop[0]
-        )
+        result = json.loads(arrpop[0])
+
+        adapter = self.inner_adapter()
+        return adapter.validate_python(result)
 
     async def ainsert(self, index, __object):
         key = len(self)

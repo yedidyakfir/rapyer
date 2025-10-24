@@ -2,7 +2,7 @@ import abc
 from abc import ABC
 from typing import get_args, Callable, Any
 
-from pydantic import GetCoreSchemaHandler
+from pydantic import GetCoreSchemaHandler, TypeAdapter
 from pydantic_core import core_schema
 
 from rapyer.context import _context_var
@@ -95,3 +95,8 @@ class GenericRedisType(RedisType, ABC):
     def find_inner_type(cls, type_):
         args = get_args(type_)
         return args[0] if args else Any
+
+    @classmethod
+    def inner_adapter(cls):
+        inner_type = cls.find_inner_type(cls.full_type)
+        return TypeAdapter(inner_type)
