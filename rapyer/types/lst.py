@@ -9,6 +9,9 @@ T = TypeVar("T")
 class RedisList(list[T], GenericRedisType, Generic[T]):
     original_type = list
 
+    def sub_field_path(self, field_name: str):
+        return f"{self.field_path}[{field_name}]"
+
     async def load(self) -> list[T]:
         # Get all items from Redis list
         redis_items = await self.client.json().get(self.redis_key, self.field_path)
