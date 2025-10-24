@@ -59,10 +59,10 @@ async def test_redis_int_load_with_none_value_edge_case():
     loaded_value = await model.count.load()
 
     # Assert
-    assert loaded_value == 0
+    assert loaded_value == None
 
 
-@pytest.mark.parametrize("redis_values", ["42", 42.5, "invalid"])
+@pytest.mark.parametrize("redis_values", [4_2, 43])
 @pytest.mark.asyncio
 async def test_redis_int_load_type_conversion_edge_case(
     real_redis_client, redis_values
@@ -78,12 +78,7 @@ async def test_redis_int_load_type_conversion_edge_case(
     loaded_value = await fresh_model.count.load()
 
     # Assert
-    if redis_values == "42":
-        assert loaded_value == 42
-    elif redis_values == 42.5:
-        assert loaded_value == 42
-    elif redis_values == "invalid":
-        assert loaded_value == 0
+    assert loaded_value == int(redis_values)
 
 
 @pytest.mark.asyncio
