@@ -59,7 +59,7 @@ async def test_redis_int_load_with_none_value_edge_case():
     loaded_value = await model.count.load()
 
     # Assert
-    assert loaded_value == None
+    assert loaded_value is None
 
 
 @pytest.mark.parametrize("redis_values", [4_2, 43])
