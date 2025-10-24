@@ -9,7 +9,7 @@ class IntModel(AtomicRedisModel):
     score: int = 100
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     IntModel.Meta.redis = redis_client
     yield redis_client
@@ -18,7 +18,7 @@ async def real_redis_client(redis_client):
 
 @pytest.mark.parametrize("test_values", [42, -100, 0, 999, -999])
 @pytest.mark.asyncio
-async def test_redis_int_set_functionality_sanity(real_redis_client, test_values):
+async def test_redis_int_set_functionality_sanity(test_values):
     # Arrange
     model = IntModel()
     await model.save()
@@ -35,7 +35,7 @@ async def test_redis_int_set_functionality_sanity(real_redis_client, test_values
 
 @pytest.mark.parametrize("test_values", [42, -100, 0, 999, -999])
 @pytest.mark.asyncio
-async def test_redis_int_load_functionality_sanity(real_redis_client, test_values):
+async def test_redis_int_load_functionality_sanity(test_values):
     # Arrange
     model = IntModel()
     await model.save()
@@ -51,7 +51,7 @@ async def test_redis_int_load_functionality_sanity(real_redis_client, test_value
 
 
 @pytest.mark.asyncio
-async def test_redis_int_load_with_none_value_edge_case(real_redis_client):
+async def test_redis_int_load_with_none_value_edge_case():
     # Arrange
     model = IntModel()
 
@@ -87,7 +87,7 @@ async def test_redis_int_load_type_conversion_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_redis_int_set_with_wrong_type_edge_case(real_redis_client):
+async def test_redis_int_set_with_wrong_type_edge_case():
     # Arrange
     model = IntModel()
 
@@ -97,7 +97,7 @@ async def test_redis_int_set_with_wrong_type_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_int_inheritance_sanity(real_redis_client):
+async def test_redis_int_inheritance_sanity():
     # Arrange & Act
     model = IntModel(count=42)
 
@@ -112,7 +112,7 @@ async def test_redis_int_inheritance_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_int_clone_functionality_sanity(real_redis_client):
+async def test_redis_int_clone_functionality_sanity():
     # Arrange
     model = IntModel(count=42)
 
@@ -145,7 +145,7 @@ async def test_redis_int_model_creation_functionality_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_int_persistence_across_instances_edge_case(real_redis_client):
+async def test_redis_int_persistence_across_instances_edge_case():
     # Arrange
     model1 = IntModel(count=100)
     await model1.save()
@@ -172,7 +172,7 @@ async def test_redis_int_persistence_across_instances_edge_case(real_redis_clien
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_int_arithmetic_operations_sanity(real_redis_client, operations):
+async def test_redis_int_arithmetic_operations_sanity(operations):
     # Arrange
     model = IntModel(count=42)
     operation, expected = operations
@@ -198,7 +198,7 @@ async def test_redis_int_arithmetic_operations_sanity(real_redis_client, operati
 )
 @pytest.mark.asyncio
 async def test_redis_int_increase_functionality_sanity(
-    real_redis_client, initial_value, increase_amount, expected
+    initial_value, increase_amount, expected
 ):
     # Arrange
     model = IntModel()
@@ -217,7 +217,7 @@ async def test_redis_int_increase_functionality_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_int_increase_default_amount_sanity(real_redis_client):
+async def test_redis_int_increase_default_amount_sanity():
     # Arrange
     model = IntModel()
     await model.save()
@@ -235,7 +235,7 @@ async def test_redis_int_increase_default_amount_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_int_increase_on_non_existent_key_edge_case(real_redis_client):
+async def test_redis_int_increase_on_non_existent_key_edge_case():
     # Arrange
     model = IntModel()
     await model.save()
@@ -252,7 +252,7 @@ async def test_redis_int_increase_on_non_existent_key_edge_case(real_redis_clien
 
 
 @pytest.mark.asyncio
-async def test_redis_int_increase_multiple_times_sanity(real_redis_client):
+async def test_redis_int_increase_multiple_times_sanity():
     # Arrange
     model = IntModel(count=0)
     await model.save()
