@@ -1,10 +1,7 @@
-from typing import TypeVar, Generic, Any
-
-from pydantic import TypeAdapter
+from typing import TypeVar, Generic
 
 from rapyer.types.base import GenericRedisType, RedisType
 from rapyer.types.utils import noop
-from rapyer.utils import RedisTypeTransformer
 
 T = TypeVar("T")
 
@@ -26,24 +23,6 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
             deserialized_items = [adapter.validate_python(item) for item in redis_items]
             super().extend(deserialized_items)
         return list(self)
-
-    def create_new_type(self, key):
-        inner_original_type = self.find_inner_type(self.original_type)
-        type_transformer = RedisTypeTransformer(self.sub_field_path(key), self.Meta)
-        new_type = type_transformer[inner_original_type]
-        return new_type
-
-    def create_new_value_with_adapter(self, key, value):
-        new_type = self.create_new_type(key)
-        if new_type is Any:
-            return value, TypeAdapter(Any)
-        adapter = TypeAdapter(new_type)
-        normalized_object = adapter.validate_python(value)
-        return normalized_object, adapter
-
-    def create_new_value(self, key, value):
-        new_value, adapter = self.create_new_value_with_adapter(key, value)
-        return new_value
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)

@@ -6,6 +6,7 @@ from pydantic import GetCoreSchemaHandler, TypeAdapter
 from pydantic_core import core_schema
 
 from rapyer.context import _context_var
+from rapyer.utils import RedisTypeTransformer
 
 
 class RedisSerializer(ABC):
@@ -104,3 +105,21 @@ class GenericRedisType(RedisType, ABC):
 
     def sub_field_path(self, field_name: str):
         return f"{self.field_path}[{field_name}]"
+
+    def create_new_type(self, key):
+        inner_original_type = self.find_inner_type(self.original_type)
+        type_transformer = RedisTypeTransformer(self.sub_field_path(key), self.Meta)
+        new_type = type_transformer[inner_original_type]
+        return new_type
+
+    def create_new_value_with_adapter(self, key, value):
+        new_type = self.create_new_type(key)
+        if new_type is Any:
+            return value, TypeAdapter(Any)
+        adapter = TypeAdapter(new_type)
+        normalized_object = adapter.validate_python(value)
+        return normalized_object, adapter
+
+    def create_new_value(self, key, value):
+        new_value, adapter = self.create_new_value_with_adapter(key, value)
+        return new_value
