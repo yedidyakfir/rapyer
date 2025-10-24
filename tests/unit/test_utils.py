@@ -1,5 +1,16 @@
+from typing import (
+    Optional,
+    Union,
+    Annotated,
+    Any,
+    Generic,
+    TypeVar,
+    TypeVarTuple,
+    get_origin,
+)
+
 import pytest
-from typing import Optional, Union, Annotated, Any, Generic, TypeVar, TypeVarTuple
+
 from rapyer.utils import replace_to_redis_types_in_annotation
 
 T = TypeVar("T")
@@ -35,9 +46,25 @@ class NewFloat:
     pass
 
 
+class MockTypeTransformer:
+    def __init__(self, mapping: dict[type, type]):
+        self.mapping = mapping
+
+    def __getitem__(self, item: type):
+        origin = get_origin(item) or item
+        if origin is Any:
+            return item
+
+        redis_type = self.mapping[origin]
+        return redis_type
+
+    def __contains__(self, item: type):
+        return item in self.mapping
+
+
 @pytest.fixture
 def type_mapping():
-    return {
+    mapping = {
         str: NewStr,
         int: NewInt,
         dict: NewDict,
@@ -46,6 +73,8 @@ def type_mapping():
         bool: NewBool,
         float: NewFloat,
     }
+    transformer = MockTypeTransformer(mapping)
+    yield transformer
 
 
 @pytest.mark.parametrize(
@@ -159,7 +188,7 @@ def test_generic_type_replacement_sanity(type_mapping, generic_type, expected_re
 
 
 @pytest.mark.parametrize(
-    ["nested_type","expected_result"],
+    ["nested_type", "expected_result"],
     [
         (dict[str, list[int]], NewDict[NewStr, NewList[NewInt]]),
         (list[dict[str, int]], NewList[NewDict[NewStr, NewInt]]),
@@ -285,7 +314,9 @@ def test_tuple_with_ellipsis_replacement_sanity(type_mapping):
                 "very complex",
             ],
             Annotated[
-                Optional[Union[NewStr, NewDict[NewInt, NewList[NewTuple[NewBool, NewFloat]]]]],
+                Optional[
+                    Union[NewStr, NewDict[NewInt, NewList[NewTuple[NewBool, NewFloat]]]]
+                ],
                 "very complex",
             ],
         ],
@@ -295,7 +326,9 @@ def test_tuple_with_ellipsis_replacement_sanity(type_mapping):
         ],
     ],
 )
-def test_extremely_complex_type_scenarios_edge_case(type_mapping, input_type, expected_type):
+def test_extremely_complex_type_scenarios_edge_case(
+    type_mapping, input_type, expected_type
+):
     # Act
     result = replace_to_redis_types_in_annotation(input_type, type_mapping)
 
