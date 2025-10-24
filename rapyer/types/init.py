@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, get_origin
+from typing import get_origin
 
 from pydantic import BaseModel
 
@@ -12,7 +12,6 @@ from rapyer.types.datetime import DatetimeSerializer
 from rapyer.types.datetime import RedisDatetime
 from rapyer.types.dct import DictSerializer
 from rapyer.types.dct import RedisDict
-from rapyer.types.integer import IntegerSerializer
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import ListSerializer
 from rapyer.types.lst import RedisList
@@ -33,7 +32,6 @@ SERIALIZER = {
     list: ListSerializer,
     dict: DictSerializer,
     bytes: ByteSerializer,
-    int: IntegerSerializer,
     bool: BooleanSerializer,
     str: StringSerializer,
     datetime: DatetimeSerializer,
