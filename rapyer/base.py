@@ -5,7 +5,7 @@ import functools
 import uuid
 from typing import Self, ClassVar, Any
 
-from pydantic import BaseModel, PrivateAttr, ConfigDict
+from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
@@ -84,14 +84,15 @@ class AtomicRedisModel(BaseModel):
                 continue
             orig_type = original_annotations[attr_name]
             redis_type = cls.__annotations__[attr_name]
-            if not safe_issubclass(redis_type, BaseRedisType):
-                continue
+            # if not safe_issubclass(redis_type, BaseRedisType):
+            #     continue
             redis_type: type[BaseRedisType]
+            adapter = TypeAdapter(redis_type)
 
             # Handle Field(default=...)
             if isinstance(value, FieldInfo):
                 if value.default != PydanticUndefined:
-                    value.default = redis_type(value.default)
+                    value.default = adapter.validate_python(value.default)
                 elif value.default_factory != PydanticUndefined and callable(
                     value.default_factory
                 ):
@@ -99,9 +100,11 @@ class AtomicRedisModel(BaseModel):
                     if isinstance(test_value, real_type):
                         continue
                     original_factory = value.default_factory
-                    value.default_factory = lambda of=original_factory: redis_type(of())
+                    value.default_factory = (
+                        lambda of=original_factory: adapter.validate_python(of())
+                    )
             elif orig_type in cls.Meta.redis_type:
-                setattr(cls, attr_name, redis_type(value))
+                setattr(cls, attr_name, adapter.validate_python(value))
 
     def __init__(self, _field_config_override=None, **data):
         super().__init__(**data)
