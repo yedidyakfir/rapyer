@@ -16,7 +16,9 @@ def create_all_types():
 @dataclasses.dataclass
 class RedisConfig:
     redis: Redis = dataclasses.field(
-        default_factory=lambda: redis.asyncio.from_url(DEFAULT_CONNECTION)
+        default_factory=lambda: redis.asyncio.from_url(
+            DEFAULT_CONNECTION, decode_responses=True
+        )
     )
     redis_type: dict[type, type] = dataclasses.field(default_factory=create_all_types)
     ttl: int | None = None
