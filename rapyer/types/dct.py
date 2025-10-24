@@ -91,7 +91,10 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         if value and value ~= '[]' and value ~= 'null' then
             -- Delete the key from the JSON object
             redis.call('JSON.DEL', key, path .. '.' .. target_key)
-            return value
+            
+            -- Parse and return the actual value
+            local parsed = cjson.decode(value)
+            return parsed[1]  -- Return first element if it's an array
         else
             return nil
         end
@@ -109,7 +112,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             return default
 
         adapter = self.inner_adapter()
-        return adapter.validate_json(result)
+        return adapter.validate_python(result)
 
     async def apopitem(self):
         # Redis Lua script for atomic get-arbitrary-key-and-delete operation
