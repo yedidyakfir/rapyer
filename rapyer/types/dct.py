@@ -1,40 +1,9 @@
 from typing import TypeVar, Generic, get_args, Any
 
-from rapyer.config import RedisFieldConfig
-from rapyer.types.base import GenericRedisType, RedisSerializer, RedisType
+from rapyer.types.base import GenericRedisType, RedisType
 from rapyer.types.utils import update_keys_in_pipeline
 
 T = TypeVar("T")
-
-
-class DictSerializer(RedisSerializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.inner_serializer = self._create_inner_serializer()
-
-    def _create_inner_serializer(self):
-        args = get_args(self.full_type)
-        if len(args) >= 2:
-            value_type = args[1]
-            # dict[key_type, value_type] - we care about value_type
-            return self.serializer_creator(value_type)
-        return None
-
-    def serialize_value(self, value):
-        if self.inner_serializer:
-            return {
-                k: self.inner_serializer.serialize_value(v) for k, v in value.items()
-            }
-        return dict(value)
-
-    def deserialize_value(self, value):
-        if value is None:
-            return None
-        if self.inner_serializer:
-            return {
-                k: self.inner_serializer.deserialize_value(v) for k, v in value.items()
-            }
-        return dict(value)
 
 
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
@@ -229,9 +198,3 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return {
             k: v.clone() if isinstance(v, RedisType) else v for k, v in self.items()
         }
-
-    def serialize_value(self, value):
-        return {k: self.serializer.serialize_value(v) for k, v in value.items()}
-
-    def deserialize_value(self, value):
-        return {k: self.serializer.deserialize_value(v) for k, v in value.items()}
