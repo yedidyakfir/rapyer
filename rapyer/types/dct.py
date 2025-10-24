@@ -21,16 +21,11 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         if redis_items is None:
             redis_items = {}
 
-        # Deserialize items using serializer
-        deserialized_items = {}
-        for key, value in redis_items.items():
-            if self.serializer is not None:
-                # Use serializer to deserialize the value
-                deserialized_value = self.serializer.deserialize_value(value)
-                deserialized_items[key] = deserialized_value
-            else:
-                # No type conversion
-                deserialized_items[key] = value
+        # Deserialize items using a type adapter
+        adapter = self.inner_adapter()
+        deserialized_items = {
+            key: adapter.validate_python(value) for key, value in redis_items.items()
+        }
 
         # Clear local dict and populate with Redis data
         super().clear()
@@ -39,10 +34,10 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     async def aset_item(self, key, value):
         super().__setitem__(key, value)
 
-        # Serialize the value for Redis storage
-        serialized_value = (
-            self.serializer.serialize_value(value) if self.serializer else value
-        )
+        # Serialize the value for Redis storage using a type adapter
+        adapter = self.inner_adapter()
+        normalized_value = adapter.validate_python(value)
+        serialized_value = adapter.dump_python(normalized_value, mode="json")
         return await self.client.json().set(
             self.redis_key, self.json_field_path(key), serialized_value
         )
@@ -52,18 +47,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return self
 
     def __setitem__(self, key, value):
-        redis_type, kwargs = self.inner_type
-        field_path = f"{self.field_path}.{key}"
-        new_val = self.inst_init(
-            redis_type,
-            value,
-            self.redis_key,
-            **kwargs,
-            redis=self.redis,
-            field_path=field_path,
-            _field_config_override=RedisFieldConfig(field_path=field_path),
-        )
-        return super().__setitem__(key, new_val)
+        new_val = self.create_new_value(key, value)
+        new_val.base_model_link = self.base_model_link
+        super().__setitem__(key, new_val)
 
     async def adel_item(self, key):
         super().__delitem__(key)
@@ -74,12 +60,16 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
+
+        # Serialize values using type adapter
+        adapter = self.inner_adapter()
         redis_params = {
-            self.json_field_path(key): (
-                self.serializer.serialize_value(v) if self.serializer else v
-            )
+            self.json_field_path(key): adapter.dump_python(validated_v, mode="json")
             for key, v in kwargs.items()
+            if (validated_v := adapter.validate_python(v))
         }
+
+        # If I am in a pipeline, update keys in pipeline, otherwise execute pipeline
         if self.pipeline:
             update_keys_in_pipeline(self.pipeline, self.redis_key, **redis_params)
             return
@@ -118,11 +108,8 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             # Key doesn't exist in Redis
             return default
 
-        # Deserialize the value using serializer
-        parsed_result = self._parse_redis_json_value(result)
-        if self.serializer is not None:
-            return self.serializer.deserialize_value(parsed_result)
-        return parsed_result
+        adapter = self.inner_adapter()
+        return adapter.validate_json(result)
 
     async def apopitem(self):
         # Redis Lua script for atomic get-arbitrary-key-and-delete operation
@@ -163,22 +150,18 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
         if result is not None:
             redis_key, redis_value = result
-            # Pop the same key from local dict
+            # Pop the same key from the local dict
             super().pop(
                 redis_key.decode() if isinstance(redis_key, bytes) else redis_key
             )
-            parsed_value = self._parse_redis_json_value(redis_value)
-            if self.serializer is not None:
-                parsed_value = self.serializer.deserialize_value(parsed_value)
-            return parsed_value
+            adapter = self.inner_adapter()
+            return adapter.validate_json(redis_value)
         else:
-            # If Redis is empty but local dict has items, raise error for consistency
+            # If Redis is empty but local dict has items, raise an error for consistency
             raise KeyError("popitem(): dictionary is empty")
 
     async def aclear(self):
-        # Clear local dict
         super().clear()
-
         # Clear Redis dict
         return await self.client.json().set(self.redis_key, self.json_path, {})
 
