@@ -83,7 +83,6 @@ class AtomicRedisModel(BaseModel):
 
             if isinstance(value, real_type):
                 continue
-            orig_type = original_annotations[attr_name]
             redis_type = cls.__annotations__[attr_name]
             # if not safe_issubclass(redis_type, BaseRedisType):
             #     continue
@@ -105,7 +104,7 @@ class AtomicRedisModel(BaseModel):
                         convert_field_factory_type, original_factory, adapter
                     )
                     value.default_factory = validate_from_adapter
-            elif orig_type in cls.Meta.redis_type:
+            else:
                 setattr(cls, attr_name, adapter.validate_python(value))
 
     def __init__(self, _field_config_override=None, **data):
