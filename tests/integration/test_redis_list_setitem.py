@@ -568,3 +568,17 @@ async def test_redis_list__apop_empty_redis__check_default_returned_sanity():
 
     # Assert
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_redis_list__apop_for_models__sanity():
+    # Arrange
+    user = UserProfile(name="Ori", age=2, email="Myemail")
+    model = BaseModelListModel(users=[user])
+    await model.save()
+
+    # Act
+    result = await model.users.apop()
+
+    # Assert
+    assert result.model_dump() == user.model_dump()
