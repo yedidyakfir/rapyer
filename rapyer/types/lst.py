@@ -31,8 +31,8 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         super().clear()
         super().extend(redis_items)
 
-    def json_field_path(self, field_name: str):
-        return f"{self.json_path}[{field_name}]"
+    def sub_field_path(self, field_name: str):
+        return f"{self.field_path}[{field_name}]"
 
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
@@ -47,8 +47,8 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         return new_type(value)
 
     def __setitem__(self, key, value):
-        new_type = self.create_new_type(key)
-        new_val = new_type(value)
+        new_val = self.create_new_value(key, value)
+        new_val.base_model_link = self.base_model_link
         super().__setitem__(key, new_val)
 
     async def aappend(self, __object):

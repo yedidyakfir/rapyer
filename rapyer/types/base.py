@@ -75,8 +75,11 @@ class RedisType(BaseRedisType):
     def json_path(self):
         return f"$.{self.field_path}"
 
+    def sub_field_path(self, field_name: str):
+        return f"{self.field_path}.{field_name}"
+
     def json_field_path(self, field_name: str):
-        return f"{self.json_path}.{field_name}"
+        return f"$.{self.sub_field_path(field_name)}"
 
     @abc.abstractmethod
     async def load(self):
