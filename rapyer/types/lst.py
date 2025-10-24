@@ -1,5 +1,6 @@
-import json
 from typing import TypeVar, Generic, Any
+
+from pydantic import TypeAdapter
 
 from rapyer.types.base import GenericRedisType, RedisType
 from rapyer.types.utils import noop
@@ -11,16 +12,20 @@ T = TypeVar("T")
 class RedisList(list[T], GenericRedisType, Generic[T]):
     original_type = list
 
-    async def load(self):
+    async def load(self) -> list[T]:
         # Get all items from Redis list
         redis_items = await self.client.json().get(self.redis_key, self.field_path)
 
         if redis_items is None:
             redis_items = []
 
-        # Clear local list and populate with Redis data
+        # Clear local list and populate with Redis data using type adapter
         super().clear()
-        super().extend(redis_items)
+        if redis_items:
+            adapter = self.inner_adapter()
+            deserialized_items = [adapter.validate_python(item) for item in redis_items]
+            super().extend(deserialized_items)
+        return list(self)
 
     def sub_field_path(self, field_name: str):
         return f"{self.field_path}[{field_name}]"
@@ -31,11 +36,17 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         new_type = type_transformer[inner_original_type]
         return new_type
 
-    def create_new_value(self, key, value):
+    def create_new_value_with_adapter(self, key, value):
         new_type = self.create_new_type(key)
         if new_type is Any:
-            return value
-        return new_type(value)
+            return value, TypeAdapter(Any)
+        adapter = TypeAdapter(new_type)
+        normalized_object = adapter.validate_python(value)
+        return normalized_object, adapter
+
+    def create_new_value(self, key, value):
+        new_value, adapter = self.create_new_value_with_adapter(key, value)
+        return new_value
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
@@ -47,9 +58,11 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         new_val = self.create_new_value(key, __object)
         super().append(new_val)
 
-        # Serialize the object for Redis storage
+        # Serialize the object for Redis storage using a type adapter
+        adapter = self.inner_adapter()
+        serialized_object = adapter.dump_python(new_val, mode="json")
         return await self.client.json().arrappend(
-            self.redis_key, self.json_path, __object
+            self.redis_key, self.json_path, serialized_object
         )
 
     async def aextend(self, __iterable):
@@ -60,12 +73,17 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         ]
         super().extend(redis_items)
 
-        # Convert iterable to list and serialize items
+        # Convert iterable to list and serialize items using type adapter
         if items:
+            adapter = self.inner_adapter()
+            normalized_items = [adapter.validate_python(item) for item in items]
+            serialized_items = [
+                adapter.dump_python(item, mode="json") for item in normalized_items
+            ]
             return await self.client.json().arrappend(
                 self.redis_key,
                 self.json_path,
-                *items,
+                *serialized_items,
             )
 
         return await noop()
@@ -79,22 +97,24 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
         if arrpop is None or (isinstance(arrpop, list) and len(arrpop) == 0):
             return None
 
-        # Handle case where arrpop returns [None] for empty list
+        # Handle case where arrpop returns [None] for an empty list
         if arrpop[0] is None:
             return None
 
-        result = json.loads(arrpop[0])
-
         adapter = self.inner_adapter()
-        return adapter.validate_python(result)
+        return adapter.validate_json(arrpop[0])
 
     async def ainsert(self, index, __object):
         key = len(self)
         new_val = self.create_new_value(key, __object)
         super().insert(index, new_val)
 
+        # Serialize the object for Redis storage using a type adapter
+        adapter = self.inner_adapter()
+        normalized_object = adapter.validate_python(__object)
+        serialized_object = adapter.dump_python(normalized_object, mode="json")
         return await self.client.json().arrinsert(
-            self.redis_key, self.json_path, index, __object
+            self.redis_key, self.json_path, index, serialized_object
         )
 
     async def aclear(self):
