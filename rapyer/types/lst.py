@@ -27,9 +27,6 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
             super().extend(deserialized_items)
         return list(self)
 
-    def sub_field_path(self, field_name: str):
-        return f"{self.field_path}[{field_name}]"
-
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
         type_transformer = RedisTypeTransformer(self.sub_field_path(key), self.Meta)

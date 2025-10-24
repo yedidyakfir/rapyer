@@ -96,7 +96,11 @@ class GenericRedisType(RedisType, ABC):
         args = get_args(type_)
         return args[0] if args else Any
 
+    # TODO - this should be cached
     @classmethod
     def inner_adapter(cls):
         inner_type = cls.find_inner_type(cls.full_type)
         return TypeAdapter(inner_type)
+
+    def sub_field_path(self, field_name: str):
+        return f"{self.field_path}[{field_name}]"
