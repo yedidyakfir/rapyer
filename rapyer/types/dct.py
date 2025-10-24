@@ -72,18 +72,6 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             self.redis_key, self.json_field_path(key)
         )
 
-    def _parse_redis_json_value(self, result):
-        """Parse JSON-encoded value returned from Redis Lua scripts."""
-        if isinstance(result, bytes):
-            result = result.decode()
-        if result.startswith("[") and result.endswith("]"):
-            # Remove JSON array wrapping for single values
-            result = result[1:-1]
-            # Handle string values that were quoted
-            if result.startswith('"') and result.endswith('"'):
-                result = result[1:-1]
-        return result
-
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
         redis_params = {
