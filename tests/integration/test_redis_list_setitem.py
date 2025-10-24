@@ -113,9 +113,7 @@ def sample_nested_config():
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_int_type_checking_sanity(
-    int_list_model_with_items
-):
+async def test_redis_list_setitem_int_type_checking_sanity(int_list_model_with_items):
     # Arrange
     model = int_list_model_with_items
     await model.save()
@@ -130,9 +128,7 @@ async def test_redis_list_setitem_int_type_checking_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_str_type_checking_sanity(
-    str_list_model_with_items
-):
+async def test_redis_list_setitem_str_type_checking_sanity(str_list_model_with_items):
     # Arrange
     model = str_list_model_with_items
     await model.save()
@@ -147,9 +143,7 @@ async def test_redis_list_setitem_str_type_checking_sanity(
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_dict_type_checking_sanity(
-    dict_list_model_with_items
-):
+async def test_redis_list_setitem_dict_type_checking_sanity(dict_list_model_with_items):
     # Arrange
     model = dict_list_model_with_items
     await model.save()
@@ -172,9 +166,7 @@ async def test_redis_list_setitem_dict_type_checking_sanity(
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_list_setitem_int_operations_sanity(
-    index, test_value
-):
+async def test_redis_list_setitem_int_operations_sanity(index, test_value):
     # Arrange
     model = IntListModel(items=[0, 0, 0])
     await model.save()
@@ -200,9 +192,7 @@ async def test_redis_list_setitem_int_operations_sanity(
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_list_setitem_str_operations_sanity(
-    index, test_value
-):
+async def test_redis_list_setitem_str_operations_sanity(index, test_value):
     # Arrange
     model = StrListModel(items=["", "", ""])
     await model.save()
@@ -228,9 +218,7 @@ async def test_redis_list_setitem_str_operations_sanity(
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_list_setitem_dict_operations_sanity(
-    index, test_value
-):
+async def test_redis_list_setitem_dict_operations_sanity(index, test_value):
     # Arrange
     model = DictListModel(items=[{}, {}, {}])
     await model.save()

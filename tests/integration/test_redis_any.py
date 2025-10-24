@@ -285,9 +285,7 @@ async def test_redis_dict_any_empty_dict_functionality_edge_case():
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_any_complex_nested_structures_edge_case(
-    complex_data
-):
+async def test_redis_any_complex_nested_structures_edge_case(complex_data):
     # Arrange
     model = AnyModel()
     await model.save()

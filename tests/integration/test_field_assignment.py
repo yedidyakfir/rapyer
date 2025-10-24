@@ -21,7 +21,11 @@ from tests.integration.test_redis_dict import UserModel as DictUserModel
 from tests.integration.test_redis_enum import TaskModel, TaskStatus, Priority
 from tests.integration.test_redis_int import IntModel
 from tests.integration.test_redis_str import StrModel
-from tests.integration.test_nested_redis_models import InnerMostModel, MiddleModel, OuterModel
+from tests.integration.test_nested_redis_models import (
+    InnerMostModel,
+    MiddleModel,
+    OuterModel,
+)
 from tests.integration.test_none_values import NoneTestModel
 
 
@@ -83,14 +87,18 @@ async def datetime_model_with_values(redis_client):
 @pytest_asyncio.fixture
 async def task_model_with_values(redis_client):
     TaskModel.Meta.redis = redis_client
-    yield TaskModel(name="test_task", status=TaskStatus.PENDING, priority=Priority.MEDIUM)
+    yield TaskModel(
+        name="test_task", status=TaskStatus.PENDING, priority=Priority.MEDIUM
+    )
 
 
 @pytest_asyncio.fixture
 async def outer_model_with_values(redis_client):
     OuterModel.Meta.redis = redis_client
     inner_model = InnerMostModel(lst=["item1"], counter=5)
-    middle_model = MiddleModel(inner_model=inner_model, tags=["tag1"], metadata={"key": "value"})
+    middle_model = MiddleModel(
+        inner_model=inner_model, tags=["tag1"], metadata={"key": "value"}
+    )
     yield OuterModel(middle_model=middle_model, user_data={"user": 100}, items=[1, 2])
 
 
@@ -377,14 +385,17 @@ async def test_assignment_datetime_field_converts_to_redis_datetime_sanity(
 ):
     # Arrange
     new_datetime = datetime(2024, 6, 15, 14, 30, 0)
-    
+
     # Act
     datetime_model_with_values.created_at = new_datetime
-    
+
     # Assert
     assert isinstance(datetime_model_with_values.created_at, RedisDatetime)
     assert datetime_model_with_values.created_at.timestamp() == new_datetime.timestamp()
-    assert datetime_model_with_values.created_at.base_model_link is datetime_model_with_values
+    assert (
+        datetime_model_with_values.created_at.base_model_link
+        is datetime_model_with_values
+    )
 
 
 @pytest.mark.asyncio
@@ -393,11 +404,11 @@ async def test_assignment_enum_field_type_unchanged_value_changed_sanity(
 ):
     # Arrange
     original_type = type(task_model_with_values.status)
-    
+
     # Act
     task_model_with_values.status = TaskStatus.COMPLETED
     task_model_with_values.priority = Priority.HIGH
-    
+
     # Assert
     assert type(task_model_with_values.status) == original_type
     assert type(task_model_with_values.priority) == type(Priority.HIGH)
@@ -414,18 +425,21 @@ async def test_assignment_base_model_field_preserves_structure_sanity(
     # Arrange
     new_inner_model = InnerMostModel(lst=["new_item1", "new_item2"], counter=10)
     new_middle_model = MiddleModel(
-        inner_model=new_inner_model, 
-        tags=["new_tag1", "new_tag2"], 
-        metadata={"new_key": "new_value"}
+        inner_model=new_inner_model,
+        tags=["new_tag1", "new_tag2"],
+        metadata={"new_key": "new_value"},
     )
-    
+
     # Act
     outer_model_with_values.middle_model = new_middle_model
-    
+
     # Assert
     assert isinstance(outer_model_with_values.middle_model, MiddleModel)
     assert isinstance(outer_model_with_values.middle_model.inner_model, InnerMostModel)
-    assert outer_model_with_values.middle_model.inner_model.lst == ["new_item1", "new_item2"]
+    assert outer_model_with_values.middle_model.inner_model.lst == [
+        "new_item1",
+        "new_item2",
+    ]
     assert outer_model_with_values.middle_model.inner_model.counter == 10
     assert outer_model_with_values.middle_model.tags == ["new_tag1", "new_tag2"]
     assert outer_model_with_values.middle_model.metadata == {"new_key": "new_value"}

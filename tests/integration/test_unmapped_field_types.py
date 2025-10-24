@@ -5,7 +5,8 @@ from collections import namedtuple
 from dataclasses import dataclass
 
 from rapyer.base import AtomicRedisModel
-from rapyer.types.any import AnyTypeRedis
+
+# from rapyer.types.any import AnyTypeRedis
 
 
 # Define some unmapped types for testing

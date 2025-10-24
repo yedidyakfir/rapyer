@@ -84,9 +84,7 @@ async def test_redis_bytes_load_with_none_value_edge_case():
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_bytes_load_type_conversion_edge_case(
-    redis_values
-):
+async def test_redis_bytes_load_type_conversion_edge_case(redis_values):
     # Arrange
     redis_value, expected = redis_values
     model = BytesModel()
