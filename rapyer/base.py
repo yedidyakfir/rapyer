@@ -19,6 +19,7 @@ from rapyer.utils import (
     RedisTypeTransformer,
     find_first_type_in_annotation,
     safe_issubclass,
+    convert_field_factory_type,
 )
 
 
@@ -100,9 +101,10 @@ class AtomicRedisModel(BaseModel):
                     if isinstance(test_value, real_type):
                         continue
                     original_factory = value.default_factory
-                    value.default_factory = (
-                        lambda of=original_factory: adapter.validate_python(of())
+                    validate_from_adapter = functools.partial(
+                        convert_field_factory_type, original_factory, adapter
                     )
+                    value.default_factory = validate_from_adapter
             elif orig_type in cls.Meta.redis_type:
                 setattr(cls, attr_name, adapter.validate_python(value))
 

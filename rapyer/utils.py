@@ -4,8 +4,9 @@ import inspect
 import uuid
 from datetime import timedelta
 from types import UnionType
-from typing import get_origin, ClassVar, Union, get_args, Any, Annotated
+from typing import get_origin, ClassVar, Union, get_args, Any, Annotated, Callable
 
+from pydantic import TypeAdapter
 from pydantic.fields import ModelPrivateAttr
 from redis.asyncio import Redis
 
@@ -146,3 +147,7 @@ class RedisTypeTransformer:
 
     def __contains__(self, item: type[BaseRedisType]):
         return item in self.redis_config.redis_type
+
+
+def convert_field_factory_type(original_factory: Callable, adapter: TypeAdapter):
+    return adapter.validate_python(original_factory())
