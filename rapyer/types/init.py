@@ -13,7 +13,6 @@ from rapyer.types.datetime import RedisDatetime
 from rapyer.types.dct import DictSerializer
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
-from rapyer.types.lst import ListSerializer
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
 from rapyer.types.string import StringSerializer
@@ -29,7 +28,6 @@ ALL_TYPES = {
 }
 
 SERIALIZER = {
-    list: ListSerializer,
     dict: DictSerializer,
     bytes: ByteSerializer,
     bool: BooleanSerializer,

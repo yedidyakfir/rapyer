@@ -1,20 +1,10 @@
 from typing import TypeVar, Generic, Any
-from typing import get_args
 
-from rapyer.types.base import GenericRedisType, RedisSerializer, RedisType
+from rapyer.types.base import GenericRedisType, RedisType
 from rapyer.types.utils import noop
 from rapyer.utils import RedisTypeTransformer
 
 T = TypeVar("T")
-
-
-class ListSerializer(RedisSerializer):
-    def _create_inner_serializer(self):
-        args = get_args(self.full_type)
-        if args:
-            inner_type = args[0]
-            return self.serializer_creator(inner_type)
-        return None
 
 
 class RedisList(list[T], GenericRedisType, Generic[T]):
