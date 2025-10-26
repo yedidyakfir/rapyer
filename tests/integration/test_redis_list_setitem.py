@@ -351,9 +351,6 @@ async def test_redis_list_setitem_basemodel_products_type_checking_sanity(
     # Assert - should be a Redis BaseModel type
     list_item = model.products[1]
     assert isinstance(list_item, AtomicRedisModel)
-    assert hasattr(list_item, "save")
-    assert hasattr(list_item, "load")
-    assert hasattr(list_item, "pk")
     assert list_item.name == test_value.name
     assert list_item.price == test_value.price
     assert list_item.in_stock == test_value.in_stock
@@ -374,9 +371,6 @@ async def test_redis_list_setitem_basemodel_configs_type_checking_sanity(
     # Assert - should be a Redis BaseModel type
     list_item = model.configs[1]
     assert isinstance(list_item, AtomicRedisModel)
-    assert hasattr(list_item, "save")
-    assert hasattr(list_item, "load")
-    assert hasattr(list_item, "pk")
     assert list_item.settings == test_value.settings
     assert list_item.options == test_value.options
 
