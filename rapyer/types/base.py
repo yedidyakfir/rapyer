@@ -2,7 +2,7 @@ import abc
 from abc import ABC
 from typing import get_args, Callable, Any
 
-from pydantic import GetCoreSchemaHandler, TypeAdapter
+from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel
 from pydantic_core import core_schema
 
 from rapyer.context import _context_var
@@ -115,6 +115,8 @@ class GenericRedisType(RedisType, ABC):
         new_type = self.create_new_type(key)
         if new_type is Any:
             return value, TypeAdapter(Any)
+        if issubclass(new_type, BaseModel):
+            value = value.model_dump()
         adapter = TypeAdapter(new_type)
         normalized_object = adapter.validate_python(value)
         return normalized_object, adapter
