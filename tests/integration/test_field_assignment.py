@@ -1,6 +1,7 @@
+from datetime import datetime
+
 import pytest
 import pytest_asyncio
-from datetime import datetime
 from pydantic import ValidationError
 
 from rapyer.types.boolean import RedisBool
@@ -14,19 +15,19 @@ from tests.integration.test_base_redis_model import UserModel as BaseUserModel
 
 # Import existing models from other test files
 from tests.integration.test_base_redis_model_mixed_types import MixedTypesModel
-from tests.integration.test_redis_bool import BoolModel
-from tests.integration.test_redis_bytes import BytesModel
-from tests.integration.test_redis_datetime import DatetimeModel
-from tests.integration.test_redis_dict import UserModel as DictUserModel
-from tests.integration.test_redis_enum import TaskModel, TaskStatus, Priority
-from tests.integration.test_redis_int import IntModel
-from tests.integration.test_redis_str import StrModel
 from tests.integration.test_nested_redis_models import (
     InnerMostModel,
     MiddleModel,
     OuterModel,
 )
 from tests.integration.test_none_values import NoneTestModel
+from tests.integration.test_redis_bool import BoolModel
+from tests.integration.test_redis_bytes import BytesModel
+from tests.integration.test_redis_datetime import DatetimeModel
+from tests.integration.test_redis_dict import StrDictModel
+from tests.integration.test_redis_enum import TaskModel, TaskStatus, Priority
+from tests.integration.test_redis_int import IntModel
+from tests.integration.test_redis_str import StrModel
 
 
 @pytest_asyncio.fixture
@@ -67,8 +68,8 @@ async def bytes_model_with_values(redis_client):
 
 @pytest_asyncio.fixture
 async def dict_model_with_values(redis_client):
-    DictUserModel.Meta.redis = redis_client
-    yield DictUserModel(metadata={"key1": "value1", "key2": "value2"})
+    StrDictModel.Meta.redis = redis_client
+    yield StrDictModel(metadata={"key1": "value1", "key2": "value2"})
 
 
 @pytest_asyncio.fixture
