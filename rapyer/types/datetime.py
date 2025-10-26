@@ -8,10 +8,20 @@ class RedisDatetime(datetime, RedisType):
 
     def __new__(cls, value, *args, **kwargs):
         if isinstance(value, datetime):
-            # Support init from a datetime
-            return datetime.__new__(cls, *value.timetuple()[:6])
+            # Support init from a datetime, preserving microseconds and timezone
+            return datetime.__new__(
+                cls,
+                value.year,
+                value.month,
+                value.day,
+                value.hour,
+                value.minute,
+                value.second,
+                value.microsecond,
+                value.tzinfo,
+            )
         else:
-            return datetime.__new__(cls, value, *args, *kwargs)
+            return datetime.__new__(cls, value, *args, **kwargs)
 
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
