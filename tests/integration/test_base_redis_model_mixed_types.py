@@ -20,16 +20,16 @@ class MixedTypesModel(AtomicRedisModel):
     mixed_dict: Dict[str, Any] = Field(default_factory=dict)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     MixedTypesModel.Meta.redis = redis_client
     yield redis_client
     await redis_client.aclose()
 
 
-@pytest.mark.parametrize(["test_bytes"], [[b"hello"], [b"world"], [b"\x00\x01\x02"]])
+@pytest.mark.parametrize("test_bytes", [b"hello", b"world", b"\x00\x01\x02"])
 @pytest.mark.asyncio
-async def test_bytes_list_append_functionality(real_redis_client, test_bytes):
+async def test_bytes_list_append_functionality(test_bytes):
     # Arrange
     model = MixedTypesModel()
     await model.save()
@@ -50,7 +50,7 @@ async def test_bytes_list_append_functionality(real_redis_client, test_bytes):
 
 @pytest.mark.parametrize("test_ints", [[1, 2, 3], [-5, 0, 42], [999, -999, 0]])
 @pytest.mark.asyncio
-async def test_int_list_extend_functionality(real_redis_client, test_ints):
+async def test_int_list_extend_functionality(test_ints):
     # Arrange
     model = MixedTypesModel()
     await model.save()
@@ -73,7 +73,7 @@ async def test_int_list_extend_functionality(real_redis_client, test_ints):
     "bool_values", [[True, False], [True, True, False], [False, False, True, True]]
 )
 @pytest.mark.asyncio
-async def test_bool_list_operations_functionality(real_redis_client, bool_values):
+async def test_bool_list_operations_functionality(bool_values):
     # Arrange
     model = MixedTypesModel()
     await model.save()
@@ -127,7 +127,7 @@ async def test_mixed_list_with_different_types_functionality(real_redis_client):
     ],
 )
 @pytest.mark.asyncio
-async def test_bytes_dict_operations_functionality(real_redis_client, test_data):
+async def test_bytes_dict_operations_functionality(test_data):
     # Arrange
     model = MixedTypesModel()
     await model.save()
@@ -152,7 +152,7 @@ async def test_bytes_dict_operations_functionality(real_redis_client, test_data)
     [{"count": 100, "age": 25}, {"negative": -50, "zero": 0, "positive": 999}],
 )
 @pytest.mark.asyncio
-async def test_int_dict_operations_functionality(real_redis_client, int_data):
+async def test_int_dict_operations_functionality(int_data):
     # Arrange
     model = MixedTypesModel()
     await model.save()
@@ -181,7 +181,7 @@ async def test_int_dict_operations_functionality(real_redis_client, int_data):
     ],
 )
 @pytest.mark.asyncio
-async def test_bool_dict_operations_functionality(real_redis_client, bool_data):
+async def test_bool_dict_operations_functionality(bool_data):
     # Arrange
     model = MixedTypesModel()
     await model.save()
@@ -280,9 +280,7 @@ async def test_dict_clear_with_mixed_types_functionality(real_redis_client):
     ],
 )
 @pytest.mark.asyncio
-async def test_list_persistence_across_instances_edge_case(
-    real_redis_client, list_type, test_values
-):
+async def test_list_persistence_across_instances_edge_case(list_type, test_values):
     # Arrange
     model1 = MixedTypesModel()
     target_list = getattr(model1, list_type)
@@ -310,9 +308,7 @@ async def test_list_persistence_across_instances_edge_case(
     ],
 )
 @pytest.mark.asyncio
-async def test_dict_persistence_across_instances_edge_case(
-    real_redis_client, dict_type, test_data
-):
+async def test_dict_persistence_across_instances_edge_case(dict_type, test_data):
     # Arrange
     model1 = MixedTypesModel()
     target_dict = getattr(model1, dict_type)

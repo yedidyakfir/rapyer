@@ -156,7 +156,7 @@ async def test_redis_int_persistence_across_instances_edge_case():
 
 
 @pytest.mark.parametrize(
-    ["operations"],
+    "operations",
     [
         [lambda x: x + 10, 52],
         [lambda x: x - 8, 34],

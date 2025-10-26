@@ -521,14 +521,14 @@ async def test_redis_dict__clone__check_clone_functionality_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["model_class"],
+    "model_class",
     [
-        [StrDictModel],
-        [IntDictModel],
-        [BytesDictModel],
-        [DatetimeDictModel],
-        [EnumDictModel],
-        [AnyDictModel],
+        StrDictModel,
+        IntDictModel,
+        BytesDictModel,
+        DatetimeDictModel,
+        EnumDictModel,
+        AnyDictModel,
     ],
 )
 async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(model_class):
@@ -632,14 +632,14 @@ async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["model_class"],
+    "model_class",
     [
-        [StrDictModel],
-        [IntDictModel],
-        [BytesDictModel],
-        [DatetimeDictModel],
-        [EnumDictModel],
-        [AnyDictModel],
+        StrDictModel,
+        IntDictModel,
+        BytesDictModel,
+        DatetimeDictModel,
+        EnumDictModel,
+        AnyDictModel,
     ],
 )
 async def test_redis_dict__apop_empty_redis__check_no_default_sanity(model_class):

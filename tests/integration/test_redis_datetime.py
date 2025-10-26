@@ -100,7 +100,7 @@ async def test_redis_datetime_set_none_functionality_edge_case(real_redis_client
 
 
 @pytest.mark.parametrize(
-    ["redis_values"], [["2023-01-01T12:00:00"], ["invalid_date"], [42], [True], [None]]
+    "redis_values", ["2023-01-01T12:00:00", "invalid_date", 42, True, None]
 )
 @pytest.mark.asyncio
 async def test_redis_datetime_load_type_conversion_edge_case(
