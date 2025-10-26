@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import dataclasses
 import functools
 import uuid
 from typing import Self, ClassVar, Any
@@ -18,7 +17,6 @@ from rapyer.utils import (
     replace_to_redis_types_in_annotation,
     RedisTypeTransformer,
     find_first_type_in_annotation,
-    safe_issubclass,
     convert_field_factory_type,
 )
 
@@ -27,7 +25,7 @@ class AtomicRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     Meta: ClassVar[RedisConfig] = RedisConfig()
     field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
-    _field_config_override: RedisFieldConfig = None
+    _base_model_link: Self = PrivateAttr(default=None)
     model_config = ConfigDict(validate_assignment=True)
 
     @property
@@ -38,35 +36,25 @@ class AtomicRedisModel(BaseModel):
     def pk(self, value: str):
         self._pk = value
 
-    @functools.cached_property
-    def inst_field_conf(self) -> RedisFieldConfig:
-        class_conf = dataclasses.asdict(self.field_config)
-        inst_conf = (
-            dataclasses.asdict(self._field_config_override)
-            if self._field_config_override
-            else {}
-        )
-        inst_conf = {k: v for k, v in inst_conf.items() if v is not None}
-        conf = class_conf | inst_conf
-        return RedisFieldConfig(**conf)
-
     @classmethod
     def class_key_initials(cls):
-        return cls.field_config.override_class_name or cls.__name__
+        return cls.__name__
 
     @property
     def key_initials(self):
-        return self.inst_field_conf.override_class_name or self.class_key_initials()
+        return self.class_key_initials()
 
     @property
     def key(self):
+        if self._base_model_link:
+            return self._base_model_link.key
         return f"{self.key_initials}:{self.pk}"
 
     def __init_subclass__(cls, **kwargs):
         original_annotations = cls.__annotations__.copy()
         cls.__annotations__ = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type, RedisTypeTransformer(field_name, cls.Meta)
+                field_type, RedisTypeTransformer(field_name, cls.Meta, AtomicRedisModel)
             )
             for field_name, field_type in cls.__annotations__.items()
         }
@@ -84,8 +72,6 @@ class AtomicRedisModel(BaseModel):
             if isinstance(value, real_type):
                 continue
             redis_type = cls.__annotations__[attr_name]
-            # if not safe_issubclass(redis_type, BaseRedisType):
-            #     continue
             redis_type: type[BaseRedisType]
             adapter = TypeAdapter(redis_type)
 
@@ -107,16 +93,16 @@ class AtomicRedisModel(BaseModel):
             else:
                 setattr(cls, attr_name, adapter.validate_python(value))
 
-    def __init__(self, _field_config_override=None, **data):
+    def __init__(self, _base_model_link=None, **data):
         super().__init__(**data)
-        self._field_config_override = _field_config_override
+        self._base_model_link = _base_model_link
         for field_name in self.model_fields:
             attr = getattr(self, field_name)
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = _base_model_link or self
 
     def is_inner_model(self):
-        return self.inst_field_conf.field_path is not None
+        return self.field_config.field_path is not None
 
     async def save(self) -> Self:
         if self.is_inner_model():

@@ -27,4 +27,3 @@ class RedisConfig:
 @dataclasses.dataclass
 class RedisFieldConfig:
     field_path: str = None
-    override_class_name: str = None

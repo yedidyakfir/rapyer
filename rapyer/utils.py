@@ -6,11 +6,11 @@ from datetime import timedelta
 from types import UnionType
 from typing import get_origin, ClassVar, Union, get_args, Any, Annotated, Callable
 
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, BaseModel
 from pydantic.fields import ModelPrivateAttr
 from redis.asyncio import Redis
 
-from rapyer.config import RedisConfig
+from rapyer.config import RedisConfig, RedisFieldConfig
 
 
 @contextlib.asynccontextmanager
@@ -128,14 +128,24 @@ def find_first_type_in_annotation(annotation: Any) -> type | None:
 
 
 class RedisTypeTransformer:
-    def __init__(self, field_name: str, redis_config: RedisConfig):
+    def __init__(self, field_name: str, redis_config: RedisConfig, pydantic_base_redis: type):
         self.field_name = field_name
         self.redis_config = redis_config
+        self.pydantic_base_redis = pydantic_base_redis
 
     def __getitem__(self, item: type):
         origin = get_origin(item) or item
         if origin is Any:
             return item
+
+        if safe_issubclass(origin, BaseModel):
+            origin: type[BaseModel]
+            field_conf = RedisFieldConfig(field_path=self.field_name)
+            return type(
+                f"Redis{origin.__name__}",
+                (origin, self.pydantic_base_redis),
+                dict(field_config=field_conf),
+            )
 
         redis_type = self.redis_config.redis_type[origin]
         full_type = redis_type
