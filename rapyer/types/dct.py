@@ -29,29 +29,43 @@ end
 
 # Redis Lua script for atomic get-arbitrary-key-and-delete operation
 POPITEM_SCRIPT = """
-    local key = KEYS[1]
-    local path = ARGV[1]
+local key = KEYS[1]
+local path = ARGV[1]
 
-    -- Get all the keys from the JSON object
-    local keys = redis.call('JSON.OBJKEYS', key, path)
+-- Get all the keys from the JSON object
+local keys = redis.call('JSON.OBJKEYS', key, path)
 
-    if keys and type(keys) == 'table' and #keys > 0 then
-        local first_key = tostring(keys[1])
-
-        -- Get the value for this key
-        local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
-
-        if value then
-            -- Delete the key from the JSON object
-            redis.call('JSON.DEL', key, path .. '.' .. first_key)
-
-            -- Parse the JSON string into a Lua table
-            local parsed_value = cjson.decode(value)
-            return {first_key, parsed_value}
-        end
+if keys and #keys > 0 then
+    -- Handle nested arrays - Redis sometimes wraps results
+    if type(keys[1]) == 'table' then
+        keys = keys[1]
     end
+    
+    local first_key = tostring(keys[1])
+    
+    -- Get the value for this key
+    local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
+    
+    if value then
+        -- Delete the key from the JSON object
+        redis.call('JSON.DEL', key, path .. '.' .. first_key)
+        
+        -- Parse the JSON string
+        local parsed_value = cjson.decode(value)
+        
+        -- If it's a table/object, return the first value
+        if type(parsed_value) == 'table' then
+            for _, v in pairs(parsed_value) do
+                return {first_key,v}  -- Return first value found
+            end
+        end
+        
+        -- Otherwise return the parsed value as-is
+        return {first_key,parsed_value}
+    end
+end
 
-    return nil
+return nil
 """
 
 
@@ -155,7 +169,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
                 redis_key.decode() if isinstance(redis_key, bytes) else redis_key
             )
             adapter = self.inner_adapter()
-            return adapter.validate_json(redis_value)
+            return adapter.validate_python(redis_value)
         else:
             # If Redis is empty but local dict has items, raise an error for consistency
             raise KeyError("popitem(): dictionary is empty")
