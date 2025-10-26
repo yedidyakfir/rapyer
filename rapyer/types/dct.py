@@ -35,37 +35,48 @@ local path = ARGV[1]
 -- Get all the keys from the JSON object
 local keys = redis.call('JSON.OBJKEYS', key, path)
 
-if keys and #keys > 0 then
-    -- Handle nested arrays - Redis sometimes wraps results
-    if type(keys[1]) == 'table' then
-        keys = keys[1]
-    end
-    
-    local first_key = tostring(keys[1])
-    
-    -- Get the value for this key
-    local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
-    
-    if value then
-        -- Delete the key from the JSON object
-        redis.call('JSON.DEL', key, path .. '.' .. first_key)
-        
-        -- Parse the JSON string
-        local parsed_value = cjson.decode(value)
-        
-        -- If it's a table/object, return the first value
-        if type(parsed_value) == 'table' then
-            for _, v in pairs(parsed_value) do
-                return {first_key,v}  -- Return first value found
-            end
-        end
-        
-        -- Otherwise return the parsed value as-is
-        return {first_key,parsed_value}
-    end
+-- Return nil if no keys exist
+if not keys or #keys == 0 then
+    return nil
 end
 
-return nil
+-- Handle nested arrays - Redis sometimes wraps results
+if type(keys[1]) == 'table' then
+    keys = keys[1]
+end
+
+-- Check again after unwrapping
+if not keys or #keys == 0 then
+    return nil
+end
+
+local first_key = tostring(keys[1])
+
+-- Get the value for this key
+local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
+
+-- Return nil if value doesn't exist
+if not value then
+    return nil
+end
+
+-- Delete the key from the JSON object
+redis.call('JSON.DEL', key, path .. '.' .. first_key)
+
+-- Parse the JSON string
+local parsed_value = cjson.decode(value)
+
+-- If it's a table/object, return the first value
+if type(parsed_value) == 'table' then
+    for _, v in pairs(parsed_value) do
+        return {first_key, v}  -- Return first value found
+    end
+    -- If table is empty, return nil
+    return nil
+end
+
+-- Otherwise return the parsed value as-is
+return {first_key, parsed_value}
 """
 
 
