@@ -167,16 +167,6 @@ class AtomicRedisModel(BaseModel):
         client = _context_var.get() or self.Meta.redis
         return await client.delete(self.key)
 
-    def redis_dump(self):
-        model_dump = self.model_dump(exclude=["_pk"])
-        # Override Redis field values with their serialized versions
-        for field_name in self.model_fields:
-            if hasattr(self, field_name):
-                redis_field = getattr(self, field_name)
-                if isinstance(redis_field, RedisType):
-                    model_dump[field_name] = redis_field.serialize_value(redis_field)
-        return model_dump
-
     async def load(self):
         await asyncio.gather(
             *[getattr(self, field_name).load() for field_name in self.model_dump()]
