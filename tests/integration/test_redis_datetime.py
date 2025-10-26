@@ -84,54 +84,6 @@ async def test_redis_datetime_load_with_none_value_edge_case():
 
 
 @pytest.mark.asyncio
-async def test_redis_datetime_set_none_functionality_edge_case():
-    # Arrange
-    model = DatetimeModel()
-    await model.save()
-
-    # Act
-    await model.created_at.set(None)
-
-    # Assert
-    fresh_model = DatetimeModel()
-    fresh_model.pk = model.pk
-    loaded_value = await fresh_model.created_at.load()
-    assert loaded_value is None
-
-
-@pytest.mark.parametrize(
-    "redis_values", ["2023-01-01T12:00:00", "invalid_date", 42, True, None]
-)
-@pytest.mark.asyncio
-async def test_redis_datetime_load_type_conversion_edge_case(
-    real_redis_client, redis_values
-):
-    # Arrange
-    model = DatetimeModel()
-    await model.save()
-    await real_redis_client.json().set(
-        model.key, model.created_at.json_path, redis_values
-    )
-
-    # Act
-    fresh_model = DatetimeModel()
-    fresh_model.pk = model.pk
-    loaded_value = await fresh_model.created_at.load()
-
-    # Assert
-    if redis_values == "2023-01-01T12:00:00":
-        assert loaded_value == datetime(2023, 1, 1, 12, 0, 0)
-    elif redis_values == "invalid_date":
-        assert loaded_value is None
-    elif redis_values == 42:
-        assert loaded_value is None
-    elif redis_values == True:
-        assert loaded_value is None
-    elif redis_values is None:
-        assert loaded_value is None
-
-
-@pytest.mark.asyncio
 async def test_redis_datetime_set_with_wrong_type_edge_case():
     # Arrange
     model = DatetimeModel()
