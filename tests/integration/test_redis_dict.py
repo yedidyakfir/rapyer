@@ -4,6 +4,7 @@ from typing import Any
 
 import pytest
 import pytest_asyncio
+from pydantic import BaseModel, Field
 
 from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
@@ -39,6 +40,35 @@ class AnyDictModel(AtomicRedisModel):
     metadata: dict[str, Any] = {}
 
 
+# Additional complex types
+class Person(BaseModel):
+    name: str
+    age: int
+    email: str
+
+
+class Company(BaseModel):
+    name: str
+    employees: int
+    founded: int
+
+
+class BaseModelDictModel(AtomicRedisModel):
+    metadata: dict[str, Person] = {}
+
+
+class BoolDictModel(AtomicRedisModel):
+    metadata: dict[str, bool] = {}
+
+
+class ListDictModel(AtomicRedisModel):
+    metadata: dict[str, list[str]] = {}
+
+
+class NestedDictModel(AtomicRedisModel):
+    metadata: dict[str, dict[str, str]] = {}
+
+
 @pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     StrDictModel.Meta.redis = redis_client
@@ -47,6 +77,10 @@ async def real_redis_client(redis_client):
     DatetimeDictModel.Meta.redis = redis_client
     EnumDictModel.Meta.redis = redis_client
     AnyDictModel.Meta.redis = redis_client
+    BaseModelDictModel.Meta.redis = redis_client
+    BoolDictModel.Meta.redis = redis_client
+    ListDictModel.Meta.redis = redis_client
+    NestedDictModel.Meta.redis = redis_client
     yield redis_client
     await redis_client.aclose()
 
@@ -66,6 +100,20 @@ async def real_redis_client(redis_client):
         ),
         (EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING),
         (AnyDictModel, {"key1": "mixed"}, "key2", 42),
+        (
+            BaseModelDictModel,
+            {"key1": Person(name="Alice", age=30, email="alice@example.com")},
+            "key2",
+            Person(name="Bob", age=25, email="bob@example.com"),
+        ),
+        (BoolDictModel, {"key1": True}, "key2", False),
+        (ListDictModel, {"key1": ["item1", "item2"]}, "key2", ["item3", "item4"]),
+        (
+            NestedDictModel,
+            {"key1": {"nested1": "value1"}},
+            "key2",
+            {"nested2": "value2"},
+        ),
     ],
 )
 async def test_redis_dict__setitem__check_local_consistency_sanity(
