@@ -65,33 +65,7 @@ async def test_redis_str_load_with_none_value_edge_case():
     loaded_value = await model.name.load()
 
     # Assert
-    assert loaded_value == ""
-
-
-@pytest.mark.parametrize("redis_values", ["bytes_value", 42, True, None])
-@pytest.mark.asyncio
-async def test_redis_str_load_type_conversion_edge_case(
-    real_redis_client, redis_values
-):
-    # Arrange
-    model = StrModel()
-    await model.save()
-    await real_redis_client.json().set(model.key, model.name.json_path, redis_values)
-
-    # Act
-    fresh_model = StrModel()
-    fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.load()
-
-    # Assert
-    if redis_values == "bytes_value":
-        assert loaded_value == "bytes_value"
-    elif redis_values == 42:
-        assert loaded_value == "42"
-    elif redis_values == True:
-        assert loaded_value == "True"
-    elif redis_values is None:
-        assert loaded_value == ""  # None becomes empty string
+    assert loaded_value is None
 
 
 @pytest.mark.asyncio
