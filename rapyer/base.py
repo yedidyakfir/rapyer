@@ -191,7 +191,7 @@ class AtomicRedisModel(BaseModel):
     @contextlib.asynccontextmanager
     async def lock(self, **kwargs):
         async with self.lock_from_key(self.key, **kwargs) as redis_model:
-            self.model_copy(update=redis_model.model_dump())
+            self.__dict__.update(redis_model.model_dump(exclude_unset=True))
             yield redis_model
 
     @contextlib.asynccontextmanager
