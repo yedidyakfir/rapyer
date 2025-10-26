@@ -105,7 +105,9 @@ class GenericRedisType(RedisType, ABC):
 
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
-        type_transformer = RedisTypeTransformer(self.sub_field_path(key), self.Meta)
+        type_transformer = RedisTypeTransformer(
+            self.sub_field_path(key), self.Meta, type(self._base_model_link)
+        )
         new_type = type_transformer[inner_original_type]
         return new_type
 
