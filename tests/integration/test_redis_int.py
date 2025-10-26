@@ -156,14 +156,14 @@ async def test_redis_int_persistence_across_instances_edge_case():
 
 
 @pytest.mark.parametrize(
-    "operations",
+    ["operations"],
     [
-        (lambda x: x + 10, 52),
-        (lambda x: x - 8, 34),
-        (lambda x: x * 2, 84),
-        (lambda x: x == 42, True),
-        (lambda x: x > 40, True),
-        (lambda x: x < 40, False),
+        [lambda x: x + 10, 52],
+        [lambda x: x - 8, 34],
+        [lambda x: x * 2, 84],
+        [lambda x: x == 42, True],
+        [lambda x: x > 40, True],
+        [lambda x: x < 40, False],
     ],
 )
 @pytest.mark.asyncio
@@ -180,15 +180,15 @@ async def test_redis_int_arithmetic_operations_sanity(operations):
 
 
 @pytest.mark.parametrize(
-    "initial_value,increase_amount,expected",
+    ["initial_value", "increase_amount", "expected"],
     [
-        (0, 1, 1),
-        (10, 5, 15),
-        (100, -20, 80),
-        (-50, 30, -20),
-        (0, 0, 0),
-        (999, 1, 1000),
-        (-999, -1, -1000),
+        [0, 1, 1],
+        [10, 5, 15],
+        [100, -20, 80],
+        [-50, 30, -20],
+        [0, 0, 0],
+        [999, 1, 1000],
+        [-999, -1, -1000],
     ],
 )
 @pytest.mark.asyncio

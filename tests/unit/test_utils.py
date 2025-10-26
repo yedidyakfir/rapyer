@@ -78,15 +78,15 @@ def type_mapping():
 
 
 @pytest.mark.parametrize(
-    "original_type, expected_type",
+    ["original_type", "expected_type"],
     [
-        (str, NewStr),
-        (int, NewInt),
-        (dict, NewDict),
-        (list, NewList),
-        (tuple, NewTuple),
-        (bool, NewBool),
-        (float, NewFloat),
+        [str, NewStr],
+        [int, NewInt],
+        [dict, NewDict],
+        [list, NewList],
+        [tuple, NewTuple],
+        [bool, NewBool],
+        [float, NewFloat],
     ],
 )
 def test_simple_type_replacement_sanity(type_mapping, original_type, expected_type):
@@ -110,11 +110,11 @@ def test_unmapped_type_unchanged_sanity(type_mapping):
 
 
 @pytest.mark.parametrize(
-    "optional_type, expected_inner_type",
+    ["optional_type", "expected_inner_type"],
     [
-        (Optional[str], NewStr),
-        (Optional[int], NewInt),
-        (Optional[list], NewList),
+        [Optional[str], NewStr],
+        [Optional[int], NewInt],
+        [Optional[list], NewList],
     ],
 )
 def test_optional_type_replacement_sanity(
@@ -129,11 +129,11 @@ def test_optional_type_replacement_sanity(
 
 
 @pytest.mark.parametrize(
-    "union_type, expected_result",
+    ["union_type", "expected_result"],
     [
-        (Union[str, int], Union[NewStr, NewInt]),
-        (Union[str, int, bool], Union[NewStr, NewInt, NewBool]),
-        (Union[str, bytes], Union[NewStr, bytes]),  # bytes unmapped
+        [Union[str, int], Union[NewStr, NewInt]],
+        [Union[str, int, bool], Union[NewStr, NewInt, NewBool]],
+        [Union[str, bytes], Union[NewStr, bytes]],  # bytes unmapped
     ],
 )
 def test_union_type_replacement_sanity(type_mapping, union_type, expected_result):
@@ -170,12 +170,12 @@ def test_annotated_optional_type_preservation_sanity(type_mapping):
 
 
 @pytest.mark.parametrize(
-    "generic_type, expected_result",
+    ["generic_type", "expected_result"],
     [
-        (list[str], NewList[NewStr]),
-        (dict[str, int], NewDict[NewStr, NewInt]),
-        (tuple[str, int], NewTuple[NewStr, NewInt]),
-        (tuple[str, ...], NewTuple[NewStr, ...]),
+        [list[str], NewList[NewStr]],
+        [dict[str, int], NewDict[NewStr, NewInt]],
+        [tuple[str, int], NewTuple[NewStr, NewInt]],
+        [tuple[str, ...], NewTuple[NewStr, ...]],
     ],
 )
 def test_generic_type_replacement_sanity(type_mapping, generic_type, expected_result):
@@ -190,10 +190,10 @@ def test_generic_type_replacement_sanity(type_mapping, generic_type, expected_re
 @pytest.mark.parametrize(
     ["nested_type", "expected_result"],
     [
-        (dict[str, list[int]], NewDict[NewStr, NewList[NewInt]]),
-        (list[dict[str, int]], NewList[NewDict[NewStr, NewInt]]),
-        (tuple[str, dict[int, list]], NewTuple[NewStr, NewDict[NewInt, NewList]]),
-        (Optional[dict[str, list[int]]], Optional[NewDict[NewStr, NewList[NewInt]]]),
+        [dict[str, list[int]], NewDict[NewStr, NewList[NewInt]]],
+        [list[dict[str, int]], NewList[NewDict[NewStr, NewInt]]],
+        [tuple[str, dict[int, list]], NewTuple[NewStr, NewDict[NewInt, NewList]]],
+        [Optional[dict[str, list[int]]], Optional[NewDict[NewStr, NewList[NewInt]]]],
     ],
 )
 def test_nested_generic_type_replacement_sanity(

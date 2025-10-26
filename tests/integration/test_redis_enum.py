@@ -1,6 +1,7 @@
+from enum import Enum
+
 import pytest
 import pytest_asyncio
-from enum import Enum
 
 from rapyer.base import AtomicRedisModel
 
@@ -33,12 +34,12 @@ async def redis_task_model(redis_client):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "status,priority",
+    ["status", "priority"],
     [
-        (TaskStatus.PENDING, Priority.LOW),
-        (TaskStatus.RUNNING, Priority.MEDIUM),
-        (TaskStatus.COMPLETED, Priority.HIGH),
-        (TaskStatus.FAILED, Priority.LOW),
+        [TaskStatus.PENDING, Priority.LOW],
+        [TaskStatus.RUNNING, Priority.MEDIUM],
+        [TaskStatus.COMPLETED, Priority.HIGH],
+        [TaskStatus.FAILED, Priority.LOW],
     ],
 )
 async def test_redis_enum_model_save_and_retrieve_sanity(

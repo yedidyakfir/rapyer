@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 import pytest_asyncio
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
@@ -17,27 +17,27 @@ class Status(str, Enum):
 
 
 class StrDictModel(AtomicRedisModel):
-    metadata: dict[str, str] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
 
 
 class IntDictModel(AtomicRedisModel):
-    metadata: dict[str, int] = {}
+    metadata: dict[str, int] = Field(default_factory=dict)
 
 
 class BytesDictModel(AtomicRedisModel):
-    metadata: dict[str, bytes] = {}
+    metadata: dict[str, bytes] = Field(default_factory=dict)
 
 
 class DatetimeDictModel(AtomicRedisModel):
-    metadata: dict[str, datetime] = {}
+    metadata: dict[str, datetime] = Field(default_factory=dict)
 
 
 class EnumDictModel(AtomicRedisModel):
-    metadata: dict[str, Status] = {}
+    metadata: dict[str, Status] = Field(default_factory=dict)
 
 
 class AnyDictModel(AtomicRedisModel):
-    metadata: dict[str, Any] = {}
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 # Additional complex types
@@ -54,19 +54,19 @@ class Company(BaseModel):
 
 
 class BaseModelDictModel(AtomicRedisModel):
-    metadata: dict[str, Person] = {}
+    metadata: dict[str, Person] = Field(default_factory=dict)
 
 
 class BoolDictModel(AtomicRedisModel):
-    metadata: dict[str, bool] = {}
+    metadata: dict[str, bool] = Field(default_factory=dict)
 
 
 class ListDictModel(AtomicRedisModel):
-    metadata: dict[str, list[str]] = {}
+    metadata: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class NestedDictModel(AtomicRedisModel):
-    metadata: dict[str, dict[str, str]] = {}
+    metadata: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -87,33 +87,33 @@ async def real_redis_client(redis_client):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,new_item_key,new_item_value",
+    ["model_class", "initial_data", "new_item_key", "new_item_value"],
     [
-        (StrDictModel, {"key1": "value1"}, "key2", "value2"),
-        (IntDictModel, {"key1": 42}, "key2", 100),
-        (BytesDictModel, {"key1": b"data1"}, "key2", b"data2"),
-        (
+        [StrDictModel, {"key1": "value1"}, "key2", "value2"],
+        [IntDictModel, {"key1": 42}, "key2", 100],
+        [BytesDictModel, {"key1": b"data1"}, "key2", b"data2"],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1)},
             "key2",
             datetime(2023, 2, 1),
-        ),
-        (EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING),
-        (AnyDictModel, {"key1": "mixed"}, "key2", 42),
-        (
+        ],
+        [EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING],
+        [AnyDictModel, {"key1": "mixed"}, "key2", 42],
+        [
             BaseModelDictModel,
             {"key1": Person(name="Alice", age=30, email="alice@example.com")},
             "key2",
             Person(name="Bob", age=25, email="bob@example.com"),
-        ),
-        (BoolDictModel, {"key1": True}, "key2", False),
-        (ListDictModel, {"key1": ["item1", "item2"]}, "key2", ["item3", "item4"]),
-        (
+        ],
+        [BoolDictModel, {"key1": True}, "key2", False],
+        [ListDictModel, {"key1": ["item1", "item2"]}, "key2", ["item3", "item4"]],
+        [
             NestedDictModel,
             {"key1": {"nested1": "value1"}},
             "key2",
             {"nested2": "value2"},
-        ),
+        ],
     ],
 )
 async def test_redis_dict__setitem__check_local_consistency_sanity(
@@ -136,18 +136,18 @@ async def test_redis_dict__setitem__check_local_consistency_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,key_to_delete",
+    ["model_class", "initial_data", "key_to_delete"],
     [
-        (StrDictModel, {"key1": "value1", "key2": "value2"}, "key1"),
-        (IntDictModel, {"key1": 42, "key2": 100}, "key1"),
-        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}, "key1"),
-        (
+        [StrDictModel, {"key1": "value1", "key2": "value2"}, "key1"],
+        [IntDictModel, {"key1": 42, "key2": 100}, "key1"],
+        [BytesDictModel, {"key1": b"data1", "key2": b"data2"}, "key1"],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
             "key1",
-        ),
-        (EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}, "key1"),
-        (AnyDictModel, {"key1": "mixed", "key2": 42}, "key1"),
+        ],
+        [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}, "key1"],
+        [AnyDictModel, {"key1": "mixed", "key2": 42}, "key1"],
     ],
 )
 async def test_redis_dict__delitem__check_local_consistency_sanity(
@@ -170,22 +170,22 @@ async def test_redis_dict__delitem__check_local_consistency_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,update_data",
+    ["model_class", "initial_data", "update_data"],
     [
-        (StrDictModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}),
-        (IntDictModel, {"key1": 42}, {"key2": 100, "key3": 200}),
-        (BytesDictModel, {"key1": b"data1"}, {"key2": b"data2", "key3": b"data3"}),
-        (
+        [StrDictModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}],
+        [IntDictModel, {"key1": 42}, {"key2": 100, "key3": 200}],
+        [BytesDictModel, {"key1": b"data1"}, {"key2": b"data2", "key3": b"data3"}],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1)},
             {"key2": datetime(2023, 2, 1), "key3": datetime(2023, 3, 1)},
-        ),
-        (
+        ],
+        [
             EnumDictModel,
             {"key1": Status.ACTIVE},
             {"key2": Status.PENDING, "key3": Status.INACTIVE},
-        ),
-        (AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}),
+        ],
+        [AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}],
     ],
 )
 async def test_redis_dict__update__check_local_consistency_sanity(
@@ -208,17 +208,17 @@ async def test_redis_dict__update__check_local_consistency_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data",
+    ["model_class", "initial_data"],
     [
-        (StrDictModel, {"key1": "value1", "key2": "value2"}),
-        (IntDictModel, {"key1": 42, "key2": 100}),
-        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}),
-        (
+        [StrDictModel, {"key1": "value1", "key2": "value2"}],
+        [IntDictModel, {"key1": 42, "key2": 100}],
+        [BytesDictModel, {"key1": b"data1", "key2": b"data2"}],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
-        ),
-        (EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}),
-        (AnyDictModel, {"key1": "mixed", "key2": 42}),
+        ],
+        [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}],
+        [AnyDictModel, {"key1": "mixed", "key2": 42}],
     ],
 )
 async def test_redis_dict__clear__check_local_consistency_sanity(
@@ -242,19 +242,19 @@ async def test_redis_dict__clear__check_local_consistency_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,new_item_key,new_item_value",
+    ["model_class", "initial_data", "new_item_key", "new_item_value"],
     [
-        (StrDictModel, {"key1": "value1"}, "key2", "value2"),
-        (IntDictModel, {"key1": 42}, "key2", 100),
-        (BytesDictModel, {"key1": b"data1"}, "key2", b"data2"),
-        (
+        [StrDictModel, {"key1": "value1"}, "key2", "value2"],
+        [IntDictModel, {"key1": 42}, "key2", 100],
+        [BytesDictModel, {"key1": b"data1"}, "key2", b"data2"],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1)},
             "key2",
             datetime(2023, 2, 1),
-        ),
-        (EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING),
-        (AnyDictModel, {"key1": "mixed"}, "key2", 42),
+        ],
+        [EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING],
+        [AnyDictModel, {"key1": "mixed"}, "key2", 42],
     ],
 )
 async def test_redis_dict__load__check_redis_load_sanity(
@@ -283,24 +283,24 @@ async def test_redis_dict__load__check_redis_load_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,key_to_pop,expected_value",
+    ["model_class", "initial_data", "key_to_pop", "expected_value"],
     [
-        (StrDictModel, {"key1": "value1", "key2": "value2"}, "key1", "value1"),
-        (IntDictModel, {"key1": 42, "key2": 100}, "key1", 42),
-        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}, "key1", b"data1"),
-        (
+        [StrDictModel, {"key1": "value1", "key2": "value2"}, "key1", "value1"],
+        [IntDictModel, {"key1": 42, "key2": 100}, "key1", 42],
+        [BytesDictModel, {"key1": b"data1", "key2": b"data2"}, "key1", b"data1"],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
             "key1",
             datetime(2023, 1, 1),
-        ),
-        (
+        ],
+        [
             EnumDictModel,
             {"key1": Status.ACTIVE, "key2": Status.PENDING},
             "key1",
             Status.ACTIVE,
-        ),
-        (AnyDictModel, {"key1": "mixed", "key2": 42}, "key1", "mixed"),
+        ],
+        [AnyDictModel, {"key1": "mixed", "key2": 42}, "key1", "mixed"],
     ],
 )
 async def test_redis_dict__pop__check_redis_pop_sanity(
@@ -325,14 +325,14 @@ async def test_redis_dict__pop__check_redis_pop_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,default_value",
+    ["model_class", "initial_data", "default_value"],
     [
-        (StrDictModel, {"key1": "value1"}, "default_value"),
-        (IntDictModel, {"key1": 42}, 999),
-        (BytesDictModel, {"key1": b"data1"}, b"default"),
-        (DatetimeDictModel, {"key1": datetime(2023, 1, 1)}, datetime(2023, 12, 31)),
-        (EnumDictModel, {"key1": Status.ACTIVE}, Status.INACTIVE),
-        (AnyDictModel, {"key1": "mixed"}, "default_any"),
+        [StrDictModel, {"key1": "value1"}, "default_value"],
+        [IntDictModel, {"key1": 42}, 999],
+        [BytesDictModel, {"key1": b"data1"}, b"default"],
+        [DatetimeDictModel, {"key1": datetime(2023, 1, 1)}, datetime(2023, 12, 31)],
+        [EnumDictModel, {"key1": Status.ACTIVE}, Status.INACTIVE],
+        [AnyDictModel, {"key1": "mixed"}, "default_any"],
     ],
 )
 async def test_redis_dict__pop_with_default__check_default_return_sanity(
@@ -352,7 +352,7 @@ async def test_redis_dict__pop_with_default__check_default_return_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data",
+    ["model_class", "initial_data"],
     [
         [StrDictModel, {"key1": "value1", "key2": "value2"}],
         [IntDictModel, {"key1": 42, "key2": 100}],
@@ -362,7 +362,7 @@ async def test_redis_dict__pop_with_default__check_default_return_sanity(
             {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
         ],
         [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}],
-        (AnyDictModel, {"key1": "mixed", "key2": 42}),
+        [AnyDictModel, {"key1": "mixed", "key2": 42}],
     ],
 )
 async def test_redis_dict__popitem__check_redis_popitem_sanity(
@@ -391,22 +391,22 @@ async def test_redis_dict__popitem__check_redis_popitem_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,update_data",
+    ["model_class", "initial_data", "update_data"],
     [
-        (StrDictModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}),
-        (IntDictModel, {"key1": 42}, {"key2": 100, "key3": 200}),
-        (BytesDictModel, {"key1": b"data1"}, {"key2": b"data2", "key3": b"data3"}),
-        (
+        [StrDictModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}],
+        [IntDictModel, {"key1": 42}, {"key2": 100, "key3": 200}],
+        [BytesDictModel, {"key1": b"data1"}, {"key2": b"data2", "key3": b"data3"}],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1)},
             {"key2": datetime(2023, 2, 1), "key3": datetime(2023, 3, 1)},
-        ),
-        (
+        ],
+        [
             EnumDictModel,
             {"key1": Status.ACTIVE},
             {"key2": Status.PENDING, "key3": Status.INACTIVE},
-        ),
-        (AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}),
+        ],
+        [AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}],
     ],
 )
 async def test_redis_dict__update_with_dict_arg__check_local_consistency_sanity(
@@ -430,14 +430,14 @@ async def test_redis_dict__update_with_dict_arg__check_local_consistency_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data",
+    ["model_class", "initial_data"],
     [
-        (StrDictModel, {"key1": "value1"}),
-        (IntDictModel, {"key1": 42}),
-        (BytesDictModel, {"key1": b"data1"}),
-        (DatetimeDictModel, {"key1": datetime(2023, 1, 1)}),
-        (EnumDictModel, {"key1": Status.ACTIVE}),
-        (AnyDictModel, {"key1": "mixed"}),
+        [StrDictModel, {"key1": "value1"}],
+        [IntDictModel, {"key1": 42}],
+        [BytesDictModel, {"key1": b"data1"}],
+        [DatetimeDictModel, {"key1": datetime(2023, 1, 1)}],
+        [EnumDictModel, {"key1": Status.ACTIVE}],
+        [AnyDictModel, {"key1": "mixed"}],
     ],
 )
 async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
@@ -474,17 +474,17 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data",
+    ["model_class", "initial_data"],
     [
-        (StrDictModel, {"key1": "value1", "key2": "value2"}),
-        (IntDictModel, {"key1": 42, "key2": 100}),
-        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}),
-        (
+        [StrDictModel, {"key1": "value1", "key2": "value2"}],
+        [IntDictModel, {"key1": 42, "key2": 100}],
+        [BytesDictModel, {"key1": b"data1", "key2": b"data2"}],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
-        ),
-        (EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}),
-        (AnyDictModel, {"key1": "mixed", "key2": 42}),
+        ],
+        [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}],
+        [AnyDictModel, {"key1": "mixed", "key2": 42}],
     ],
 )
 async def test_redis_dict__clone__check_clone_functionality_sanity(
@@ -521,14 +521,14 @@ async def test_redis_dict__clone__check_clone_functionality_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class",
+    ["model_class"],
     [
-        StrDictModel,
-        IntDictModel,
-        BytesDictModel,
-        DatetimeDictModel,
-        EnumDictModel,
-        AnyDictModel,
+        [StrDictModel],
+        [IntDictModel],
+        [BytesDictModel],
+        [DatetimeDictModel],
+        [EnumDictModel],
+        [AnyDictModel],
     ],
 )
 async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(model_class):
@@ -543,14 +543,14 @@ async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(model_clas
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data",
+    ["model_class", "initial_data"],
     [
-        (StrDictModel, {"key1": "value1"}),
-        (IntDictModel, {"key1": 42}),
-        (BytesDictModel, {"key1": b"data1"}),
-        (DatetimeDictModel, {"key1": datetime(2023, 1, 1)}),
-        (EnumDictModel, {"key1": Status.ACTIVE}),
-        (AnyDictModel, {"key1": "mixed"}),
+        [StrDictModel, {"key1": "value1"}],
+        [IntDictModel, {"key1": 42}],
+        [BytesDictModel, {"key1": b"data1"}],
+        [DatetimeDictModel, {"key1": datetime(2023, 1, 1)}],
+        [EnumDictModel, {"key1": Status.ACTIVE}],
+        [AnyDictModel, {"key1": "mixed"}],
     ],
 )
 async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
@@ -575,18 +575,18 @@ async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,initial_data,additional_data",
+    ["model_class", "initial_data", "additional_data"],
     [
-        (StrDictModel, {"key1": "value1"}, {"key2": "value2"}),
-        (IntDictModel, {"key1": 42}, {"key2": 100}),
-        (BytesDictModel, {"key1": b"data1"}, {"key2": b"data2"}),
-        (
+        [StrDictModel, {"key1": "value1"}, {"key2": "value2"}],
+        [IntDictModel, {"key1": 42}, {"key2": 100}],
+        [BytesDictModel, {"key1": b"data1"}, {"key2": b"data2"}],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1)},
             {"key2": datetime(2023, 2, 1)},
-        ),
-        (EnumDictModel, {"key1": Status.ACTIVE}, {"key2": Status.PENDING}),
-        (AnyDictModel, {"key1": "mixed"}, {"key2": 42}),
+        ],
+        [EnumDictModel, {"key1": Status.ACTIVE}, {"key2": Status.PENDING}],
+        [AnyDictModel, {"key1": "mixed"}, {"key2": 42}],
     ],
 )
 async def test__redis_dict_model__ior_sanity(
@@ -606,14 +606,14 @@ async def test__redis_dict_model__ior_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class,default_value",
+    ["model_class", "default_value"],
     [
-        (StrDictModel, "default_value"),
-        (IntDictModel, 999),
-        (BytesDictModel, b"default"),
-        (DatetimeDictModel, datetime(2023, 12, 31)),
-        (EnumDictModel, Status.INACTIVE),
-        (AnyDictModel, "default_any"),
+        [StrDictModel, "default_value"],
+        [IntDictModel, 999],
+        [BytesDictModel, b"default"],
+        [DatetimeDictModel, datetime(2023, 12, 31)],
+        [EnumDictModel, Status.INACTIVE],
+        [AnyDictModel, "default_any"],
     ],
 )
 async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
@@ -632,14 +632,14 @@ async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model_class",
+    ["model_class"],
     [
-        StrDictModel,
-        IntDictModel,
-        BytesDictModel,
-        DatetimeDictModel,
-        EnumDictModel,
-        AnyDictModel,
+        [StrDictModel],
+        [IntDictModel],
+        [BytesDictModel],
+        [DatetimeDictModel],
+        [EnumDictModel],
+        [AnyDictModel],
     ],
 )
 async def test_redis_dict__apop_empty_redis__check_no_default_sanity(model_class):

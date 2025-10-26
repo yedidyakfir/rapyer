@@ -1,5 +1,6 @@
 import pytest
 import pytest_asyncio
+from pydantic import Field
 
 from rapyer.base import AtomicRedisModel, RedisConfig
 
@@ -8,8 +9,8 @@ class UserModelWithTTL(AtomicRedisModel):
     name: str = "test"
     age: int = 25
     active: bool = True
-    tags: list[str] = []
-    settings: dict[str, str] = {}
+    tags: list[str] = Field(default_factory=list)
+    settings: dict[str, str] = Field(default_factory=dict)
 
     Meta = RedisConfig(ttl=300)
 

@@ -27,7 +27,7 @@ async def real_redis_client(redis_client):
     await redis_client.aclose()
 
 
-@pytest.mark.parametrize("test_bytes", [b"hello", b"world", b"\x00\x01\x02"])
+@pytest.mark.parametrize(["test_bytes"], [[b"hello"], [b"world"], [b"\x00\x01\x02"]])
 @pytest.mark.asyncio
 async def test_bytes_list_append_functionality(real_redis_client, test_bytes):
     # Arrange
@@ -272,11 +272,11 @@ async def test_dict_clear_with_mixed_types_functionality(real_redis_client):
 
 
 @pytest.mark.parametrize(
-    "list_type,test_values",
+    ["list_type", "test_values"],
     [
-        ("bytes_list", [b"test1", b"test2", b"test3"]),
-        ("int_list", [10, 20, 30]),
-        ("bool_list", [True, False, True]),
+        ["bytes_list", [b"test1", b"test2", b"test3"]],
+        ["int_list", [10, 20, 30]],
+        ["bool_list", [True, False, True]],
     ],
 )
 @pytest.mark.asyncio
@@ -302,11 +302,11 @@ async def test_list_persistence_across_instances_edge_case(
 
 
 @pytest.mark.parametrize(
-    "dict_type,test_data",
+    ["dict_type", "test_data"],
     [
-        ("bytes_dict", {"key1": b"value1", "key2": b"value2"}),
-        ("int_dict", {"num1": 100, "num2": 200}),
-        ("bool_dict", {"flag1": True, "flag2": False}),
+        ["bytes_dict", {"key1": b"value1", "key2": b"value2"}],
+        ["int_dict", {"num1": 100, "num2": 200}],
+        ["bool_dict", {"flag1": True, "flag2": False}],
     ],
 )
 @pytest.mark.asyncio

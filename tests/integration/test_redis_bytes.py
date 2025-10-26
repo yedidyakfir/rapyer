@@ -76,11 +76,11 @@ async def test_redis_bytes_load_with_none_value_edge_case():
 
 
 @pytest.mark.parametrize(
-    "redis_values",
+    ["redis_values"],
     [
-        (b"string_value", b"string_value"),
-        (b"actual_bytes", b"actual_bytes"),
-        (b"42", b"42"),
+        [b"string_value", b"string_value"],
+        [b"actual_bytes", b"actual_bytes"],
+        [b"42", b"42"],
     ],
 )
 @pytest.mark.asyncio
@@ -101,15 +101,15 @@ async def test_redis_bytes_load_type_conversion_edge_case(redis_values):
 
 
 @pytest.mark.parametrize(
-    "operations",
+    ["operations"],
     [
-        (lambda x: len(x), 5),
-        (lambda x: x[1:3], b"el"),
-        (lambda x: x + b" world", b"hello world"),
-        (lambda x: b"ell" in x, True),
-        (lambda x: x.decode(), "hello"),
-        (lambda x: x.upper(), b"HELLO"),
-        (lambda x: x.replace(b"l", b"x"), b"hexxo"),
+        [lambda x: len(x), 5],
+        [lambda x: x[1:3], b"el"],
+        [lambda x: x + b" world", b"hello world"],
+        [lambda x: b"ell" in x, True],
+        [lambda x: x.decode(), "hello"],
+        [lambda x: x.upper(), b"HELLO"],
+        [lambda x: x.replace(b"l", b"x"), b"hexxo"],
     ],
 )
 @pytest.mark.asyncio

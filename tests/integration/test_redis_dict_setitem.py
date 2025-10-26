@@ -132,7 +132,7 @@ async def test_redis_dict_setitem_dict_type_checking_sanity(dict_dict_model):
 
 
 @pytest.mark.parametrize(
-    "key,test_value",
+    ["key", "test_value"],
     [
         ["count", 100],
         ["score", 200],
@@ -158,7 +158,7 @@ async def test_redis_dict_setitem_int_operations_sanity(key, test_value):
 
 
 @pytest.mark.parametrize(
-    "key,test_value",
+    ["key", "test_value"],
     [
         ["name", "hello"],
         ["title", "world"],
@@ -184,7 +184,7 @@ async def test_redis_dict_setitem_str_operations_sanity(key, test_value):
 
 
 @pytest.mark.parametrize(
-    "key,test_value",
+    ["key", "test_value"],
     [
         ["config", {"setting1": "value1"}],
         ["options", {"setting2": "value2"}],

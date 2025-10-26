@@ -1,8 +1,9 @@
-import pytest
-import pytest_asyncio
-from typing import Union
 from collections import namedtuple
 from dataclasses import dataclass
+from typing import Union
+
+import pytest
+import pytest_asyncio
 
 from rapyer.base import AtomicRedisModel
 
@@ -50,7 +51,7 @@ test_data_args = [
 ]
 
 
-@pytest.mark.parametrize("test_data", test_data_args)
+@pytest.mark.parametrize(["test_data"], test_data_args)
 @pytest.mark.asyncio
 async def test_unmapped_field_types_set_and_load_functionality_sanity(test_data):
     # Arrange

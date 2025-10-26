@@ -1,19 +1,20 @@
 import pytest
 import pytest_asyncio
+from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
 
 
 class ComprehensiveTestModel(AtomicRedisModel):
-    tags: list[str] = []
-    metadata: dict[str, str] = {}
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, str] = Field(default_factory=dict)
     name: str = ""
     counter: int = 0
 
 
 class PipelineTestModel(AtomicRedisModel):
-    metadata: dict[str, str] = {}
-    config: dict[str, int] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
+    config: dict[str, int] = Field(default_factory=dict)
 
 
 @pytest_asyncio.fixture

@@ -17,7 +17,8 @@ async def real_redis_client(redis_client):
 
 
 @pytest.mark.parametrize(
-    "test_values", ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"]
+    ["test_values"],
+    [["hello"], ["world"], [""], ["special chars: !@#$%"], ["unicode: 你好"]],
 )
 @pytest.mark.asyncio
 async def test_redis_str_set_functionality_sanity(real_redis_client, test_values):
@@ -36,7 +37,8 @@ async def test_redis_str_set_functionality_sanity(real_redis_client, test_values
 
 
 @pytest.mark.parametrize(
-    "test_values", ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"]
+    ["test_values"],
+    [["hello"], ["world"], [""], ["special chars: !@#$%"], ["unicode: 你好"]],
 )
 @pytest.mark.asyncio
 async def test_redis_str_load_functionality_sanity(real_redis_client, test_values):
@@ -66,7 +68,7 @@ async def test_redis_str_load_with_none_value_edge_case(real_redis_client):
     assert loaded_value == ""
 
 
-@pytest.mark.parametrize("redis_values", ["bytes_value", 42, True, None])
+@pytest.mark.parametrize(["redis_values"], [["bytes_value"], [42], [True], [None]])
 @pytest.mark.asyncio
 async def test_redis_str_load_type_conversion_edge_case(
     real_redis_client, redis_values
@@ -167,15 +169,15 @@ async def test_redis_str_persistence_across_instances_edge_case(real_redis_clien
 
 
 @pytest.mark.parametrize(
-    "operations",
+    ["operations"],
     [
-        (lambda x: x.upper(), "HELLO"),
-        (lambda x: x.lower(), "hello"),
-        (lambda x: x.strip(), "hello"),
-        (lambda x: len(x), 5),
-        (lambda x: x[1:3], "el"),
-        (lambda x: "ell" in x, True),
-        (lambda x: x.split("l"), ["he", "", "o"]),
+        [lambda x: x.upper(), "HELLO"],
+        [lambda x: x.lower(), "hello"],
+        [lambda x: x.strip(), "hello"],
+        [lambda x: len(x), 5],
+        [lambda x: x[1:3], "el"],
+        [lambda x: "ell" in x, True],
+        [lambda x: x.split("l"), ["he", "", "o"]],
     ],
 )
 @pytest.mark.asyncio
