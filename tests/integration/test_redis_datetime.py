@@ -20,7 +20,7 @@ class DatetimeDictModel(AtomicRedisModel):
     event_dates: dict[str, datetime] = Field(default_factory=dict)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     DatetimeModel.Meta.redis = redis_client
     DatetimeListModel.Meta.redis = redis_client
@@ -39,7 +39,7 @@ date_values = [
 
 @pytest.mark.parametrize("test_values", date_values)
 @pytest.mark.asyncio
-async def test_redis_datetime_set_functionality_sanity(real_redis_client, test_values):
+async def test_redis_datetime_set_functionality_sanity(test_values):
     # Arrange
     model = DatetimeModel()
     await model.save()
@@ -56,7 +56,7 @@ async def test_redis_datetime_set_functionality_sanity(real_redis_client, test_v
 
 @pytest.mark.parametrize("test_values", date_values)
 @pytest.mark.asyncio
-async def test_redis_datetime_load_functionality_sanity(real_redis_client, test_values):
+async def test_redis_datetime_load_functionality_sanity(test_values):
     # Arrange
     model = DatetimeModel()
     await model.save()
@@ -72,7 +72,7 @@ async def test_redis_datetime_load_functionality_sanity(real_redis_client, test_
 
 
 @pytest.mark.asyncio
-async def test_redis_datetime_load_with_none_value_edge_case(real_redis_client):
+async def test_redis_datetime_load_with_none_value_edge_case():
     # Arrange
     model = DatetimeModel()
 
@@ -84,7 +84,7 @@ async def test_redis_datetime_load_with_none_value_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_datetime_set_none_functionality_edge_case(real_redis_client):
+async def test_redis_datetime_set_none_functionality_edge_case():
     # Arrange
     model = DatetimeModel()
     await model.save()
@@ -132,7 +132,7 @@ async def test_redis_datetime_load_type_conversion_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_redis_datetime_set_with_wrong_type_edge_case(real_redis_client):
+async def test_redis_datetime_set_with_wrong_type_edge_case():
     # Arrange
     model = DatetimeModel()
 
@@ -159,7 +159,7 @@ async def test_redis_datetime_serialization_functionality_sanity(real_redis_clie
 
 
 @pytest.mark.asyncio
-async def test_redis_datetime_clone_functionality_sanity(real_redis_client):
+async def test_redis_datetime_clone_functionality_sanity():
     # Arrange
     test_datetime = datetime(2023, 1, 1, 12, 0, 0)
     model = DatetimeModel(created_at=test_datetime)
@@ -192,7 +192,7 @@ async def test_redis_datetime_model_creation_functionality_sanity(real_redis_cli
 
 
 @pytest.mark.asyncio
-async def test_redis_datetime_persistence_across_instances_edge_case(real_redis_client):
+async def test_redis_datetime_persistence_across_instances_edge_case():
     # Arrange
     test_datetime = datetime(2023, 1, 1, 12, 0, 0)
     model1 = DatetimeModel()
@@ -217,7 +217,7 @@ async def test_redis_datetime_persistence_across_instances_edge_case(real_redis_
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_datetime_list_functionality_sanity(real_redis_client, test_dates):
+async def test_redis_datetime_list_functionality_sanity(test_dates):
     # Arrange
     model = DatetimeListModel(dates=test_dates)
     await model.save()
@@ -240,9 +240,7 @@ async def test_redis_datetime_list_functionality_sanity(real_redis_client, test_
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_datetime_dict_functionality_sanity(
-    real_redis_client, test_date_dict
-):
+async def test_redis_datetime_dict_functionality_sanity(test_date_dict):
     # Arrange
     model = DatetimeDictModel(event_dates=test_date_dict)
     await model.save()
@@ -279,7 +277,7 @@ async def test_redis_datetime_isoformat_compatibility_edge_case(real_redis_clien
 
 @pytest.mark.parametrize("test_datetime", date_values)
 @pytest.mark.asyncio
-async def test_redis_datetime_model_save_load_sanity(real_redis_client, test_datetime):
+async def test_redis_datetime_model_save_load_sanity(test_datetime):
     # Arrange
     model = DatetimeModel(created_at=test_datetime)
     await model.save()

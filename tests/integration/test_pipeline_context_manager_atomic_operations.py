@@ -17,7 +17,7 @@ class PipelineTestModel(AtomicRedisModel):
     config: dict[str, int] = Field(default_factory=dict)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     PipelineTestModel.Meta.redis = redis_client
     ComprehensiveTestModel.Meta.redis = redis_client
@@ -26,9 +26,7 @@ async def real_redis_client(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_context_manager__dict_update_operations__check_atomic_batch_sanity(
-    real_redis_client,
-):
+async def test_pipeline_context_manager__dict_update_operations__check_atomic_batch_sanity():
     # Arrange
     original_metadata = {"original": "value"}
     model = PipelineTestModel(metadata=original_metadata)
@@ -56,9 +54,7 @@ async def test_pipeline_context_manager__dict_update_operations__check_atomic_ba
 
 
 @pytest.mark.asyncio
-async def test_pipeline_context_manager__multiple_dict_fields__check_atomic_execution_sanity(
-    real_redis_client,
-):
+async def test_pipeline_context_manager__multiple_dict_fields__check_atomic_execution_sanity():
     # Arrange
     model = PipelineTestModel(metadata={"env": "dev"}, config={"port": 8080})
     await model.save()
@@ -91,9 +87,7 @@ async def test_pipeline_context_manager__multiple_dict_fields__check_atomic_exec
 
 
 @pytest.mark.asyncio
-async def test_pipeline_context_manager__exception_during_pipeline__check_no_changes_applied_edge_case(
-    real_redis_client,
-):
+async def test_pipeline_context_manager__exception_during_pipeline__check_no_changes_applied_edge_case():
     # Arrange
     model = PipelineTestModel(metadata={"key": "original"})
     await model.save()
@@ -111,9 +105,7 @@ async def test_pipeline_context_manager__exception_during_pipeline__check_no_cha
 
 
 @pytest.mark.asyncio
-async def test_pipeline_context_manager__empty_pipeline__check_no_operations_edge_case(
-    real_redis_client,
-):
+async def test_pipeline_context_manager__empty_pipeline__check_no_operations_edge_case():
     # Arrange
     model = PipelineTestModel(metadata={"key": "unchanged"})
     await model.save()
@@ -129,9 +121,7 @@ async def test_pipeline_context_manager__empty_pipeline__check_no_operations_edg
 
 
 @pytest.mark.asyncio
-async def test_pipeline_context_manager__incremental_updates_atomic__check_intermediate_state_sanity(
-    real_redis_client,
-):
+async def test_pipeline_context_manager__incremental_updates_atomic__check_intermediate_state_sanity():
     # Arrange
     model = PipelineTestModel(metadata={"stage": "init"}, config={"step": 0})
     await model.save()
@@ -164,9 +154,7 @@ async def test_pipeline_context_manager__incremental_updates_atomic__check_inter
 
 
 @pytest.mark.asyncio
-async def test_pipeline_context_manager__pipeline_context_cleanup__check_context_variable_sanity(
-    real_redis_client,
-):
+async def test_pipeline_context_manager__pipeline_context_cleanup__check_context_variable_sanity():
     # Arrange
     model = PipelineTestModel(metadata={"test": "value"})
     await model.save()
@@ -190,7 +178,7 @@ async def test_pipeline_context_manager__pipeline_context_cleanup__check_context
 
 
 @pytest.mark.asyncio
-async def test_pipeline_list_aappend__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_list_aappend__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(tags=["initial"])
     await model.save()
@@ -209,7 +197,7 @@ async def test_pipeline_list_aappend__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_list_aextend__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_list_aextend__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(tags=["initial"])
     await model.save()
@@ -228,7 +216,7 @@ async def test_pipeline_list_aextend__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_list_ainsert__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_list_ainsert__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(tags=["first", "last"])
     await model.save()
@@ -247,7 +235,7 @@ async def test_pipeline_list_ainsert__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_list_aclear__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_list_aclear__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(tags=["tag1", "tag2"])
     await model.save()
@@ -266,7 +254,7 @@ async def test_pipeline_list_aclear__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_dict_aset_item__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_dict_aset_item__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(metadata={"existing": "value"})
     await model.save()
@@ -285,7 +273,7 @@ async def test_pipeline_dict_aset_item__check_atomicity_sanity(real_redis_client
 
 
 @pytest.mark.asyncio
-async def test_pipeline_dict_adel_item__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_dict_adel_item__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(metadata={"key1": "value1", "key2": "value2"})
     await model.save()
@@ -304,7 +292,7 @@ async def test_pipeline_dict_adel_item__check_atomicity_sanity(real_redis_client
 
 
 @pytest.mark.asyncio
-async def test_pipeline_dict_aupdate__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_dict_aupdate__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(metadata={"existing": "value"})
     await model.save()
@@ -327,7 +315,7 @@ async def test_pipeline_dict_aupdate__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_dict_aclear__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_dict_aclear__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(metadata={"key1": "value1", "key2": "value2"})
     await model.save()
@@ -346,7 +334,7 @@ async def test_pipeline_dict_aclear__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_string_set__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_string_set__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(name="original")
     await model.save()
@@ -365,7 +353,7 @@ async def test_pipeline_string_set__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_int_set__check_atomicity_sanity(real_redis_client):
+async def test_pipeline_int_set__check_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(counter=10)
     await model.save()
@@ -384,9 +372,7 @@ async def test_pipeline_int_set__check_atomicity_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_pipeline_multiple_operations__check_combined_atomicity_sanity(
-    real_redis_client,
-):
+async def test_pipeline_multiple_operations__check_combined_atomicity_sanity():
     # Arrange
     model = ComprehensiveTestModel(
         tags=["tag1"], metadata={"key1": "value1"}, name="original", counter=0
@@ -423,9 +409,7 @@ async def test_pipeline_multiple_operations__check_combined_atomicity_sanity(
 
 
 @pytest.mark.asyncio
-async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case(
-    real_redis_client,
-):
+async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case():
     # Arrange
     model = ComprehensiveTestModel(tags=["original"], metadata={"key": "original"})
     await model.save()
@@ -446,9 +430,7 @@ async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case(
 
 # Tests for operations that DON'T work in pipeline (kept with try-catch for documentation)
 @pytest.mark.asyncio
-async def test_pipeline_list_apop__check_pipeline_limitation_edge_case(
-    real_redis_client,
-):
+async def test_pipeline_list_apop__check_pipeline_limitation_edge_case():
     # Arrange
     model = ComprehensiveTestModel(tags=["tag1", "tag2", "tag3"])
     await model.save()
@@ -462,9 +444,7 @@ async def test_pipeline_list_apop__check_pipeline_limitation_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_pipeline_dict_apop__check_pipeline_limitation_edge_case(
-    real_redis_client,
-):
+async def test_pipeline_dict_apop__check_pipeline_limitation_edge_case():
     # Arrange
     model = ComprehensiveTestModel(metadata={"key1": "value1", "key2": "value2"})
     await model.save()
@@ -478,9 +458,7 @@ async def test_pipeline_dict_apop__check_pipeline_limitation_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_pipeline_dict_apopitem__check_pipeline_limitation_edge_case(
-    real_redis_client,
-):
+async def test_pipeline_dict_apopitem__check_pipeline_limitation_edge_case():
     # Arrange
     model = ComprehensiveTestModel(metadata={"key1": "value1"})
     await model.save()

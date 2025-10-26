@@ -20,7 +20,7 @@ class UserModelWithoutTTL(AtomicRedisModel):
     age: int = 25
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     UserModelWithTTL.Meta.redis = redis_client
     UserModelWithoutTTL.Meta.redis = redis_client

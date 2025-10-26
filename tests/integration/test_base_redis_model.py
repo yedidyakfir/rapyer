@@ -9,7 +9,7 @@ class UserModel(AtomicRedisModel):
     tags: list[str] = Field(default_factory=list)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     UserModel.Meta.redis = redis_client
     yield redis_client
@@ -61,7 +61,7 @@ async def test_base_redis_model__list_insert__check_redis_insert(real_redis_clie
 
 
 @pytest.mark.asyncio
-async def test_base_redis_model__list_clear__check_redis_clear(real_redis_client):
+async def test_base_redis_model__list_clear__check_redis_clear():
     # Arrange
     user = UserModel(tags=["tag1", "tag2", "tag3"])
     await user.save()
@@ -135,9 +135,7 @@ async def test_base_redis_model__try_delete_existing_key__check_returns_true_san
 
 
 @pytest.mark.asyncio
-async def test_base_redis_model__try_delete_nonexistent_key__check_returns_false_sanity(
-    real_redis_client,
-):
+async def test_base_redis_model__try_delete_nonexistent_key__check_returns_false_sanity():
     # Arrange
     mock_key = "UserModel:nonexistent_key"
 

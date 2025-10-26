@@ -94,7 +94,7 @@ async def test_bool_list_operations_functionality(bool_values):
 
 
 @pytest.mark.asyncio
-async def test_mixed_list_with_different_types_functionality(real_redis_client):
+async def test_mixed_list_with_different_types_functionality():
     # Arrange
     model = MixedTypesModel()
     mixed_values = ["string", 42, True, b"bytes", 3.14]
@@ -206,7 +206,7 @@ async def test_bool_dict_operations_functionality(bool_data):
 
 
 @pytest.mark.asyncio
-async def test_mixed_dict_with_various_types_functionality(real_redis_client):
+async def test_mixed_dict_with_various_types_functionality():
     # Arrange
     model = MixedTypesModel()
     mixed_data = {
@@ -255,7 +255,7 @@ async def test_list_clear_with_mixed_types_functionality(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_dict_clear_with_mixed_types_functionality(real_redis_client):
+async def test_dict_clear_with_mixed_types_functionality():
     # Arrange
     model = MixedTypesModel()
     mixed_data = {"str": "value", "int": 42, "bool": True}
@@ -329,7 +329,7 @@ async def test_dict_persistence_across_instances_edge_case(dict_type, test_data)
 
 
 @pytest.mark.asyncio
-async def test_bytes_list_with_special_characters_edge_case(real_redis_client):
+async def test_bytes_list_with_special_characters_edge_case():
     # Arrange
     model = MixedTypesModel()
     special_bytes = [b"\x00\x01\x02\x03", b"\xff\xfe\xfd", b""]
@@ -350,7 +350,7 @@ async def test_bytes_list_with_special_characters_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_mixed_operations_on_same_model_functionality(real_redis_client):
+async def test_mixed_operations_on_same_model_functionality():
     # Arrange
     model = MixedTypesModel()
     await model.save()

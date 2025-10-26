@@ -9,7 +9,7 @@ class BoolModel(AtomicRedisModel):
     is_deleted: bool = True
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     BoolModel.Meta.redis = redis_client
     yield redis_client
@@ -35,7 +35,7 @@ async def test_redis_bool_set_functionality_sanity(real_redis_client, test_value
 
 @pytest.mark.parametrize("test_values", [True, False])
 @pytest.mark.asyncio
-async def test_redis_bool_load_functionality_sanity(real_redis_client, test_values):
+async def test_redis_bool_load_functionality_sanity(test_values):
     # Arrange
     model = BoolModel(is_active=test_values)
     await model.save()
@@ -48,7 +48,7 @@ async def test_redis_bool_load_functionality_sanity(real_redis_client, test_valu
 
 
 @pytest.mark.asyncio
-async def test_redis_bool_set_with_wrong_type_edge_case(real_redis_client):
+async def test_redis_bool_set_with_wrong_type_edge_case():
     # Arrange
     model = BoolModel()
     await model.save()
@@ -59,7 +59,7 @@ async def test_redis_bool_set_with_wrong_type_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_bool_truthy_values_functionality_sanity(real_redis_client):
+async def test_redis_bool_truthy_values_functionality_sanity():
     # Arrange
     model = BoolModel(is_active=True)
 

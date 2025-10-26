@@ -38,7 +38,7 @@ class OuterModelWithRedisNested(AtomicRedisModel):
     outer_data: list[int] = Field(default_factory=list)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     OuterModel.Meta.redis = redis_client
     OuterModelWithRedisNested.Meta.redis = redis_client
@@ -48,7 +48,7 @@ async def real_redis_client(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_nested_model_deep_list_append_sanity(real_redis_client):
+async def test_nested_model_deep_list_append_sanity():
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -67,7 +67,7 @@ async def test_nested_model_deep_list_append_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_nested_model_deep_list_extend_sanity(real_redis_client):
+async def test_nested_model_deep_list_extend_sanity():
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -86,7 +86,7 @@ async def test_nested_model_deep_list_extend_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_nested_model_middle_list_operations_sanity(real_redis_client):
+async def test_nested_model_middle_list_operations_sanity():
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -107,7 +107,7 @@ async def test_nested_model_middle_list_operations_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_nested_model_middle_dict_operations_sanity(real_redis_client):
+async def test_nested_model_middle_dict_operations_sanity():
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -128,7 +128,7 @@ async def test_nested_model_middle_dict_operations_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_nested_model_outer_level_operations_sanity(real_redis_client):
+async def test_nested_model_outer_level_operations_sanity():
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -156,9 +156,7 @@ async def test_nested_model_outer_level_operations_sanity(real_redis_client):
     "test_values", [["param1", "param2"], ["a", "b", "c"], ["single"]]
 )
 @pytest.mark.asyncio
-async def test_nested_model_deep_list_multiple_operations_sanity(
-    real_redis_client, test_values
-):
+async def test_nested_model_deep_list_multiple_operations_sanity(test_values):
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -180,7 +178,7 @@ async def test_nested_model_deep_list_multiple_operations_sanity(
 
 
 @pytest.mark.asyncio
-async def test_nested_model_persistence_across_instances_sanity(real_redis_client):
+async def test_nested_model_persistence_across_instances_sanity():
     # Arrange
     outer1 = OuterModel()
     await outer1.save()
@@ -236,9 +234,7 @@ async def test_nested_model_clear_operations_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_nested_model_mixed_operations_on_different_levels_edge_case(
-    real_redis_client,
-):
+async def test_nested_model_mixed_operations_on_different_levels_edge_case():
     # Arrange
     outer = OuterModel()
     await outer.save()
@@ -305,7 +301,7 @@ async def test_nested_model_load_operations_after_external_changes_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_initial_list_data_update_sanity(real_redis_client):
+async def test_nested_model_with_initial_list_data_update_sanity():
     # Arrange
     middle_model = MiddleModel(tags=["initial_tag1", "initial_tag2"])
     outer = OuterModel(items=[100, 200], middle_model=middle_model)
@@ -330,7 +326,7 @@ async def test_nested_model_with_initial_list_data_update_sanity(real_redis_clie
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_initial_dict_data_update_sanity(real_redis_client):
+async def test_nested_model_with_initial_dict_data_update_sanity():
     # Arrange
     middle_model = MiddleModel(metadata={"env": "test", "version": "1.0"})
     outer = OuterModel(
@@ -364,7 +360,7 @@ async def test_nested_model_with_initial_dict_data_update_sanity(real_redis_clie
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_initial_deep_data_update_sanity(real_redis_client):
+async def test_nested_model_with_initial_deep_data_update_sanity():
     # Arrange
     inner_model = InnerMostModel(lst=["deep1", "deep2"], counter=10)
     middle_model = MiddleModel(inner_model=inner_model)
@@ -389,7 +385,7 @@ async def test_nested_model_with_initial_deep_data_update_sanity(real_redis_clie
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_mixed_initial_data_update_sanity(real_redis_client):
+async def test_nested_model_with_mixed_initial_data_update_sanity():
     # Arrange
     inner_model = InnerMostModel(lst=["inner1"])
     middle_model = MiddleModel(
@@ -430,9 +426,7 @@ async def test_nested_model_with_mixed_initial_data_update_sanity(real_redis_cli
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_basic_operations_sanity(
-    real_redis_client,
-):
+async def test_nested_model_with_redis_inner_model_basic_operations_sanity():
     # Arrange
     outer = OuterModelWithRedisNested()
     await outer.save()
@@ -460,9 +454,7 @@ async def test_nested_model_with_redis_inner_model_basic_operations_sanity(
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_counter_update_sanity(
-    real_redis_client,
-):
+async def test_nested_model_with_redis_inner_model_counter_update_sanity():
     # Arrange
     outer = OuterModelWithRedisNested()
     await outer.save()
@@ -480,9 +472,7 @@ async def test_nested_model_with_redis_inner_model_counter_update_sanity(
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_persistence_sanity(
-    real_redis_client,
-):
+async def test_nested_model_with_redis_inner_model_persistence_sanity():
     # Arrange
     outer1 = OuterModelWithRedisNested()
     await outer1.save()
@@ -510,7 +500,7 @@ async def test_nested_model_with_redis_inner_model_persistence_sanity(
 )
 @pytest.mark.asyncio
 async def test_nested_model_with_redis_inner_model_parameterized_operations_sanity(
-    real_redis_client, tag_sets
+    tag_sets
 ):
     # Arrange
     outer = OuterModelWithRedisNested()
@@ -531,9 +521,7 @@ async def test_nested_model_with_redis_inner_model_parameterized_operations_sani
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case(
-    real_redis_client,
-):
+async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case():
     # Arrange
     outer = OuterModelWithRedisNested()
     await outer.save()
@@ -603,9 +591,7 @@ async def test_nested_model_with_redis_inner_model_clear_operations_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_nested_model_with_redis_inner_model_with_initial_data_sanity(
-    real_redis_client,
-):
+async def test_nested_model_with_redis_inner_model_with_initial_data_sanity():
     # Arrange
     inner_redis = InnerRedisModel(
         tags=["initial_tag"], metadata={"env": "test"}, counter=5

@@ -9,7 +9,7 @@ class StrModel(AtomicRedisModel):
     description: str = "default"
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
     StrModel.Meta.redis = redis_client
     yield redis_client
@@ -21,7 +21,7 @@ async def real_redis_client(redis_client):
     ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"],
 )
 @pytest.mark.asyncio
-async def test_redis_str_set_functionality_sanity(real_redis_client, test_values):
+async def test_redis_str_set_functionality_sanity(test_values):
     # Arrange
     model = StrModel()
     await model.save()
@@ -41,7 +41,7 @@ async def test_redis_str_set_functionality_sanity(real_redis_client, test_values
     ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"],
 )
 @pytest.mark.asyncio
-async def test_redis_str_load_functionality_sanity(real_redis_client, test_values):
+async def test_redis_str_load_functionality_sanity(test_values):
     # Arrange
     model = StrModel()
     await model.save()
@@ -57,7 +57,7 @@ async def test_redis_str_load_functionality_sanity(real_redis_client, test_value
 
 
 @pytest.mark.asyncio
-async def test_redis_str_load_with_none_value_edge_case(real_redis_client):
+async def test_redis_str_load_with_none_value_edge_case():
     # Arrange
     model = StrModel()
 
@@ -95,7 +95,7 @@ async def test_redis_str_load_type_conversion_edge_case(
 
 
 @pytest.mark.asyncio
-async def test_redis_str_set_with_wrong_type_edge_case(real_redis_client):
+async def test_redis_str_set_with_wrong_type_edge_case():
     # Arrange
     model = StrModel()
 
@@ -105,7 +105,7 @@ async def test_redis_str_set_with_wrong_type_edge_case(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_str_inheritance_sanity(real_redis_client):
+async def test_redis_str_inheritance_sanity():
     # Arrange & Act
     model = StrModel(name="hello")
 
@@ -120,7 +120,7 @@ async def test_redis_str_inheritance_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_str_clone_functionality_sanity(real_redis_client):
+async def test_redis_str_clone_functionality_sanity():
     # Arrange
     model = StrModel(name="test")
 
@@ -153,7 +153,7 @@ async def test_redis_str_model_creation_functionality_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_str_persistence_across_instances_edge_case(real_redis_client):
+async def test_redis_str_persistence_across_instances_edge_case():
     # Arrange
     model1 = StrModel(name="original")
     await model1.save()
@@ -181,7 +181,7 @@ async def test_redis_str_persistence_across_instances_edge_case(real_redis_clien
     ],
 )
 @pytest.mark.asyncio
-async def test_redis_str_string_operations_sanity(real_redis_client, operations):
+async def test_redis_str_string_operations_sanity(operations):
     # Arrange
     model = StrModel(name="hello")
     operation, expected = operations
@@ -194,7 +194,7 @@ async def test_redis_str_string_operations_sanity(real_redis_client, operations)
 
 
 @pytest.mark.asyncio
-async def test_redis_str_concatenation_functionality_sanity(real_redis_client):
+async def test_redis_str_concatenation_functionality_sanity():
     # Arrange
     model = StrModel(name="hello")
 
@@ -204,7 +204,7 @@ async def test_redis_str_concatenation_functionality_sanity(real_redis_client):
 
 
 @pytest.mark.asyncio
-async def test_redis_str_empty_string_functionality_edge_case(real_redis_client):
+async def test_redis_str_empty_string_functionality_edge_case():
     # Arrange
     model = StrModel(name="")
     await model.save()
