@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 import pytest_asyncio
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
@@ -354,41 +354,14 @@ async def test_redis_dict__pop_with_default__check_default_return_sanity(
 @pytest.mark.parametrize(
     "model_class,initial_data",
     [
-        pytest.param(
-            StrDictModel,
-            {"key1": "value1", "key2": "value2"},
-            marks=pytest.mark.xfail(
-                reason="popitem returns list format that fails validation"
-            ),
-        ),
-        pytest.param(
-            IntDictModel,
-            {"key1": 42, "key2": 100},
-            marks=pytest.mark.xfail(
-                reason="popitem returns list format that fails validation"
-            ),
-        ),
-        pytest.param(
-            BytesDictModel,
-            {"key1": b"data1", "key2": b"data2"},
-            marks=pytest.mark.xfail(
-                reason="popitem returns list format that fails validation"
-            ),
-        ),
-        pytest.param(
+        [StrDictModel, {"key1": "value1", "key2": "value2"}],
+        [IntDictModel, {"key1": 42, "key2": 100}],
+        [BytesDictModel, {"key1": b"data1", "key2": b"data2"}],
+        [
             DatetimeDictModel,
             {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
-            marks=pytest.mark.xfail(
-                reason="popitem returns list format that fails validation"
-            ),
-        ),
-        pytest.param(
-            EnumDictModel,
-            {"key1": Status.ACTIVE, "key2": Status.PENDING},
-            marks=pytest.mark.xfail(
-                reason="popitem returns list format that fails validation"
-            ),
-        ),
+        ],
+        [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}],
         (AnyDictModel, {"key1": "mixed", "key2": 42}),
     ],
 )
