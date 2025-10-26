@@ -5,6 +5,55 @@ from rapyer.types.utils import update_keys_in_pipeline
 
 T = TypeVar("T")
 
+# Redis Lua script for atomic get-and-delete operation
+POP_SCRIPT = """
+local key = KEYS[1]
+local path = ARGV[1]
+local target_key = ARGV[2]
+
+-- Get the value from the JSON object
+local value = redis.call('JSON.GET', key, path .. '.' .. target_key)
+
+if value and value ~= '[]' and value ~= 'null' then
+    -- Delete the key from the JSON object
+    redis.call('JSON.DEL', key, path .. '.' .. target_key)
+
+    -- Parse and return the actual value
+    local parsed = cjson.decode(value)
+    return parsed[1]  -- Return first element if it's an array
+else
+    return nil
+end
+"""
+
+
+# Redis Lua script for atomic get-arbitrary-key-and-delete operation
+POPITEM_SCRIPT = """
+    local key = KEYS[1]
+    local path = ARGV[1]
+
+    -- Get all the keys from the JSON object
+    local keys = redis.call('JSON.OBJKEYS', key, path)
+
+    if keys and type(keys) == 'table' and #keys > 0 then
+        local first_key = tostring(keys[1])
+
+        -- Get the value for this key
+        local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
+
+        if value then
+            -- Delete the key from the JSON object
+            redis.call('JSON.DEL', key, path .. '.' .. first_key)
+
+            -- Parse the JSON string into a Lua table
+            local parsed_value = cjson.decode(value)
+            return {first_key, parsed_value}
+        end
+    end
+
+    return nil
+"""
+
 
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     original_type = dict
@@ -79,30 +128,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             await pipeline.execute()
 
     async def apop(self, key, default=None):
-        # Redis Lua script for atomic get-and-delete operation
-        pop_script = """
-        local key = KEYS[1]
-        local path = ARGV[1]
-        local target_key = ARGV[2]
-        
-        -- Get the value from the JSON object
-        local value = redis.call('JSON.GET', key, path .. '.' .. target_key)
-        
-        if value and value ~= '[]' and value ~= 'null' then
-            -- Delete the key from the JSON object
-            redis.call('JSON.DEL', key, path .. '.' .. target_key)
-            
-            -- Parse and return the actual value
-            local parsed = cjson.decode(value)
-            return parsed[1]  -- Return first element if it's an array
-        else
-            return nil
-        end
-        """
-
         # Execute the script atomically
         result = await self.client.eval(
-            pop_script, 1, self.redis_key, self.json_path, key
+            POP_SCRIPT, 1, self.redis_key, self.json_path, key
         )
         # Key exists in Redis, pop from local dict (it should exist there too)
         super().pop(key, None)
@@ -115,40 +143,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return adapter.validate_python(result)
 
     async def apopitem(self):
-        # Redis Lua script for atomic get-arbitrary-key-and-delete operation
-        popitem_script = """
-        local key = KEYS[1]
-        local path = ARGV[1]
-        
-        -- Get all the keys from the JSON object
-        local keys_result = redis.call('JSON.OBJKEYS', key, path)
-        
-        if keys_result and type(keys_result) == 'table' and #keys_result > 0 then
-            -- Get the first key from the result
-            local keys = keys_result
-            if type(keys[1]) == 'table' then
-                keys = keys[1]  -- Sometimes Redis returns nested arrays
-            end
-            
-            if #keys > 0 then
-                local first_key = tostring(keys[1])
-                -- Get the value for this key
-                local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
-                
-                if value then
-                    -- Delete the key from the JSON object
-                    redis.call('JSON.DEL', key, path .. '.' .. first_key)
-                    return {first_key, value}
-                end
-            end
-        end
-        
-        return nil
-        """
-
         # Execute the script atomically
         result = await self.client.eval(
-            popitem_script, 1, self.redis_key, self.json_path
+            POPITEM_SCRIPT, 1, self.redis_key, self.json_path
         )
 
         if result is not None:
