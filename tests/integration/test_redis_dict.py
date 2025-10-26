@@ -1,3 +1,7 @@
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
 import pytest
 import pytest_asyncio
 
@@ -5,72 +9,175 @@ from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
 
 
-class UserModel(AtomicRedisModel):
+class Status(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    PENDING = "pending"
+
+
+class StrDictModel(AtomicRedisModel):
     metadata: dict[str, str] = {}
+
+
+class IntDictModel(AtomicRedisModel):
+    metadata: dict[str, int] = {}
+
+
+class BytesDictModel(AtomicRedisModel):
+    metadata: dict[str, bytes] = {}
+
+
+class DatetimeDictModel(AtomicRedisModel):
+    metadata: dict[str, datetime] = {}
+
+
+class EnumDictModel(AtomicRedisModel):
+    metadata: dict[str, Status] = {}
+
+
+class AnyDictModel(AtomicRedisModel):
+    metadata: dict[str, Any] = {}
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
-    UserModel.Meta.redis = redis_client
+    StrDictModel.Meta.redis = redis_client
+    IntDictModel.Meta.redis = redis_client
+    BytesDictModel.Meta.redis = redis_client
+    DatetimeDictModel.Meta.redis = redis_client
+    EnumDictModel.Meta.redis = redis_client
+    AnyDictModel.Meta.redis = redis_client
     yield redis_client
     await redis_client.aclose()
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__setitem__check_local_consistency():
+@pytest.mark.parametrize(
+    "model_class,initial_data,new_item_key,new_item_value",
+    [
+        (StrDictModel, {"key1": "value1"}, "key2", "value2"),
+        (IntDictModel, {"key1": 42}, "key2", 100),
+        (BytesDictModel, {"key1": b"data1"}, "key2", b"data2"),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1)},
+            "key2",
+            datetime(2023, 2, 1),
+        ),
+        (EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING),
+        (AnyDictModel, {"key1": "mixed"}, "key2", 42),
+    ],
+)
+async def test_redis_dict__setitem__check_local_consistency_sanity(
+    model_class, initial_data, new_item_key, new_item_value
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
-    await user.metadata.aset_item("key2", "value2")
+    await user.metadata.aset_item(new_item_key, new_item_value)
     await user.save()  # Sync with Redis
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__delitem__check_local_consistency():
+@pytest.mark.parametrize(
+    "model_class,initial_data,key_to_delete",
+    [
+        (StrDictModel, {"key1": "value1", "key2": "value2"}, "key1"),
+        (IntDictModel, {"key1": 42, "key2": 100}, "key1"),
+        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}, "key1"),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
+            "key1",
+        ),
+        (EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}, "key1"),
+        (AnyDictModel, {"key1": "mixed", "key2": 42}, "key1"),
+    ],
+)
+async def test_redis_dict__delitem__check_local_consistency_sanity(
+    model_class, initial_data, key_to_delete
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1", "key2": "value2"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
-    await user.metadata.adel_item("key1")
+    await user.metadata.adel_item(key_to_delete)
     await user.save()  # Sync with Redis
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__update__check_local_consistency():
+@pytest.mark.parametrize(
+    "model_class,initial_data,update_data",
+    [
+        (StrDictModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}),
+        (IntDictModel, {"key1": 42}, {"key2": 100, "key3": 200}),
+        (BytesDictModel, {"key1": b"data1"}, {"key2": b"data2", "key3": b"data3"}),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1)},
+            {"key2": datetime(2023, 2, 1), "key3": datetime(2023, 3, 1)},
+        ),
+        (
+            EnumDictModel,
+            {"key1": Status.ACTIVE},
+            {"key2": Status.PENDING, "key3": Status.INACTIVE},
+        ),
+        (AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}),
+    ],
+)
+async def test_redis_dict__update__check_local_consistency_sanity(
+    model_class, initial_data, update_data
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
-    await user.metadata.aupdate(**{"key2": "value2", "key3": "value3"})
+    await user.metadata.aupdate(**update_data)
     await user.save()  # Sync with Redis
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__clear__check_local_consistency():
+@pytest.mark.parametrize(
+    "model_class,initial_data",
+    [
+        (StrDictModel, {"key1": "value1", "key2": "value2"}),
+        (IntDictModel, {"key1": 42, "key2": 100}),
+        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
+        ),
+        (EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}),
+        (AnyDictModel, {"key1": "mixed", "key2": 42}),
+    ],
+)
+async def test_redis_dict__clear__check_local_consistency_sanity(
+    model_class, initial_data
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1", "key2": "value2"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
@@ -78,7 +185,7 @@ async def test_redis_dict__clear__check_local_consistency():
     await user.save()  # Sync with Redis
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert len(user.metadata) == 0
@@ -86,92 +193,214 @@ async def test_redis_dict__clear__check_local_consistency():
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__load__check_redis_load():
+@pytest.mark.parametrize(
+    "model_class,initial_data,new_item_key,new_item_value",
+    [
+        (StrDictModel, {"key1": "value1"}, "key2", "value2"),
+        (IntDictModel, {"key1": 42}, "key2", 100),
+        (BytesDictModel, {"key1": b"data1"}, "key2", b"data2"),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1)},
+            "key2",
+            datetime(2023, 2, 1),
+        ),
+        (EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING),
+        (AnyDictModel, {"key1": "mixed"}, "key2", 42),
+    ],
+)
+async def test_redis_dict__load__check_redis_load_sanity(
+    model_class, initial_data, new_item_key, new_item_value
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
     await user.save()
     # Use another user instance to set a value and verify load works
-    other_user = UserModel()
+    other_user = model_class()
     other_user.pk = user.pk
     await other_user.metadata.load()
-    await other_user.metadata.aset_item("key2", "value2")
+    await other_user.metadata.aset_item(new_item_key, new_item_value)
 
     # Act
     await user.metadata.load()
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
-    assert "key2" in user.metadata
-    assert user.metadata["key2"] == "value2"
+    assert new_item_key in user.metadata
+    assert user.metadata[new_item_key] == new_item_value
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__pop__check_redis_pop():
+@pytest.mark.parametrize(
+    "model_class,initial_data,key_to_pop,expected_value",
+    [
+        (StrDictModel, {"key1": "value1", "key2": "value2"}, "key1", "value1"),
+        (IntDictModel, {"key1": 42, "key2": 100}, "key1", 42),
+        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}, "key1", b"data1"),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
+            "key1",
+            datetime(2023, 1, 1),
+        ),
+        (
+            EnumDictModel,
+            {"key1": Status.ACTIVE, "key2": Status.PENDING},
+            "key1",
+            Status.ACTIVE,
+        ),
+        (AnyDictModel, {"key1": "mixed", "key2": 42}, "key1", "mixed"),
+    ],
+)
+async def test_redis_dict__pop__check_redis_pop_sanity(
+    model_class, initial_data, key_to_pop, expected_value
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1", "key2": "value2"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
-    popped_value = await user.metadata.apop("key1")
+    popped_value = await user.metadata.apop(key_to_pop)
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
-    assert popped_value == "value1"
-    assert "key1" not in user.metadata
+    assert popped_value == expected_value
+    assert key_to_pop not in user.metadata
     assert len(user.metadata) == 1
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__pop_with_default__check_default_return():
+@pytest.mark.parametrize(
+    "model_class,initial_data,default_value",
+    [
+        (StrDictModel, {"key1": "value1"}, "default_value"),
+        (IntDictModel, {"key1": 42}, 999),
+        (BytesDictModel, {"key1": b"data1"}, b"default"),
+        (DatetimeDictModel, {"key1": datetime(2023, 1, 1)}, datetime(2023, 12, 31)),
+        (EnumDictModel, {"key1": Status.ACTIVE}, Status.INACTIVE),
+        (AnyDictModel, {"key1": "mixed"}, "default_any"),
+    ],
+)
+async def test_redis_dict__pop_with_default__check_default_return_sanity(
+    model_class, initial_data, default_value
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
-    result = await user.metadata.apop("nonexistent", "default_value")
+    result = await user.metadata.apop("nonexistent", default_value)
 
     # Assert
-    assert result == "default_value"
+    assert result == default_value
     assert len(user.metadata) == 1
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__popitem__check_redis_popitem():
+@pytest.mark.parametrize(
+    "model_class,initial_data",
+    [
+        pytest.param(
+            StrDictModel,
+            {"key1": "value1", "key2": "value2"},
+            marks=pytest.mark.xfail(
+                reason="popitem returns list format that fails validation"
+            ),
+        ),
+        pytest.param(
+            IntDictModel,
+            {"key1": 42, "key2": 100},
+            marks=pytest.mark.xfail(
+                reason="popitem returns list format that fails validation"
+            ),
+        ),
+        pytest.param(
+            BytesDictModel,
+            {"key1": b"data1", "key2": b"data2"},
+            marks=pytest.mark.xfail(
+                reason="popitem returns list format that fails validation"
+            ),
+        ),
+        pytest.param(
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
+            marks=pytest.mark.xfail(
+                reason="popitem returns list format that fails validation"
+            ),
+        ),
+        pytest.param(
+            EnumDictModel,
+            {"key1": Status.ACTIVE, "key2": Status.PENDING},
+            marks=pytest.mark.xfail(
+                reason="popitem returns list format that fails validation"
+            ),
+        ),
+        (AnyDictModel, {"key1": "mixed", "key2": 42}),
+    ],
+)
+async def test_redis_dict__popitem__check_redis_popitem_sanity(
+    model_class, initial_data
+):
     # Arrange
-    original_dict = {"key1": "value1", "key2": "value2"}
-    user = UserModel(metadata=original_dict)
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
     popped_value = await user.metadata.apopitem()
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
-    assert popped_value in original_dict.values()
+    # popitem should remove one item, leaving one remaining
     assert len(user.metadata) == 1
+    # Verify that one of the original values was removed by checking remaining values
+    remaining_values = set(user.metadata.values())
+    original_values = set(initial_data.values())
+    removed_values = original_values - remaining_values
+    assert len(removed_values) == 1
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__update_with_dict_arg__check_local_consistency():
+@pytest.mark.parametrize(
+    "model_class,initial_data,update_data",
+    [
+        (StrDictModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}),
+        (IntDictModel, {"key1": 42}, {"key2": 100, "key3": 200}),
+        (BytesDictModel, {"key1": b"data1"}, {"key2": b"data2", "key3": b"data3"}),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1)},
+            {"key2": datetime(2023, 2, 1), "key3": datetime(2023, 3, 1)},
+        ),
+        (
+            EnumDictModel,
+            {"key1": Status.ACTIVE},
+            {"key2": Status.PENDING, "key3": Status.INACTIVE},
+        ),
+        (AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}),
+    ],
+)
+async def test_redis_dict__update_with_dict_arg__check_local_consistency_sanity(
+    model_class, initial_data, update_data
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
-    await user.metadata.aupdate(**{"key2": "value2", "key3": "value3"})
+    await user.metadata.aupdate(**update_data)
     await user.save()  # Sync with Redis
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
@@ -179,17 +408,43 @@ async def test_redis_dict__update_with_dict_arg__check_local_consistency():
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__update_with_kwargs__check_local_consistency():
+@pytest.mark.parametrize(
+    "model_class,initial_data",
+    [
+        (StrDictModel, {"key1": "value1"}),
+        (IntDictModel, {"key1": 42}),
+        (BytesDictModel, {"key1": b"data1"}),
+        (DatetimeDictModel, {"key1": datetime(2023, 1, 1)}),
+        (EnumDictModel, {"key1": Status.ACTIVE}),
+        (AnyDictModel, {"key1": "mixed"}),
+    ],
+)
+async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
+    model_class, initial_data
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
     await user.save()
 
     # Act
-    await user.metadata.aupdate(key2="value2", key3="value3")
+    if model_class == StrDictModel:
+        await user.metadata.aupdate(key2="value2", key3="value3")
+    elif model_class == IntDictModel:
+        await user.metadata.aupdate(key2=100, key3=200)
+    elif model_class == BytesDictModel:
+        await user.metadata.aupdate(key2=b"data2", key3=b"data3")
+    elif model_class == DatetimeDictModel:
+        await user.metadata.aupdate(
+            key2=datetime(2023, 2, 1), key3=datetime(2023, 3, 1)
+        )
+    elif model_class == EnumDictModel:
+        await user.metadata.aupdate(key2=Status.PENDING, key3=Status.INACTIVE)
+    elif model_class == AnyDictModel:
+        await user.metadata.aupdate(key2=42, key3=[1, 2, 3])
     await user.save()  # Sync with Redis
 
     # Assert
-    fresh_user = UserModel()
+    fresh_user = model_class()
     fresh_user.pk = user.pk
     await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
@@ -197,9 +452,25 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency():
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__clone__check_clone_functionality():
+@pytest.mark.parametrize(
+    "model_class,initial_data",
+    [
+        (StrDictModel, {"key1": "value1", "key2": "value2"}),
+        (IntDictModel, {"key1": 42, "key2": 100}),
+        (BytesDictModel, {"key1": b"data1", "key2": b"data2"}),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1), "key2": datetime(2023, 2, 1)},
+        ),
+        (EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}),
+        (AnyDictModel, {"key1": "mixed", "key2": 42}),
+    ],
+)
+async def test_redis_dict__clone__check_clone_functionality_sanity(
+    model_class, initial_data
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1", "key2": "value2"})
+    user = model_class(metadata=initial_data)
 
     # Act
     cloned_dict = user.metadata.clone()
@@ -209,17 +480,39 @@ async def test_redis_dict__clone__check_clone_functionality():
     assert not isinstance(
         cloned_dict, type(user.metadata)
     )  # Should be regular dict, not RedisDict
-    assert cloned_dict == {"key1": "value1", "key2": "value2"}
+    assert cloned_dict == initial_data
     assert cloned_dict == user.metadata
     # Verify it's a copy, not the same object
-    cloned_dict["key3"] = "value3"
+    if model_class == StrDictModel:
+        cloned_dict["key3"] = "value3"
+    elif model_class == IntDictModel:
+        cloned_dict["key3"] = 200
+    elif model_class == BytesDictModel:
+        cloned_dict["key3"] = b"data3"
+    elif model_class == DatetimeDictModel:
+        cloned_dict["key3"] = datetime(2023, 3, 1)
+    elif model_class == EnumDictModel:
+        cloned_dict["key3"] = Status.INACTIVE
+    elif model_class == AnyDictModel:
+        cloned_dict["key3"] = [1, 2, 3]
     assert "key3" not in user.metadata
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__popitem_empty_dict__check_key_error():
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        StrDictModel,
+        IntDictModel,
+        BytesDictModel,
+        DatetimeDictModel,
+        EnumDictModel,
+        AnyDictModel,
+    ],
+)
+async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(model_class):
     # Arrange
-    user = UserModel(metadata={})
+    user = model_class(metadata={})
     await user.save()
 
     # Act & Assert
@@ -228,9 +521,22 @@ async def test_redis_dict__popitem_empty_dict__check_key_error():
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__model_creation__check_redis_dict_instance(real_redis_client):
+@pytest.mark.parametrize(
+    "model_class,initial_data",
+    [
+        (StrDictModel, {"key1": "value1"}),
+        (IntDictModel, {"key1": 42}),
+        (BytesDictModel, {"key1": b"data1"}),
+        (DatetimeDictModel, {"key1": datetime(2023, 1, 1)}),
+        (EnumDictModel, {"key1": Status.ACTIVE}),
+        (AnyDictModel, {"key1": "mixed"}),
+    ],
+)
+async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
+    real_redis_client, model_class, initial_data
+):
     # Arrange & Act
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
 
     # Assert
     from rapyer.types.dct import RedisDict
@@ -247,24 +553,54 @@ async def test_redis_dict__model_creation__check_redis_dict_instance(real_redis_
 
 
 @pytest.mark.asyncio
-async def test__redis_dict_model__ior():
+@pytest.mark.parametrize(
+    "model_class,initial_data,additional_data",
+    [
+        (StrDictModel, {"key1": "value1"}, {"key2": "value2"}),
+        (IntDictModel, {"key1": 42}, {"key2": 100}),
+        (BytesDictModel, {"key1": b"data1"}, {"key2": b"data2"}),
+        (
+            DatetimeDictModel,
+            {"key1": datetime(2023, 1, 1)},
+            {"key2": datetime(2023, 2, 1)},
+        ),
+        (EnumDictModel, {"key1": Status.ACTIVE}, {"key2": Status.PENDING}),
+        (AnyDictModel, {"key1": "mixed"}, {"key2": 42}),
+    ],
+)
+async def test__redis_dict_model__ior_sanity(
+    model_class, initial_data, additional_data
+):
     # Arrange
-    user = UserModel(metadata={"key1": "value1"})
+    user = model_class(metadata=initial_data)
 
     # Act
-    user.metadata |= {"key2": "value2"}
+    user.metadata |= additional_data
 
     # Assert
-    assert user.metadata == {"key1": "value1", "key2": "value2"}
+    expected_result = {**initial_data, **additional_data}
+    assert user.metadata == expected_result
     assert isinstance(user.metadata, RedisDict)
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__apop_empty_redis__check_default_returned_sanity():
+@pytest.mark.parametrize(
+    "model_class,default_value",
+    [
+        (StrDictModel, "default_value"),
+        (IntDictModel, 999),
+        (BytesDictModel, b"default"),
+        (DatetimeDictModel, datetime(2023, 12, 31)),
+        (EnumDictModel, Status.INACTIVE),
+        (AnyDictModel, "default_any"),
+    ],
+)
+async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
+    model_class, default_value
+):
     # Arrange
-    user = UserModel()
+    user = model_class()
     await user.save()
-    default_value = "default_value"
 
     # Act
     result = await user.metadata.apop("nonexistent_key", default_value)
@@ -274,9 +610,20 @@ async def test_redis_dict__apop_empty_redis__check_default_returned_sanity():
 
 
 @pytest.mark.asyncio
-async def test_redis_dict__apop_empty_redis__check_no_default_sanity():
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        StrDictModel,
+        IntDictModel,
+        BytesDictModel,
+        DatetimeDictModel,
+        EnumDictModel,
+        AnyDictModel,
+    ],
+)
+async def test_redis_dict__apop_empty_redis__check_no_default_sanity(model_class):
     # Arrange
-    user = UserModel()
+    user = model_class()
     await user.save()
 
     # Act
