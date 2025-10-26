@@ -112,8 +112,8 @@ class AtomicRedisModel(BaseModel):
         self._field_config_override = _field_config_override
         for field_name in self.model_fields:
             attr = getattr(self, field_name)
-            if isinstance(attr, RedisType):
-                attr.base_model_link = self
+            if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
+                attr._base_model_link = _base_model_link or self
 
     def is_inner_model(self):
         return self.inst_field_conf.field_path is not None
@@ -212,4 +212,4 @@ class AtomicRedisModel(BaseModel):
         if value is not None:
             attr = getattr(self, name)
             if isinstance(attr, RedisType):
-                attr.base_model_link = self
+                attr._base_model_link = self

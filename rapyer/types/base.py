@@ -42,19 +42,19 @@ class RedisType(BaseRedisType):
 
     @property
     def redis(self):
-        return self.base_model_link.Meta.redis
+        return self._base_model_link.Meta.redis
 
     @property
     def redis_key(self):
-        return self.base_model_link.key
+        return self._base_model_link.key
 
     @property
     def Meta(self):
-        return self.base_model_link.Meta
+        return self._base_model_link.Meta
 
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to redis key
-        self.base_model_link = None
+        self._base_model_link = None
 
     @classmethod
     def __get_pydantic_core_schema__(

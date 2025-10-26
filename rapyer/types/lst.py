@@ -29,7 +29,7 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
-        new_val.base_model_link = self.base_model_link
+        new_val._base_model_link = self._base_model_link
         super().__setitem__(key, new_val)
 
     async def aappend(self, __object):
