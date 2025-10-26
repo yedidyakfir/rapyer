@@ -152,7 +152,7 @@ class AtomicRedisModel(BaseModel):
         model_dump = model_dump[0]
 
         instance = cls(**model_dump, should_serialize=True)
-        # Extract pk from key format: "ClassName:pk"
+        # Extract pk from the key format: "ClassName:pk"
         pk = key.split(":", 1)[1]
         instance._pk = pk
         # Update Redis field parameters to use the correct redis_key
