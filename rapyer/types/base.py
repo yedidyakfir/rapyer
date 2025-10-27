@@ -57,6 +57,7 @@ class RedisType(BaseRedisType):
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to redis key
         self._base_model_link = None
+        self._adapter = TypeAdapter(self.__class__)
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -106,12 +107,6 @@ class GenericRedisType(RedisType, ABC):
     def find_inner_type(cls, type_):
         args = get_args(type_)
         return args[0] if args else Any
-
-    # TODO - this should be cached
-    @classmethod
-    def inner_adapter(cls):
-        inner_type = cls.find_inner_type(cls.full_type)
-        return TypeAdapter(inner_type)
 
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)

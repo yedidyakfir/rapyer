@@ -83,6 +83,10 @@ return {first_key, parsed_value}
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     original_type = dict
 
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+        GenericRedisType.__init__(self, *args, **kwargs)
+
     @classmethod
     def find_inner_type(cls, type_):
         args = get_args(type_)
@@ -96,10 +100,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             redis_items = {}
 
         # Deserialize items using a type adapter
-        adapter = self.inner_adapter()
-        deserialized_items = {
-            key: adapter.validate_python(value) for key, value in redis_items.items()
-        }
+        deserialized_items = self._adapter.validate_python(redis_items)
 
         # Clear local dict and populate with Redis data
         super().clear()
@@ -109,11 +110,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         super().__setitem__(key, value)
 
         # Serialize the value for Redis storage using a type adapter
-        adapter = self.inner_adapter()
-        normalized_value = adapter.validate_python(value)
-        serialized_value = adapter.dump_python(normalized_value, mode="json")
+        serialized_value = self._adapter.dump_python({key: value}, mode="json")
         return await self.client.json().set(
-            self.redis_key, self.json_field_path(key), serialized_value
+            self.redis_key, self.json_field_path(key), serialized_value[key]
         )
 
     def __ior__(self, other):
@@ -136,11 +135,10 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         self.update(**kwargs)
 
         # Serialize values using type adapter
-        adapter = self.inner_adapter()
+        validated_data = self._adapter.validate_python(kwargs)
         redis_params = {
-            self.json_field_path(key): adapter.dump_python(validated_v, mode="json")
-            for key, v in kwargs.items()
-            if (validated_v := adapter.validate_python(v))
+            self.json_field_path(key): v
+            for key, v in self._adapter.dump_python(validated_data, mode="json").items()
         }
 
         # If I am in a pipeline, update keys in pipeline, otherwise execute pipeline
@@ -164,8 +162,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             # Key doesn't exist in Redis
             return default
 
-        adapter = self.inner_adapter()
-        return adapter.validate_python(result)
+        return self._adapter.validate_python({key: result})[key]
 
     async def apopitem(self):
         # Execute the script atomically
@@ -179,8 +176,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             super().pop(
                 redis_key.decode() if isinstance(redis_key, bytes) else redis_key
             )
-            adapter = self.inner_adapter()
-            return adapter.validate_python(redis_value)
+            return self._adapter.validate_python({redis_key: redis_value})[redis_key]
         else:
             # If Redis is empty but local dict has items, raise an error for consistency
             raise KeyError("popitem(): dictionary is empty")
