@@ -2,35 +2,14 @@ import abc
 import base64
 import pickle
 from abc import ABC
-from typing import get_args, Any
+from typing import get_args, Any, TypeVar, Generic
 
 from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel
 from pydantic_core import core_schema
 
+from rapyer.config import RedisFieldConfig, RedisConfig
 from rapyer.context import _context_var
-from rapyer.utils import RedisTypeTransformer
-
-
-class RedisSerializer(ABC):
-    def __init__(self, full_type: type, serializer_creator: Callable):
-        self.full_type = full_type
-        self.serializer_creator = serializer_creator
-
-    def serialize_value(self, value):
-        return value
-
-    def deserialize_value(self, value):
-        return value
-
-
-class PydanicSerializer(RedisSerializer):
-    def serialize_value(self, value):
-        if isinstance(value, dict):
-            return value
-        return value.model_dump()
-
-    def deserialize_value(self, value):
-        return self.full_type(**value)
+from rapyer.utils import safe_issubclass
 
 
 class BaseRedisType(ABC):
@@ -38,6 +17,7 @@ class BaseRedisType(ABC):
 
 
 class RedisType(BaseRedisType):
+    full_type: type = None
     original_type: type = None
     field_path: str = None
 
@@ -54,9 +34,9 @@ class RedisType(BaseRedisType):
         return self._base_model_link.Meta
 
     def __init__(self, *args, **kwargs):
-        # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to redis key
+        # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
         self._base_model_link = None
-        self._adapter = TypeAdapter(self.__class__)
+        self._adapter = TypeAdapter(self.full_type)
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -170,3 +150,55 @@ class GenericRedisType(RedisType, Generic[T], ABC):
             return core_schema.no_info_after_validator_function(
                 cls, handler(cls.original_type)
             )
+
+
+class RedisTypeTransformer:
+    def __init__(
+        self, field_name: str, redis_config: RedisConfig, pydantic_base_redis: type
+    ):
+        self.field_name = field_name
+        self.redis_config = redis_config
+        self.pydantic_base_redis = pydantic_base_redis
+
+    def __getitem__(self, item: type):
+        if isinstance(item, tuple):
+            origin, args = item
+        else:
+            origin, args = item, None
+        if origin is Any:
+            return item
+
+        if safe_issubclass(origin, BaseModel):
+            origin: type[BaseModel]
+            field_conf = RedisFieldConfig(field_path=self.field_name)
+            return type(
+                f"Redis{origin.__name__}",
+                (origin, self.pydantic_base_redis),
+                dict(field_config=field_conf),
+            )
+
+        if safe_issubclass(origin, RedisType):
+            redis_type = origin
+            full_type = origin.full_type
+            original_type = origin.original_type
+        else:
+            redis_type = self.redis_config.redis_type[origin]
+            full_type = redis_type
+            original_type = origin
+
+        if args:
+            full_type = full_type[args]
+            original_type = original_type[args]
+        new_type = type(
+            redis_type.__name__,
+            (redis_type,),
+            dict(
+                field_path=self.field_name,
+                original_type=original_type,
+                full_type=full_type,
+            ),
+        )
+        return new_type
+
+    def __contains__(self, item: type):
+        return item in self.redis_config.redis_type

@@ -11,11 +11,10 @@ from pydantic_core import PydanticUndefined
 from rapyer.config import RedisConfig, RedisFieldConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
-from rapyer.types.base import RedisType, BaseRedisType
+from rapyer.types.base import RedisType, BaseRedisType, RedisTypeTransformer
 from rapyer.utils import (
     acquire_lock,
     replace_to_redis_types_in_annotation,
-    RedisTypeTransformer,
     find_first_type_in_annotation,
     convert_field_factory_type,
 )

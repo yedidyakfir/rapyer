@@ -101,7 +101,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
 
         # Reconstruct the generic type with new arguments
         if origin in type_mapping:
-            origin = type_mapping[origin]
+            origin = type_mapping[origin, new_args]
         if origin is UnionType:
             origin = Union
         try:
@@ -125,38 +125,6 @@ def find_first_type_in_annotation(annotation: Any) -> type | None:
         return find_first_type_in_annotation(args[0])
 
     return None
-
-
-class RedisTypeTransformer:
-    def __init__(self, field_name: str, redis_config: RedisConfig, pydantic_base_redis: type):
-        self.field_name = field_name
-        self.redis_config = redis_config
-        self.pydantic_base_redis = pydantic_base_redis
-
-    def __getitem__(self, item: type):
-        origin = get_origin(item) or item
-        if origin is Any:
-            return item
-
-        if safe_issubclass(origin, BaseModel):
-            origin: type[BaseModel]
-            field_conf = RedisFieldConfig(field_path=self.field_name)
-            return type(
-                f"Redis{origin.__name__}",
-                (origin, self.pydantic_base_redis),
-                dict(field_config=field_conf),
-            )
-
-        redis_type = self.redis_config.redis_type[origin]
-        new_type = type(
-            redis_type.__name__,
-            (redis_type,),
-            dict(field_path=self.field_name, original_type=item),
-        )
-        return new_type
-
-    def __contains__(self, item: type):
-        return item in self.redis_config.redis_type
 
 
 def convert_field_factory_type(original_factory: Callable, adapter: TypeAdapter):
