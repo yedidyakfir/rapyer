@@ -384,3 +384,87 @@ def test_partial_mapping_edge_case():
 
     # Assert
     assert result == expected
+
+
+class UnknownType:
+    pass
+
+
+class AnotherUnknownType:
+    pass
+
+
+@pytest.mark.parametrize(
+    ["unknown_type", "expected_type"],
+    [
+        [UnknownType, UnknownType],
+        [AnotherUnknownType, AnotherUnknownType],
+        [bytes, bytes],
+        [set, set],
+    ],
+)
+def test_unknown_type_returned_as_is_sanity(type_mapping, unknown_type, expected_type):
+    # Arrange
+    # Act
+    result = replace_to_redis_types_in_annotation(unknown_type, type_mapping)
+
+    # Assert
+    assert result == expected_type
+
+
+@pytest.mark.parametrize(
+    ["nested_unknown_type", "expected_type"],
+    [
+        [list[UnknownType], NewList[UnknownType]],
+        [dict[str, UnknownType], NewDict[NewStr, UnknownType]],
+        [dict[UnknownType, str], NewDict[UnknownType, NewStr]],
+        [dict[UnknownType, AnotherUnknownType], NewDict[UnknownType, AnotherUnknownType]],
+        [tuple[str, UnknownType, int], NewTuple[NewStr, UnknownType, NewInt]],
+        [Optional[UnknownType], Optional[UnknownType]],
+        [Union[str, UnknownType], Union[NewStr, UnknownType]],
+        [Union[UnknownType, AnotherUnknownType], Union[UnknownType, AnotherUnknownType]],
+    ],
+)
+def test_nested_unknown_types_partial_replacement_sanity(type_mapping, nested_unknown_type, expected_type):
+    # Arrange
+    # Act
+    result = replace_to_redis_types_in_annotation(nested_unknown_type, type_mapping)
+
+    # Assert
+    assert result == expected_type
+
+
+def test_deeply_nested_unknown_types_sanity(type_mapping):
+    # Arrange
+    deep_unknown = dict[str, list[tuple[UnknownType, bool]]]
+    expected = NewDict[NewStr, NewList[NewTuple[UnknownType, NewBool]]]
+
+    # Act
+    result = replace_to_redis_types_in_annotation(deep_unknown, type_mapping)
+
+    # Assert
+    assert result == expected
+
+
+def test_annotated_unknown_type_preservation_sanity(type_mapping):
+    # Arrange
+    metadata = "unknown field"
+    annotated_unknown = Annotated[UnknownType, metadata]
+
+    # Act
+    result = replace_to_redis_types_in_annotation(annotated_unknown, type_mapping)
+
+    # Assert
+    assert result == Annotated[UnknownType, metadata]
+
+
+def test_complex_unknown_type_scenarios_edge_case(type_mapping):
+    # Arrange
+    complex_unknown = Annotated[Optional[Union[str, dict[UnknownType, list[AnotherUnknownType]]]], "complex"]
+    expected = Annotated[Optional[Union[NewStr, NewDict[UnknownType, NewList[AnotherUnknownType]]]], "complex"]
+
+    # Act
+    result = replace_to_redis_types_in_annotation(complex_unknown, type_mapping)
+
+    # Assert
+    assert result == expected
