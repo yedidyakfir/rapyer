@@ -194,3 +194,13 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return {
             k: v.clone() if isinstance(v, RedisType) else v for k, v in self.items()
         }
+
+    @classmethod
+    def full_serializer(cls, value):
+        return {key: cls.serialize_unknown(item) for key, item in value.items()}
+
+    @classmethod
+    def full_deserializer(cls, value):
+        if isinstance(value, dict):
+            return {key: cls.deserialize_unknown(item) for key, item in value.items()}
+        return value

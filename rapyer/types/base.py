@@ -1,6 +1,8 @@
 import abc
+import base64
+import pickle
 from abc import ABC
-from typing import get_args, Callable, Any
+from typing import get_args, Any
 
 from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel
 from pydantic_core import core_schema
@@ -90,6 +92,14 @@ class RedisType(BaseRedisType):
     def clone(self):
         pass
 
+    @staticmethod
+    def serialize_unknown(value: Any):
+        return base64.b64encode(pickle.dumps(value)).decode("utf-8")
+
+    @staticmethod
+    def deserialize_unknown(value: str):
+        return pickle.loads(base64.b64decode(value))
+
 
 class GenericRedisType(RedisType, ABC):
     @classmethod
@@ -124,3 +134,42 @@ class GenericRedisType(RedisType, ABC):
     def create_new_value(self, key, value):
         new_value, adapter = self.create_new_value_with_adapter(key, value)
         return new_value
+
+    @classmethod
+    @abc.abstractmethod
+    def full_serializer(cls, value):
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def full_deserializer(cls, value):
+        pass
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        # Extract the generic type argument T from source_type
+        element_type = cls.find_inner_type(cls.original_type)
+
+        if element_type is Any:
+            # Build schema with both validator and serializer
+            python_schema = core_schema.no_info_before_validator_function(
+                cls.full_deserializer, handler(cls.original_type)
+            )
+
+            return core_schema.no_info_after_validator_function(
+                cls,
+                python_schema,
+                serialization=core_schema.plain_serializer_function_ser_schema(
+                    cls.full_serializer,
+                    return_schema=core_schema.dict_schema(
+                        core_schema.str_schema(), core_schema.str_schema()
+                    ),
+                ),
+            )
+        else:
+            # Normal serialization for concrete types
+            return core_schema.no_info_after_validator_function(
+                cls, handler(cls.original_type)
+            )

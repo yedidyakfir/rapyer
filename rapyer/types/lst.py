@@ -105,3 +105,13 @@ class RedisList(list[T], GenericRedisType, Generic[T]):
 
     def clone(self):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]
+
+    @classmethod
+    def full_serializer(cls, value):
+        return [cls.serialize_unknown(item) for item in value]
+
+    @classmethod
+    def full_deserializer(cls, value):
+        if isinstance(value, list):
+            return [cls.deserialize_unknown(item) for item in value]
+        return value
