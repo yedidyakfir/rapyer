@@ -1,5 +1,7 @@
 from typing import TypeVar, Generic, get_args, Any
 
+from pydantic_core import core_schema
+
 from rapyer.types.base import GenericRedisType, RedisType
 from rapyer.types.utils import update_keys_in_pipeline
 
@@ -200,3 +202,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         if isinstance(value, dict):
             return {key: cls.deserialize_unknown(item) for key, item in value.items()}
         return value
+
+    @classmethod
+    def schema_for_unknown(cls):
+        core_schema.dict_schema(core_schema.str_schema(), core_schema.str_schema())

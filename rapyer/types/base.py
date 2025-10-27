@@ -123,6 +123,11 @@ class GenericRedisType(RedisType, Generic[T], ABC):
         pass
 
     @classmethod
+    @abc.abstractmethod
+    def schema_for_unknown(cls):
+        pass
+
+    @classmethod
     def __get_pydantic_core_schema__(
         cls, source_type: Any, handler: GetCoreSchemaHandler
     ) -> core_schema.CoreSchema:
@@ -139,10 +144,7 @@ class GenericRedisType(RedisType, Generic[T], ABC):
                 cls,
                 python_schema,
                 serialization=core_schema.plain_serializer_function_ser_schema(
-                    cls.full_serializer,
-                    return_schema=core_schema.dict_schema(
-                        core_schema.str_schema(), core_schema.str_schema()
-                    ),
+                    cls.full_serializer, return_schema=cls.schema_for_unknown()
                 ),
             )
         else:

@@ -1,5 +1,7 @@
 from typing import TypeVar
 
+from pydantic_core import core_schema
+
 from rapyer.types.base import GenericRedisType, RedisType
 from rapyer.types.utils import noop
 
@@ -113,3 +115,7 @@ class RedisList(list, GenericRedisType[T]):
         if isinstance(value, list):
             return [cls.deserialize_unknown(item) for item in value]
         return value
+
+    @classmethod
+    def schema_for_unknown(cls):
+        core_schema.list_schema(core_schema.str_schema())
