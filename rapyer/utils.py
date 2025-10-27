@@ -82,7 +82,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
 
     # Handle Annotated specially - preserve metadata
     if origin is Annotated:
-        # First arg is the actual type, rest are metadata
+        # The first arg is the actual type, rest are metadata
         actual_type = args[0]
         metadata = args[1:]
 
@@ -101,7 +101,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
 
         # Reconstruct the generic type with new arguments
         if origin in type_mapping:
-            origin = type_mapping[annotation]
+            origin = type_mapping[origin]
         if origin is UnionType:
             origin = Union
         try:
@@ -148,15 +148,12 @@ class RedisTypeTransformer:
             )
 
         redis_type = self.redis_config.redis_type[origin]
-        full_type = redis_type
-        if origin != item:
-            args = get_args(item)
-            full_type = full_type[args]
-        return type(
+        new_type = type(
             redis_type.__name__,
             (redis_type,),
-            dict(field_path=self.field_name, original_type=item, full_type=full_type),
+            dict(field_path=self.field_name, original_type=item),
         )
+        return new_type
 
     def __contains__(self, item: type):
         return item in self.redis_config.redis_type

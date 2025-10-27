@@ -1,12 +1,13 @@
-from typing import TypeVar, Generic
+from typing import TypeVar
 
 from rapyer.types.base import GenericRedisType, RedisType
 from rapyer.types.utils import noop
 
+
 T = TypeVar("T")
 
 
-class RedisList(list[T], GenericRedisType, Generic[T]):
+class RedisList(list, GenericRedisType[T]):
     original_type = list
 
     def __init__(self, *args, **kwargs):

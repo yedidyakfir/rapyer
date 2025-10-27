@@ -39,7 +39,6 @@ class BaseRedisType(ABC):
 
 class RedisType(BaseRedisType):
     original_type: type = None
-    full_type: type = None
     field_path: str = None
 
     @property
@@ -102,7 +101,10 @@ class RedisType(BaseRedisType):
         return pickle.loads(base64.b64decode(value))
 
 
-class GenericRedisType(RedisType, ABC):
+T = TypeVar("T")
+
+
+class GenericRedisType(RedisType, Generic[T], ABC):
     @classmethod
     def find_inner_type(cls, type_):
         args = get_args(type_)
@@ -145,7 +147,7 @@ class GenericRedisType(RedisType, ABC):
         cls, source_type: Any, handler: GetCoreSchemaHandler
     ) -> core_schema.CoreSchema:
         # Extract the generic type argument T from source_type
-        element_type = cls.find_inner_type(cls.original_type)
+        element_type = cls.find_inner_type(source_type)
 
         if element_type is Any:
             # Build schema with both validator and serializer
