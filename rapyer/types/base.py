@@ -105,7 +105,9 @@ class GenericRedisType(RedisType, Generic[T], ABC):
             return value, TypeAdapter(Any)
         if issubclass(new_type, BaseModel):
             value = value.model_dump()
-        adapter = new_type._adapter  # noqa
+            adapter = TypeAdapter(new_type)
+        else:
+            adapter = new_type._adapter  # noqa
         normalized_object = adapter.validate_python(value)
         return normalized_object, adapter
 
