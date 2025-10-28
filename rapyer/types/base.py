@@ -17,7 +17,6 @@ class BaseRedisType(ABC):
 
 
 class RedisType(BaseRedisType):
-    full_type: type = None
     original_type: type = None
     field_path: str = None
     _adapter: TypeAdapter = None
@@ -181,24 +180,17 @@ class RedisTypeTransformer:
 
         if safe_issubclass(origin, RedisType):
             redis_type = origin
-            full_type = origin.full_type
             original_type = origin.original_type
         else:
             redis_type = self.redis_config.redis_type[origin]
-            full_type = redis_type
             original_type = origin
+            if args:
+                original_type = original_type[args]
 
-        if args:
-            full_type = full_type[args]
-            original_type = original_type[args]
         new_type = type(
             redis_type.__name__,
             (redis_type,),
-            dict(
-                field_path=self.field_name,
-                original_type=original_type,
-                full_type=full_type,
-            ),
+            dict(field_path=self.field_name, original_type=original_type),
         )
 
         if issubclass(redis_type, RedisType):
