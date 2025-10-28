@@ -1,46 +1,42 @@
-import base64
-from rapyer.types.base import RedisType, RedisSerializer
-
-
-class ByteSerializer(RedisSerializer):
-    def serialize_value(self, value):
-        if isinstance(value, bytes):
-            return base64.b64encode(value).decode()
-        elif isinstance(value, str):
-            return base64.b64encode(value.encode()).decode()
-        else:
-            return base64.b64encode(str(value).encode()).decode()
-
-    def deserialize_value(self, value):
-        if isinstance(value, str):
-            try:
-                return base64.b64decode(value)
-            except Exception:
-                return value.encode()
-        elif isinstance(value, bytes):
-            return value
-        else:
-            return str(value).encode()
+from rapyer.types.base import RedisType
+from pydantic_core import core_schema
 
 
 class RedisBytes(bytes, RedisType):
-    serializer = ByteSerializer(bytes, None)
     original_type = bytes
 
     async def load(self):
         redis_value = await self.client.json().get(self.redis_key, self.field_path)
-        if redis_value is not None:
-            return self.serializer.deserialize_value(redis_value)
-        return b""
+        return self._adapter.validate_python(redis_value)
 
     async def set(self, value: bytes):
         if not isinstance(value, bytes):
             raise TypeError("Value must be bytes")
 
-        serialized_value = self.serializer.serialize_value(value)
-        return await self.client.json().set(
-            self.redis_key, self.json_path, serialized_value
-        )
+        value = self._adapter.dump_python(value, mode="json")
+        return await self.client.json().set(self.redis_key, self.json_path, value)
 
     def clone(self):
         return bytes(self)
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        return core_schema.no_info_after_validator_function(
+            cls,
+            core_schema.no_info_before_validator_function(
+                cls._validate_pickle, handler(cls.original_type)
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls._serialize_pickle, return_schema=core_schema.str_schema()
+            ),
+        )
+
+    @classmethod
+    def _validate_pickle(cls, value):
+        if isinstance(value, str):
+            return cls.deserialize_unknown(value)
+        return value
+
+    @classmethod
+    def _serialize_pickle(cls, value):
+        return cls.serialize_unknown(bytes(value))
