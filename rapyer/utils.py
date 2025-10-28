@@ -86,7 +86,7 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_mapping: Any) -> 
         actual_type = args[0]
         metadata = args[1:]
 
-        # Recursively replace in the actual type
+        # Recursively replace the actual type
         new_type = replace_to_redis_types_in_annotation(actual_type, type_mapping)
 
         # Reconstruct Annotated with new type and original metadata
