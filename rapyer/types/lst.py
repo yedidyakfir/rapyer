@@ -1,3 +1,4 @@
+import json
 from typing import TypeVar
 
 from pydantic_core import core_schema
@@ -81,8 +82,8 @@ class RedisList(list, GenericRedisType[T]):
         # Handle case where arrpop returns [None] for an empty list
         if arrpop[0] is None:
             return None
-
-        return self._adapter.validate_json(arrpop)[0]
+        arrpop = [json.loads(val) for val in arrpop]
+        return self._adapter.validate_python(arrpop)[0]
 
     async def ainsert(self, index, __object):
         key = len(self)
