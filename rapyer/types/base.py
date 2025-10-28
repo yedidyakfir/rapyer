@@ -20,6 +20,7 @@ class RedisType(BaseRedisType):
     full_type: type = None
     original_type: type = None
     field_path: str = None
+    _adapter: TypeAdapter = None
 
     @property
     def redis(self):
@@ -36,7 +37,6 @@ class RedisType(BaseRedisType):
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
         self._base_model_link = None
-        self._adapter = TypeAdapter(self.full_type)
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -200,6 +200,14 @@ class RedisTypeTransformer:
                 full_type=full_type,
             ),
         )
+
+        if issubclass(redis_type, RedisType):
+            adapter_type = new_type
+            try:
+                adapter_type = adapter_type[args]
+            except TypeError:
+                pass
+            new_type._adapter = TypeAdapter(adapter_type)
         return new_type
 
     def __contains__(self, item: type):
