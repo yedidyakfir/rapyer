@@ -3,7 +3,7 @@ import pytest_asyncio
 from pydantic import Field, BaseModel
 
 from rapyer.base import AtomicRedisModel
-from tests.integration.test_nested_redis_models import (
+from tests.integration.models.test_nested_redis_models import (
     InnerRedisModel,
     ContainerModel,
     OuterModelWithRedisNested,
