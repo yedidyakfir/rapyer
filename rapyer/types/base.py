@@ -2,7 +2,7 @@ import abc
 import base64
 import pickle
 from abc import ABC
-from typing import get_args, Any, TypeVar, Generic
+from typing import get_args, Any, TypeVar, Generic, get_origin
 
 from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel
 from pydantic_core import core_schema
@@ -94,7 +94,9 @@ class GenericRedisType(RedisType, Generic[T], ABC):
         type_transformer = RedisTypeTransformer(
             self.sub_field_path(key), self.Meta, type(self._base_model_link)
         )
-        new_type = type_transformer[inner_original_type]
+        inner_type_orig = get_origin(inner_original_type) or inner_original_type
+        inner_type_args = get_args(inner_original_type)
+        new_type = type_transformer[inner_type_orig, inner_type_args]
         return new_type
 
     def create_new_value_with_adapter(self, key, value):
@@ -103,7 +105,7 @@ class GenericRedisType(RedisType, Generic[T], ABC):
             return value, TypeAdapter(Any)
         if issubclass(new_type, BaseModel):
             value = value.model_dump()
-        adapter = TypeAdapter(new_type)
+        adapter = new_type._adapter  # noqa
         normalized_object = adapter.validate_python(value)
         return normalized_object, adapter
 
