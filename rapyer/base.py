@@ -217,6 +217,14 @@ class AtomicRedisModel(BaseModel):
             if isinstance(attr, RedisType):
                 attr._base_model_link = self._base_model_link or self
 
+    def __eq__(self, other):
+        if not isinstance(other, BaseModel):
+            return False
+        if self.__dict__ == other.__dict__:
+            return True
+        else:
+            return super().__eq__(other)
+
     @model_validator(mode="before")
     @classmethod
     def validate_sub_model(cls, values):
