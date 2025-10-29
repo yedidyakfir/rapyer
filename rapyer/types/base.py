@@ -15,11 +15,7 @@ from rapyer.utils import safe_issubclass
 REDIS_DUMP_FLAG_NAME = "__rapyer_dumped__"
 
 
-class BaseRedisType(ABC):
-    field_path: str = ""
-
-
-class RedisType(BaseRedisType):
+class RedisType(ABC):
     original_type: type = None
     field_path: str = None
     _adapter: TypeAdapter = None

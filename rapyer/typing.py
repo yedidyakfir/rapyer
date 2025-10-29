@@ -1,5 +1,5 @@
 from typing import Callable
 
-from rapyer.types.base import BaseRedisType
+from rapyer.types.base import RedisType
 
-TypeTransformer = Callable[[type], type[BaseRedisType]]
+TypeTransformer = Callable[[type], type[RedisType]]

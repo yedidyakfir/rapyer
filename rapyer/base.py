@@ -13,7 +13,6 @@ from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
 from rapyer.types.base import (
     RedisType,
-    BaseRedisType,
     RedisTypeTransformer,
     REDIS_DUMP_FLAG_NAME,
 )
@@ -89,7 +88,7 @@ class AtomicRedisModel(BaseModel):
             if isinstance(value, real_type):
                 continue
             redis_type = cls.__annotations__[attr_name]
-            redis_type: type[BaseRedisType]
+            redis_type: type[RedisType]
             adapter = TypeAdapter(redis_type)
 
             # Handle Field(default=...)
