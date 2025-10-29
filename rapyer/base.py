@@ -213,6 +213,18 @@ class AtomicRedisModel(BaseModel):
             _context_xx_pipe.set(False)
 
     def __setattr__(self, name: str, value: Any) -> None:
+        if name not in self.__annotations__:
+            super().__setattr__(name, value)
+            return
+
+        field_annotation = self.__annotations__[name]
+        not_correct_type = not isinstance(value, field_annotation)
+        should_be_validated = not_correct_type and isinstance(value, BaseModel)
+        if should_be_validated:
+            adapter = TypeAdapter(field_annotation)
+            value = adapter.validate_python(value.model_dump())
+        elif issubclass(field_annotation, RedisType):
+            value = field_annotation._adapter.validate_python(value)
         super().__setattr__(name, value)
         if value is not None:
             attr = getattr(self, name)
