@@ -1,0 +1,84 @@
+import pytest
+import pytest_asyncio
+from pydantic import Field
+
+from rapyer.base import AtomicRedisModel
+from rapyer.types.lst import RedisList
+from rapyer.types.string import RedisStr
+
+
+class ListModel(AtomicRedisModel):
+    items: list[str] = Field(default_factory=list)
+    numbers: list[int] = Field(default_factory=list)
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def real_redis_client(redis_client):
+    ListModel.Meta.redis = redis_client
+    yield redis_client
+    await redis_client.aclose()
+
+
+@pytest.mark.parametrize(
+    "test_value",
+    [
+        ["item1", "item2", "item3"],
+        ["hello", "world"],
+        ["single"],
+    ],
+)
+@pytest.mark.asyncio
+async def test_redis_list_model_creation_with_initial_value_and_set_load_sanity(
+    test_value,
+):
+    # Arrange
+    model = ListModel(items=test_value)
+
+    # Assert model creation
+    assert isinstance(model.items, RedisList)
+    assert model.items.redis_key == model.key
+    assert model.items.field_path == "items"
+    assert model.items.json_path == "$.items"
+    for i in range(len(test_value)):
+        assert isinstance(model.items[i], RedisStr)
+        assert model.items[i].redis_key == model.key
+        assert model.items[i].json_path == f"$..items.{i}"
+
+    # Act - Save and test load operations
+    await model.save()
+
+    # Assert - Load and verify
+    loaded_value = await model.items.load()
+    assert loaded_value == test_value
+
+    # Test load from a fresh model
+    fresh_model = ListModel()
+    fresh_model.pk = model.pk
+    fresh_loaded_value = await fresh_model.items.load()
+    assert fresh_loaded_value == test_value
+
+
+@pytest.mark.asyncio
+async def test_redis_list_model_creation_with_list_operations_sanity():
+    # Arrange
+    model = ListModel(items=["initial"])
+
+    # Assert model creation
+    from rapyer.types.lst import RedisList
+
+    assert isinstance(model.items, RedisList)
+    assert model.items.json_path == "$.items"
+    assert isinstance(model.items[0], RedisStr)
+    assert model.items[0].json_path == "$.items[0]"
+
+    # Act - Save and perform list operations
+    await model.save()
+    await model.items.aappend("new_item")
+    await model.items.aextend(["item2", "item3"])
+
+    # Assert - Load and verify operations worked
+    loaded_items = await model.items.load()
+    assert "initial" in loaded_items
+    assert "new_item" in loaded_items
+    assert "item2" in loaded_items
+    assert "item3" in loaded_items
