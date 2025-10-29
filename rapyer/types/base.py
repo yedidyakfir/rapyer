@@ -105,7 +105,7 @@ class GenericRedisType(RedisType, Generic[T], ABC):
 
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
-        type_transformer = RedisTypeTransformer(self.sub_field_path(key), self.Meta)
+        type_transformer = RedisTypeTransformer(key, self.Meta)
         inner_type_orig = get_origin(inner_original_type) or inner_original_type
         inner_type_args = get_args(inner_original_type)
         new_type = type_transformer[inner_type_orig, inner_type_args]
