@@ -179,7 +179,7 @@ class RedisTypeTransformer:
         else:
             origin, args = item, None
         if origin is Any:
-            return item
+            return origin
 
         from rapyer.base import AtomicRedisModel
 
