@@ -561,7 +561,7 @@ async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
 
     # Assert
     assert isinstance(user.metadata, RedisDict)
-    assert hasattr(user.metadata, "redis_key")
+    assert hasattr(user.metadata, "key")
     assert hasattr(user.metadata, "field_path")
     assert hasattr(user.metadata, "redis")
     assert hasattr(user.metadata, "json_path")

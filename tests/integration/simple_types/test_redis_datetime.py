@@ -121,7 +121,7 @@ async def test_redis_datetime_clone_functionality_sanity():
 
     # Assert
     assert cloned_datetime == test_datetime
-    assert not hasattr(cloned_datetime, "redis_key")
+    assert not hasattr(cloned_datetime, "key")
 
 
 @pytest.mark.asyncio
@@ -133,7 +133,7 @@ async def test_redis_datetime_model_creation_functionality_sanity(real_redis_cli
     from rapyer.types.datetime import RedisDatetime
 
     assert isinstance(model.created_at, RedisDatetime)
-    assert hasattr(model.created_at, "redis_key")
+    assert hasattr(model.created_at, "key")
     assert hasattr(model.created_at, "field_path")
     assert hasattr(model.created_at, "redis")
     assert hasattr(model.created_at, "json_path")

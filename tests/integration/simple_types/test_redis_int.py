@@ -129,7 +129,7 @@ async def test_redis_int_model_creation_functionality_sanity(real_redis_client):
     from rapyer.types.integer import RedisInt
 
     assert isinstance(model.count, RedisInt)
-    assert hasattr(model.count, "redis_key")
+    assert hasattr(model.count, "key")
     assert hasattr(model.count, "field_path")
     assert hasattr(model.count, "redis")
     assert hasattr(model.count, "json_path")

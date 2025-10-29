@@ -116,7 +116,7 @@ async def test_redis_str_model_creation_functionality_sanity(real_redis_client):
     from rapyer.types.string import RedisStr
 
     assert isinstance(model.name, RedisStr)
-    assert hasattr(model.name, "redis_key")
+    assert hasattr(model.name, "key")
     assert hasattr(model.name, "field_path")
     assert hasattr(model.name, "redis")
     assert hasattr(model.name, "json_path")
