@@ -116,7 +116,7 @@ def _collect_annotations_recursive(
     current_cls, exclude_classes, all_annotations, visited
 ):
     """
-    Helper function to recursively collect annotations.
+    Helper functions to recursively collect annotations.
 
     Args:
         current_cls: Current class being processed
