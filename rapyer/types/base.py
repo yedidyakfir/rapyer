@@ -41,10 +41,6 @@ class RedisType(ABC):
             else self.field_name
         )
 
-    @property
-    def _base_redis_type(self):
-        return self._base_model_link._base_redis_type
-
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
         self._base_model_link = None
@@ -103,9 +99,7 @@ class GenericRedisType(RedisType, Generic[T], ABC):
 
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
-        type_transformer = RedisTypeTransformer(
-            self.sub_field_path(key), self.Meta, self._base_model_link._base_redis_type
-        )
+        type_transformer = RedisTypeTransformer(self.sub_field_path(key), self.Meta)
         inner_type_orig = get_origin(inner_original_type) or inner_original_type
         inner_type_args = get_args(inner_original_type)
         new_type = type_transformer[inner_type_orig, inner_type_args]
@@ -175,12 +169,9 @@ class GenericRedisType(RedisType, Generic[T], ABC):
 
 
 class RedisTypeTransformer:
-    def __init__(
-        self, field_name: str, redis_config: RedisConfig, pydantic_base_redis: type
-    ):
+    def __init__(self, field_name: str, redis_config: RedisConfig):
         self.field_name = field_name
         self.redis_config = redis_config
-        self.pydantic_base_redis = pydantic_base_redis
 
     def __getitem__(self, item: type):
         if isinstance(item, tuple):
@@ -190,7 +181,9 @@ class RedisTypeTransformer:
         if origin is Any:
             return item
 
-        if safe_issubclass(origin, self.pydantic_base_redis):
+        from rapyer.base import AtomicRedisModel
+
+        if safe_issubclass(origin, AtomicRedisModel):
             field_conf = RedisFieldConfig(field_name=self.field_name)
             return type(
                 origin.__name__,
@@ -202,7 +195,7 @@ class RedisTypeTransformer:
             field_conf = RedisFieldConfig(field_name=self.field_name)
             return type(
                 f"Redis{origin.__name__}",
-                (origin, self.pydantic_base_redis),
+                (AtomicRedisModel, origin),
                 dict(field_config=field_conf),
             )
 

@@ -27,8 +27,7 @@ from rapyer.utils import (
 
 class AtomicRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
-    _base_model_link: Self = PrivateAttr(default=None)
-    _base_redis_type: type[BaseModel] = PrivateAttr(default=None)
+    _base_model_link: Self | RedisType = PrivateAttr(default=None)
 
     Meta: ClassVar[RedisConfig] = RedisConfig()
     field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
@@ -72,8 +71,7 @@ class AtomicRedisModel(BaseModel):
         )
         new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type,
-                RedisTypeTransformer(field_name, cls.Meta, AtomicRedisModel),
+                field_type, RedisTypeTransformer(field_name, cls.Meta)
             )
             for field_name, field_type in original_annotations.items()
         }
@@ -240,7 +238,5 @@ class AtomicRedisModel(BaseModel):
         for field_name in self.model_fields:
             attr = getattr(self, field_name)
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
-                attr._base_model_link = self._base_model_link or self
                 attr._base_model_link = self
-        self._base_redis_type = AtomicRedisModel
         return self
