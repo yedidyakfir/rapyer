@@ -28,10 +28,11 @@ from rapyer.utils import (
 
 class AtomicRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
-    Meta: ClassVar[RedisConfig] = RedisConfig()
-    field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
     _base_model_link: Self = PrivateAttr(default=None)
     _base_redis_type: type[BaseModel] = None
+
+    Meta: ClassVar[RedisConfig] = RedisConfig()
+    field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
     model_config = ConfigDict(validate_assignment=True)
 
     @property
