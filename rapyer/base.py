@@ -54,11 +54,18 @@ class AtomicRedisModel(BaseModel):
         original_annotations = get_all_annotations(
             cls, exclude_classes=[AtomicRedisModel]
         )
+        field_path = cls.field_config.field_path
         new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type, RedisTypeTransformer(field_name, cls.Meta, AtomicRedisModel)
+                field_type,
+                RedisTypeTransformer(full_field_path, cls.Meta, AtomicRedisModel),
             )
             for field_name, field_type in original_annotations.items()
+            if (
+                full_field_path := (
+                    f"{field_path}.{field_name}" if field_path else field_name
+                )
+            )
         }
         cls.__annotations__.update(new_annotations)
         super().__init_subclass__(**kwargs)
