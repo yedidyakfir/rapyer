@@ -229,4 +229,11 @@ class AtomicRedisModel(BaseModel):
         if value is not None:
             attr = getattr(self, name)
             if isinstance(attr, RedisType):
-                attr._base_model_link = self
+                attr._base_model_link = self._base_model_link or self
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_sub_model(cls, values):
+        if isinstance(values, BaseModel) and not isinstance(values, cls):
+            return values.model_dump()
+        return values
