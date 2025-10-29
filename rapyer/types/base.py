@@ -36,11 +36,7 @@ class RedisType(ABC):
     @property
     def field_path(self) -> str:
         base_path = self._base_model_link.field_path
-        return (
-            f"{self._base_model_link.field_path}.{self.field_name}"
-            if base_path
-            else self.field_name
-        )
+        return f"{base_path}.{self.field_name}" if base_path else self.field_name
 
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
