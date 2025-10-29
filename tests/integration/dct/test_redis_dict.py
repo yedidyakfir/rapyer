@@ -560,8 +560,6 @@ async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
     user = model_class(metadata=initial_data)
 
     # Assert
-    from rapyer.types.dct import RedisDict
-
     assert isinstance(user.metadata, RedisDict)
     assert hasattr(user.metadata, "redis_key")
     assert hasattr(user.metadata, "field_path")
