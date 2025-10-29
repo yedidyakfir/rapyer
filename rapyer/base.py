@@ -213,7 +213,7 @@ class AtomicRedisModel(BaseModel):
             _context_xx_pipe.set(False)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name not in self.__annotations__:
+        if name not in self.__annotations__ or value is None:
             super().__setattr__(name, value)
             return
 
