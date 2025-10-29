@@ -207,4 +207,6 @@ class RedisTypeTransformer:
         return new_type
 
     def __contains__(self, item: type):
+        if safe_issubclass(item, BaseModel):
+            return True
         return item in self.redis_config.redis_type
