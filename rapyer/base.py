@@ -17,6 +17,7 @@ from rapyer.utils import (
     replace_to_redis_types_in_annotation,
     find_first_type_in_annotation,
     convert_field_factory_type,
+    get_all_annotations,
 )
 
 
@@ -50,13 +51,16 @@ class AtomicRedisModel(BaseModel):
         return f"{self.key_initials}:{self.pk}"
 
     def __init_subclass__(cls, **kwargs):
-        original_annotations = cls.__annotations__.copy()
-        cls.__annotations__ = {
+        original_annotations = get_all_annotations(
+            cls, exclude_classes=[AtomicRedisModel]
+        )
+        new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
                 field_type, RedisTypeTransformer(field_name, cls.Meta, AtomicRedisModel)
             )
-            for field_name, field_type in cls.__annotations__.items()
+            for field_name, field_type in original_annotations.items()
         }
+        cls.__annotations__.update(new_annotations)
         super().__init_subclass__(**kwargs)
 
         for attr_name, attr_type in cls.__annotations__.items():
