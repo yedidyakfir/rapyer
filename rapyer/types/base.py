@@ -6,10 +6,13 @@ from typing import get_args, Any, TypeVar, Generic, get_origin
 
 from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel
 from pydantic_core import core_schema
+from pydantic_core.core_schema import ValidationInfo, CoreSchema, SerializationInfo
 
 from rapyer.config import RedisFieldConfig, RedisConfig
 from rapyer.context import _context_var
 from rapyer.utils import safe_issubclass
+
+REDIS_DUMP_FLAG_NAME = "__rapyer_dumped__"
 
 
 class BaseRedisType(ABC):
@@ -109,7 +112,9 @@ class GenericRedisType(RedisType, Generic[T], ABC):
             adapter = new_type._adapter  # noqa
         else:
             return value, TypeAdapter(new_type)
-        normalized_object = adapter.validate_python(value)
+        normalized_object = adapter.validate_python(
+            value, context={REDIS_DUMP_FLAG_NAME: True}
+        )
         return normalized_object, adapter
 
     def create_new_value(self, key, value):
@@ -118,12 +123,12 @@ class GenericRedisType(RedisType, Generic[T], ABC):
 
     @classmethod
     @abc.abstractmethod
-    def full_serializer(cls, value):
+    def full_serializer(cls, value, info: SerializationInfo):
         pass
 
     @classmethod
     @abc.abstractmethod
-    def full_deserializer(cls, value):
+    def full_deserializer(cls, value, info: ValidationInfo):
         pass
 
     @classmethod
@@ -134,21 +139,23 @@ class GenericRedisType(RedisType, Generic[T], ABC):
     @classmethod
     def __get_pydantic_core_schema__(
         cls, source_type: Any, handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
+    ) -> CoreSchema:
         # Extract the generic type argument T from source_type
         element_type = cls.find_inner_type(source_type)
 
         if element_type is Any:
             # Build schema with both validator and serializer
-            python_schema = core_schema.no_info_before_validator_function(
+            python_schema = core_schema.with_info_before_validator_function(
                 cls.full_deserializer, handler(cls.original_type)
             )
 
-            return core_schema.no_info_after_validator_function(
-                cls,
+            return core_schema.with_info_after_validator_function(
+                lambda v, info: cls(v),
                 python_schema,
                 serialization=core_schema.plain_serializer_function_ser_schema(
-                    cls.full_serializer, return_schema=cls.schema_for_unknown()
+                    cls.full_serializer,
+                    info_arg=True,
+                    return_schema=cls.schema_for_unknown(),
                 ),
             )
         else:

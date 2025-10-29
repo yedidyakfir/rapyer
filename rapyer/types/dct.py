@@ -2,7 +2,7 @@ from typing import TypeVar, Generic, get_args, Any
 
 from pydantic_core import core_schema
 
-from rapyer.types.base import GenericRedisType, RedisType
+from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.utils import update_keys_in_pipeline
 
 T = TypeVar("T")
@@ -112,7 +112,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         super().__setitem__(key, value)
 
         # Serialize the value for Redis storage using a type adapter
-        serialized_value = self._adapter.dump_python({key: value}, mode="json")
+        serialized_value = self._adapter.dump_python(
+            {key: value}, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
         return await self.client.json().set(
             self.redis_key, self.json_field_path(key), serialized_value[key]
         )
@@ -137,11 +139,13 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         self.update(**kwargs)
 
         # Serialize values using type adapter
-        validated_data = self._adapter.validate_python(kwargs)
-        redis_params = {
-            self.json_field_path(key): v
-            for key, v in self._adapter.dump_python(validated_data, mode="json").items()
-        }
+        validated_data = self._adapter.validate_python(
+            kwargs, context={REDIS_DUMP_FLAG_NAME: True}
+        )
+        dumped_data = self._adapter.dump_python(
+            validated_data, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
+        redis_params = {self.json_field_path(key): v for key, v in dumped_data.items()}
 
         # If I am in a pipeline, update keys in pipeline, otherwise execute pipeline
         if self.pipeline:
@@ -164,7 +168,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             # Key doesn't exist in Redis
             return default
 
-        return self._adapter.validate_python({key: result})[key]
+        return self._adapter.validate_python(
+            {key: result}, context={REDIS_DUMP_FLAG_NAME: True}
+        )[key]
 
     async def apopitem(self):
         # Execute the script atomically
@@ -178,7 +184,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             super().pop(
                 redis_key.decode() if isinstance(redis_key, bytes) else redis_key
             )
-            return self._adapter.validate_python({redis_key: redis_value})[redis_key]
+            return self._adapter.validate_python(
+                {redis_key: redis_value}, context={REDIS_DUMP_FLAG_NAME: True}
+            )[redis_key]
         else:
             # If Redis is empty but local dict has items, raise an error for consistency
             raise KeyError("popitem(): dictionary is empty")
@@ -194,13 +202,23 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         }
 
     @classmethod
-    def full_serializer(cls, value):
-        return {key: cls.serialize_unknown(item) for key, item in value.items()}
+    def full_serializer(cls, value, info: core_schema.SerializationInfo):
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME)
+        return {
+            key: cls.serialize_unknown(item) if should_serialize_redis else item
+            for key, item in value.items()
+        }
 
     @classmethod
-    def full_deserializer(cls, value):
+    def full_deserializer(cls, value, info: core_schema.ValidationInfo):
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME)
         if isinstance(value, dict):
-            return {key: cls.deserialize_unknown(item) for key, item in value.items()}
+            return {
+                key: cls.deserialize_unknown(item) if should_serialize_redis else item
+                for key, item in value.items()
+            }
         return value
 
     @classmethod

@@ -117,7 +117,7 @@ async def real_redis_client(redis_client):
     ],
 )
 async def test_redis_dict__setitem__check_local_consistency_sanity(
-    model_class, initial_data, new_item_key, new_item_value
+    model_class: type[AtomicRedisModel], initial_data, new_item_key, new_item_value
 ):
     # Arrange
     user = model_class(metadata=initial_data)

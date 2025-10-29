@@ -11,7 +11,12 @@ from pydantic_core import PydanticUndefined
 from rapyer.config import RedisConfig, RedisFieldConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
-from rapyer.types.base import RedisType, BaseRedisType, RedisTypeTransformer
+from rapyer.types.base import (
+    RedisType,
+    BaseRedisType,
+    RedisTypeTransformer,
+    REDIS_DUMP_FLAG_NAME,
+)
 from rapyer.utils import (
     acquire_lock,
     replace_to_redis_types_in_annotation,
@@ -115,7 +120,7 @@ class AtomicRedisModel(BaseModel):
         if self.is_inner_model():
             raise RuntimeError("Can only save from top level model")
 
-        model_dump = self.model_dump(mode="json")
+        model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
         await self.Meta.redis.json().set(self.key, "$", model_dump)
         if self.Meta.ttl is not None:
             await self.Meta.redis.expire(self.key, self.Meta.ttl)

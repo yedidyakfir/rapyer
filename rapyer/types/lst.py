@@ -2,8 +2,9 @@ import json
 from typing import TypeVar
 
 from pydantic_core import core_schema
+from pydantic_core.core_schema import ValidationInfo, SerializationInfo
 
-from rapyer.types.base import GenericRedisType, RedisType
+from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.utils import noop
 
 
@@ -30,7 +31,9 @@ class RedisList(list, GenericRedisType[T]):
         # Clear the local list and populate with Redis data using type adapter
         super().clear()
         if redis_items:
-            deserialized_items = self._adapter.validate_python(redis_items)
+            deserialized_items = self._adapter.validate_python(
+                redis_items, context={REDIS_DUMP_FLAG_NAME: True}
+            )
             super().extend(deserialized_items)
         return list(self)
 
@@ -45,7 +48,9 @@ class RedisList(list, GenericRedisType[T]):
         super().append(new_val)
 
         # Serialize the object for Redis storage using a type adapter
-        serialized_object = self._adapter.dump_python([new_val], mode="json")
+        serialized_object = self._adapter.dump_python(
+            [new_val], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
         return await self.client.json().arrappend(
             self.redis_key, self.json_path, *serialized_object
         )
@@ -60,8 +65,12 @@ class RedisList(list, GenericRedisType[T]):
 
         # Convert iterable to list and serialize items using type adapter
         if items:
-            normalized_items = self._adapter.validate_python(items)
-            serialized_items = self._adapter.dump_python(normalized_items, mode="json")
+            normalized_items = self._adapter.validate_python(
+                items, context={REDIS_DUMP_FLAG_NAME: True}
+            )
+            serialized_items = self._adapter.dump_python(
+                normalized_items, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            )
             return await self.client.json().arrappend(
                 self.redis_key,
                 self.json_path,
@@ -83,7 +92,9 @@ class RedisList(list, GenericRedisType[T]):
         if arrpop[0] is None:
             return None
         arrpop = [json.loads(val) for val in arrpop]
-        return self._adapter.validate_python(arrpop)[0]
+        return self._adapter.validate_python(
+            arrpop, context={REDIS_DUMP_FLAG_NAME: True}
+        )[0]
 
     async def ainsert(self, index, __object):
         key = len(self)
@@ -91,8 +102,12 @@ class RedisList(list, GenericRedisType[T]):
         super().insert(index, new_val)
 
         # Serialize the object for Redis storage using a type adapter
-        normalized_object = self._adapter.validate_python([__object])
-        serialized_object = self._adapter.dump_python(normalized_object, mode="json")
+        normalized_object = self._adapter.validate_python(
+            [__object], context={REDIS_DUMP_FLAG_NAME: True}
+        )
+        serialized_object = self._adapter.dump_python(
+            normalized_object, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
         return await self.client.json().arrinsert(
             self.redis_key, self.json_path, index, *serialized_object
         )
@@ -108,13 +123,23 @@ class RedisList(list, GenericRedisType[T]):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]
 
     @classmethod
-    def full_serializer(cls, value):
-        return [cls.serialize_unknown(item) for item in value]
+    def full_serializer(cls, value, info: SerializationInfo):
+        ctx = info.context or {}
+        is_redis_data = ctx.get(REDIS_DUMP_FLAG_NAME)
+        return [
+            cls.serialize_unknown(item) if is_redis_data else item for item in value
+        ]
 
     @classmethod
-    def full_deserializer(cls, value):
+    def full_deserializer(cls, value, info: ValidationInfo):
+        ctx = info.context or {}
+        is_redis_data = ctx.get(REDIS_DUMP_FLAG_NAME)
+
         if isinstance(value, list):
-            return [cls.deserialize_unknown(item) for item in value]
+            return [
+                cls.deserialize_unknown(item) if is_redis_data else item
+                for item in value
+            ]
         return value
 
     @classmethod
