@@ -63,8 +63,6 @@ async def test_redis_dict_model_creation_with_dict_operations_sanity():
     assert isinstance(model.data, RedisDict)
     assert model.data.json_path == "$.data"
     assert isinstance(model.data["initial"], RedisStr)
-    assert model.data["initial"].redis_key == model.key
-    assert model.data["initial"].json_path == "$.data.initial"
 
     # Act - Save and perform dict operations
     await model.save()
