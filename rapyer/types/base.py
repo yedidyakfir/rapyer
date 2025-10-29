@@ -116,9 +116,9 @@ class GenericRedisType(RedisType, Generic[T], ABC):
         return new_type
 
     def create_new_value_with_adapter(self, key, value):
-        new_type = self.create_new_type(key)
-        if new_type is Any:
+        if not self.is_type_supported:
             return value, TypeAdapter(Any)
+        new_type = self.create_new_type(key)
         if issubclass(new_type, BaseModel):
             adapter = TypeAdapter(new_type)
         elif issubclass(new_type, RedisType):
