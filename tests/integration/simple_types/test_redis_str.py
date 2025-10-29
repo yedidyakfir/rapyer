@@ -120,7 +120,7 @@ async def test_redis_str_model_creation_functionality_sanity(real_redis_client):
     assert hasattr(model.name, "field_path")
     assert hasattr(model.name, "redis")
     assert hasattr(model.name, "json_path")
-    assert model.name.redis_key == model.key
+    assert model.name.key == model.key
     assert model.name.field_path == "name"
     assert model.name.json_path == "$.name"
     assert model.name.redis == real_redis_client

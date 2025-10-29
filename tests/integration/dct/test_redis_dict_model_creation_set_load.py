@@ -36,7 +36,7 @@ async def test_redis_dict_model_creation_with_initial_value_and_set_load_sanity(
     model = DictModel(data=test_value)
 
     assert isinstance(model.data, RedisDict)
-    assert model.data.redis_key == model.key
+    assert model.data.key == model.key
     assert model.data.field_path == "data"
     assert model.data.json_path == "$.data"
 

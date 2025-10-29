@@ -567,7 +567,7 @@ async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
     assert hasattr(user.metadata, "field_path")
     assert hasattr(user.metadata, "redis")
     assert hasattr(user.metadata, "json_path")
-    assert user.metadata.redis_key == user.key
+    assert user.metadata.key == user.key
     assert user.metadata.field_path == "metadata"
     assert user.metadata.json_path == "$.metadata"
     assert user.metadata.redis == real_redis_client

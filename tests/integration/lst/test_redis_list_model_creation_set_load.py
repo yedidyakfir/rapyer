@@ -36,12 +36,12 @@ async def test_redis_list_model_creation_with_initial_value_and_set_load_sanity(
 
     # Assert model creation
     assert isinstance(model.items, RedisList)
-    assert model.items.redis_key == model.key
+    assert model.items.key == model.key
     assert model.items.field_path == "items"
     assert model.items.json_path == "$.items"
     for i in range(len(test_value)):
         assert isinstance(model.items[i], RedisStr)
-        assert model.items[i].redis_key == model.key
+        assert model.items[i].key == model.key
         assert model.items[i].json_path == f"$..items.{i}"
 
     # Act - Save and test load operations

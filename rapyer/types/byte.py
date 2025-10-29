@@ -8,7 +8,7 @@ class RedisBytes(bytes, RedisType):
     original_type = bytes
 
     async def load(self):
-        redis_value = await self.client.json().get(self.redis_key, self.field_path)
+        redis_value = await self.client.json().get(self.key, self.field_path)
         return self._adapter.validate_python(
             redis_value, context={REDIS_DUMP_FLAG_NAME: True}
         )
@@ -20,7 +20,7 @@ class RedisBytes(bytes, RedisType):
         value = self._adapter.dump_python(
             value, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
-        return await self.client.json().set(self.redis_key, self.json_path, value)
+        return await self.client.json().set(self.key, self.json_path, value)
 
     def clone(self):
         return bytes(self)

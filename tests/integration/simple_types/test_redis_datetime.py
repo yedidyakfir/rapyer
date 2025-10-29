@@ -137,7 +137,7 @@ async def test_redis_datetime_model_creation_functionality_sanity(real_redis_cli
     assert hasattr(model.created_at, "field_path")
     assert hasattr(model.created_at, "redis")
     assert hasattr(model.created_at, "json_path")
-    assert model.created_at.redis_key == model.key
+    assert model.created_at.key == model.key
     assert model.created_at.field_path == "created_at"
     assert model.created_at.json_path == "$.created_at"
     assert model.created_at.redis == real_redis_client

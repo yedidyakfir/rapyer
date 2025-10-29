@@ -23,7 +23,7 @@ class RedisList(list, GenericRedisType[T]):
 
     async def load(self) -> list[T]:
         # Get all items from Redis list
-        redis_items = await self.client.json().get(self.redis_key, self.field_path)
+        redis_items = await self.client.json().get(self.key, self.field_path)
 
         if redis_items is None:
             redis_items = []
@@ -52,7 +52,7 @@ class RedisList(list, GenericRedisType[T]):
             [new_val], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
         return await self.client.json().arrappend(
-            self.redis_key, self.json_path, *serialized_object
+            self.key, self.json_path, *serialized_object
         )
 
     async def aextend(self, __iterable):
@@ -72,7 +72,7 @@ class RedisList(list, GenericRedisType[T]):
                 normalized_items, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
             )
             return await self.client.json().arrappend(
-                self.redis_key,
+                self.key,
                 self.json_path,
                 *serialized_items,
             )
@@ -82,7 +82,7 @@ class RedisList(list, GenericRedisType[T]):
     async def apop(self, index=-1):
         if self:
             super().pop(index)
-        arrpop = await self.client.json().arrpop(self.redis_key, self.json_path, index)
+        arrpop = await self.client.json().arrpop(self.key, self.json_path, index)
 
         # Handle empty list case
         if arrpop is None or (isinstance(arrpop, list) and len(arrpop) == 0):
@@ -109,7 +109,7 @@ class RedisList(list, GenericRedisType[T]):
             normalized_object, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
         return await self.client.json().arrinsert(
-            self.redis_key, self.json_path, index, *serialized_object
+            self.key, self.json_path, index, *serialized_object
         )
 
     async def aclear(self):
@@ -117,7 +117,7 @@ class RedisList(list, GenericRedisType[T]):
         super().clear()
 
         # Clear Redis list
-        return await self.client.json().set(self.redis_key, self.json_path, [])
+        return await self.client.json().set(self.key, self.json_path, [])
 
     def clone(self):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]

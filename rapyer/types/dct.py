@@ -96,7 +96,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     async def load(self):
         # Get all items from Redis dict
-        redis_items = await self.client.json().get(self.redis_key, self.field_path)
+        redis_items = await self.client.json().get(self.key, self.field_path)
 
         if redis_items is None:
             redis_items = {}
@@ -116,7 +116,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             {key: value}, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
         return await self.client.json().set(
-            self.redis_key, self.json_field_path(key), serialized_value[key]
+            self.key, self.json_field_path(key), serialized_value[key]
         )
 
     def __ior__(self, other):
@@ -130,9 +130,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     async def adel_item(self, key):
         super().__delitem__(key)
-        return await self.client.json().delete(
-            self.redis_key, self.json_field_path(key)
-        )
+        return await self.client.json().delete(self.key, self.json_field_path(key))
 
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
@@ -148,18 +146,16 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
         # If I am in a pipeline, update keys in pipeline, otherwise execute pipeline
         if self.pipeline:
-            update_keys_in_pipeline(self.pipeline, self.redis_key, **redis_params)
+            update_keys_in_pipeline(self.pipeline, self.key, **redis_params)
             return
 
         async with self.redis.pipeline() as pipeline:
-            update_keys_in_pipeline(pipeline, self.redis_key, **redis_params)
+            update_keys_in_pipeline(pipeline, self.key, **redis_params)
             await pipeline.execute()
 
     async def apop(self, key, default=None):
         # Execute the script atomically
-        result = await self.client.eval(
-            POP_SCRIPT, 1, self.redis_key, self.json_path, key
-        )
+        result = await self.client.eval(POP_SCRIPT, 1, self.key, self.json_path, key)
         # Key exists in Redis, pop from local dict (it should exist there too)
         super().pop(key, None)
 
@@ -173,9 +169,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     async def apopitem(self):
         # Execute the script atomically
-        result = await self.client.eval(
-            POPITEM_SCRIPT, 1, self.redis_key, self.json_path
-        )
+        result = await self.client.eval(POPITEM_SCRIPT, 1, self.key, self.json_path)
 
         if result is not None:
             redis_key, redis_value = result
@@ -193,7 +187,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     async def aclear(self):
         super().clear()
         # Clear Redis dict
-        return await self.client.json().set(self.redis_key, self.json_path, {})
+        return await self.client.json().set(self.key, self.json_path, {})
 
     def clone(self):
         return {

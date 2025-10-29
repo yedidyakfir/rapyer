@@ -26,7 +26,7 @@ class RedisType(ABC):
         return self._base_model_link.Meta.redis
 
     @property
-    def redis_key(self):
+    def key(self):
         return self._base_model_link.key
 
     @property
