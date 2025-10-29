@@ -92,7 +92,7 @@ class GenericRedisType(RedisType, Generic[T], ABC):
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
         type_transformer = RedisTypeTransformer(
-            self.sub_field_path(key), self.Meta, type(self._base_model_link)
+            self.sub_field_path(key), self.Meta, self._base_model_link._base_redis_type
         )
         inner_type_orig = get_origin(inner_original_type) or inner_original_type
         inner_type_args = get_args(inner_original_type)
@@ -104,10 +104,11 @@ class GenericRedisType(RedisType, Generic[T], ABC):
         if new_type is Any:
             return value, TypeAdapter(Any)
         if issubclass(new_type, BaseModel):
-            value = value.model_dump()
             adapter = TypeAdapter(new_type)
-        else:
+        elif issubclass(new_type, RedisType):
             adapter = new_type._adapter  # noqa
+        else:
+            return value, TypeAdapter(new_type)
         normalized_object = adapter.validate_python(value)
         return normalized_object, adapter
 

@@ -4,7 +4,7 @@ import functools
 import uuid
 from typing import Self, ClassVar, Any, get_origin
 
-from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter
+from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter, model_validator
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
@@ -26,6 +26,7 @@ class AtomicRedisModel(BaseModel):
     Meta: ClassVar[RedisConfig] = RedisConfig()
     field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
     _base_model_link: Self = PrivateAttr(default=None)
+    _base_redis_type: type[BaseModel] = None
     model_config = ConfigDict(validate_assignment=True)
 
     @property
@@ -104,21 +105,8 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, attr_name, adapter.validate_python(value))
 
     def __init__(self, _base_model_link=None, **data):
-        data = {
-            k: (
-                v.model_dump()
-                if isinstance(v, BaseModel)
-                and not isinstance(v, self.__annotations__[k])
-                else v
-            )
-            for k, v in data.items()
-        }
-        super().__init__(**data)
         self._base_model_link = _base_model_link
-        for field_name in self.model_fields:
-            attr = getattr(self, field_name)
-            if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
-                attr._base_model_link = _base_model_link or self
+        super().__init__(**data)
 
     def is_inner_model(self):
         return self.field_config.field_path is not None
@@ -218,10 +206,6 @@ class AtomicRedisModel(BaseModel):
             return
 
         field_annotation = self.__annotations__[name]
-        if isinstance(value, BaseModel):
-            if not isinstance(value, field_annotation):
-                adapter = TypeAdapter(field_annotation)
-                value = adapter.validate_python(value.model_dump())
         origin = get_origin(field_annotation) or field_annotation
         if issubclass(origin, RedisType):
             value = field_annotation._adapter.validate_python(value)
@@ -237,3 +221,12 @@ class AtomicRedisModel(BaseModel):
         if isinstance(values, BaseModel) and not isinstance(values, cls):
             return values.model_dump()
         return values
+
+    @model_validator(mode="after")
+    def assign_fields_links(self):
+        for field_name in self.model_fields:
+            attr = getattr(self, field_name)
+            if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
+                attr._base_model_link = self._base_model_link or self
+        self._base_redis_type = AtomicRedisModel
+        return self

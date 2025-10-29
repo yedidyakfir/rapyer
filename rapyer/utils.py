@@ -107,8 +107,6 @@ def find_first_type_in_annotation(annotation: Any) -> type | None:
 
 def convert_field_factory_type(original_factory: Callable, adapter: TypeAdapter):
     original_value = original_factory()
-    if isinstance(original_value, BaseModel):
-        original_value = original_value.model_dump()
     return adapter.validate_python(original_value)
 
 
