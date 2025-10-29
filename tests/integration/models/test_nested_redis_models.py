@@ -500,7 +500,7 @@ async def test_nested_model_with_redis_inner_model_persistence_sanity():
 )
 @pytest.mark.asyncio
 async def test_nested_model_with_redis_inner_model_parameterized_operations_sanity(
-    tag_sets
+    tag_sets,
 ):
     # Arrange
     outer = OuterModelWithRedisNested()

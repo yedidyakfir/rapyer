@@ -423,7 +423,7 @@ async def test_redis_list_setitem_basemodel_field_paths_sanity():
 
     # Check the inst_field_conf for proper field path
     if hasattr(model.products[1], "inst_field_conf"):
-        assert model.products[1].inst_field_conf.field_path == "products[1]"
+        assert model.products[1].inst_field_conf.field_name == "products[1]"
 
 
 @pytest.mark.asyncio

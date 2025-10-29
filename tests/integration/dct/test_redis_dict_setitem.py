@@ -435,7 +435,7 @@ async def test_redis_dict_setitem_basemodel_field_paths_sanity():
     # Check the inst_field_conf for proper field path
     if hasattr(model.companies["startup"], "inst_field_conf"):
         assert (
-            model.companies["startup"].inst_field_conf.field_path == "companies.startup"
+            model.companies["startup"].inst_field_conf.field_name == "companies.startup"
         )
 
 

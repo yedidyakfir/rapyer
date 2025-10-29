@@ -42,6 +42,16 @@ class AtomicRedisModel(BaseModel):
     def pk(self, value: str):
         self._pk = value
 
+    @property
+    def field_path(self):
+        field_name = self.field_config.field_name
+        if not self._base_model_link:
+            return field_name
+        parent_field_path = self._base_model_link.field_path
+        if parent_field_path:
+            return f"{parent_field_path}.{field_name}"
+        return field_name
+
     @classmethod
     def class_key_initials(cls):
         return cls.__name__
@@ -60,18 +70,12 @@ class AtomicRedisModel(BaseModel):
         original_annotations = get_all_annotations(
             cls, exclude_classes=[AtomicRedisModel]
         )
-        field_path = cls.field_config.field_path
         new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
                 field_type,
-                RedisTypeTransformer(full_field_path, cls.Meta, AtomicRedisModel),
+                RedisTypeTransformer(field_name, cls.Meta, AtomicRedisModel),
             )
             for field_name, field_type in original_annotations.items()
-            if (
-                full_field_path := (
-                    f"{field_path}.{field_name}" if field_path else field_name
-                )
-            )
         }
         cls.__annotations__.update(new_annotations)
         super().__init_subclass__(**kwargs)
@@ -110,7 +114,7 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, attr_name, adapter.validate_python(value))
 
     def is_inner_model(self):
-        return self.field_config.field_path is not None
+        return self.field_config.field_name
 
     async def save(self) -> Self:
         if self.is_inner_model():
@@ -214,7 +218,7 @@ class AtomicRedisModel(BaseModel):
         if value is not None:
             attr = getattr(self, name)
             if isinstance(attr, RedisType):
-                attr._base_model_link = self._base_model_link or self
+                attr._base_model_link = self
 
     def __eq__(self, other):
         if not isinstance(other, BaseModel):
@@ -237,6 +241,6 @@ class AtomicRedisModel(BaseModel):
             attr = getattr(self, field_name)
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = self._base_model_link or self
+                attr._base_model_link = self
         self._base_redis_type = AtomicRedisModel
-        self._base_model_link = None
         return self

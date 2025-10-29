@@ -17,7 +17,7 @@ REDIS_DUMP_FLAG_NAME = "__rapyer_dumped__"
 
 class RedisType(ABC):
     original_type: type = None
-    field_path: str = None
+    field_name: str = None
     _adapter: TypeAdapter = None
 
     @property
@@ -31,6 +31,19 @@ class RedisType(ABC):
     @property
     def Meta(self):
         return self._base_model_link.Meta
+
+    @property
+    def field_path(self) -> str:
+        base_path = self._base_model_link.field_path
+        return (
+            f"{self._base_model_link.field_path}.{self.field_name}"
+            if base_path
+            else self.field_name
+        )
+
+    @property
+    def _base_redis_type(self):
+        return self._base_model_link._base_redis_type
 
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
@@ -178,7 +191,7 @@ class RedisTypeTransformer:
             return item
 
         if safe_issubclass(origin, self.pydantic_base_redis):
-            field_conf = RedisFieldConfig(field_path=self.field_name)
+            field_conf = RedisFieldConfig(field_name=self.field_name)
             return type(
                 origin.__name__,
                 (origin,),
@@ -186,7 +199,7 @@ class RedisTypeTransformer:
             )
         if safe_issubclass(origin, BaseModel):
             origin: type[BaseModel]
-            field_conf = RedisFieldConfig(field_path=self.field_name)
+            field_conf = RedisFieldConfig(field_name=self.field_name)
             return type(
                 f"Redis{origin.__name__}",
                 (origin, self.pydantic_base_redis),
@@ -205,7 +218,7 @@ class RedisTypeTransformer:
         new_type = type(
             redis_type.__name__,
             (redis_type,),
-            dict(field_path=self.field_name, original_type=original_type),
+            dict(field_name=self.field_name, original_type=original_type),
         )
 
         if issubclass(redis_type, RedisType):

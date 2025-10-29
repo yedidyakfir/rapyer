@@ -26,4 +26,4 @@ class RedisConfig:
 
 @dataclasses.dataclass
 class RedisFieldConfig:
-    field_path: str = None
+    field_name: str = ""
