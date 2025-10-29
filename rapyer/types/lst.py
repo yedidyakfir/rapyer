@@ -122,6 +122,9 @@ class RedisList(list, GenericRedisType[T]):
     def clone(self):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]
 
+    def iterate_values(self):
+        return self
+
     @classmethod
     def full_serializer(cls, value, info: SerializationInfo):
         ctx = info.context or {}

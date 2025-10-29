@@ -125,12 +125,11 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
-        new_val._base_model_link = self._base_model_link
+        self.bind_value_with_link(new_val)
         super().__setitem__(key, new_val)
 
     async def adel_item(self, key):
         super().__delitem__(key)
-
         return await self.client.json().delete(
             self.redis_key, self.json_field_path(key)
         )
@@ -200,6 +199,9 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return {
             k: v.clone() if isinstance(v, RedisType) else v for k, v in self.items()
         }
+
+    def iterate_values(self):
+        return self.values()
 
     @classmethod
     def full_serializer(cls, value, info: core_schema.SerializationInfo):

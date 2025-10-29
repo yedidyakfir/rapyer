@@ -1,5 +1,6 @@
 import abc
 import base64
+import functools
 import pickle
 from abc import ABC
 from typing import get_args, Any, TypeVar, Generic, get_origin
@@ -44,6 +45,10 @@ class RedisType(ABC):
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
         self._base_model_link = None
+
+    def bind_value_with_link(self, val):
+        if hasattr(val, "_base_model_link"):
+            val._base_model_link = self
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -92,6 +97,11 @@ T = TypeVar("T")
 
 
 class GenericRedisType(RedisType, Generic[T], ABC):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for val in self.iterate_values():
+            self.bind_value_with_link(val)
+
     @classmethod
     def find_inner_type(cls, type_):
         args = get_args(type_)
@@ -123,6 +133,18 @@ class GenericRedisType(RedisType, Generic[T], ABC):
     def create_new_value(self, key, value):
         new_value, adapter = self.create_new_value_with_adapter(key, value)
         return new_value
+
+    @functools.cached_property
+    def is_type_supported(self):
+        from rapyer.base import AtomicRedisModel
+
+        inner_type = self.find_inner_type(self._adapter._type)
+        origin = get_origin(inner_type) or inner_type
+        return issubclass(origin, AtomicRedisModel) or issubclass(origin, RedisType)
+
+    @abc.abstractmethod
+    def iterate_values(self):
+        pass
 
     @classmethod
     @abc.abstractmethod
