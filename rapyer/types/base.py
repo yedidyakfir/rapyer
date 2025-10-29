@@ -173,6 +173,13 @@ class RedisTypeTransformer:
         if origin is Any:
             return item
 
+        if safe_issubclass(origin, self.pydantic_base_redis):
+            field_conf = RedisFieldConfig(field_path=self.field_name)
+            return type(
+                origin.__name__,
+                (origin,),
+                dict(field_config=field_conf),
+            )
         if safe_issubclass(origin, BaseModel):
             origin: type[BaseModel]
             field_conf = RedisFieldConfig(field_path=self.field_name)
@@ -208,5 +215,7 @@ class RedisTypeTransformer:
 
     def __contains__(self, item: type):
         if safe_issubclass(item, BaseModel):
+            return True
+        if safe_issubclass(item, RedisType):
             return True
         return item in self.redis_config.redis_type
