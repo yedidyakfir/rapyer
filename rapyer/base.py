@@ -29,7 +29,7 @@ from rapyer.utils import (
 class AtomicRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     _base_model_link: Self = PrivateAttr(default=None)
-    _base_redis_type: type[BaseModel] = None
+    _base_redis_type: type[BaseModel] = PrivateAttr(default=None)
 
     Meta: ClassVar[RedisConfig] = RedisConfig()
     field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
@@ -109,10 +109,6 @@ class AtomicRedisModel(BaseModel):
                     value.default_factory = validate_from_adapter
             else:
                 setattr(cls, attr_name, adapter.validate_python(value))
-
-    def __init__(self, _base_model_link=None, **data):
-        self._base_model_link = _base_model_link
-        super().__init__(**data)
 
     def is_inner_model(self):
         return self.field_config.field_path is not None
@@ -235,4 +231,5 @@ class AtomicRedisModel(BaseModel):
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = self._base_model_link or self
         self._base_redis_type = AtomicRedisModel
+        self._base_model_link = None
         return self
