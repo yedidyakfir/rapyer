@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import functools
 import uuid
-from typing import Self, ClassVar, Any
+from typing import Self, ClassVar, Any, get_origin
 
 from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter
 from pydantic.fields import FieldInfo
@@ -218,12 +218,12 @@ class AtomicRedisModel(BaseModel):
             return
 
         field_annotation = self.__annotations__[name]
-        not_correct_type = not isinstance(value, field_annotation)
-        should_be_validated = not_correct_type and isinstance(value, BaseModel)
-        if should_be_validated:
-            adapter = TypeAdapter(field_annotation)
-            value = adapter.validate_python(value.model_dump())
-        elif issubclass(field_annotation, RedisType):
+        if isinstance(value, BaseModel):
+            if not isinstance(value, field_annotation):
+                adapter = TypeAdapter(field_annotation)
+                value = adapter.validate_python(value.model_dump())
+        origin = get_origin(field_annotation) or field_annotation
+        if issubclass(origin, RedisType):
             value = field_annotation._adapter.validate_python(value)
         super().__setattr__(name, value)
         if value is not None:
