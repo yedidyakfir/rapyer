@@ -104,6 +104,15 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, attr_name, adapter.validate_python(value))
 
     def __init__(self, _base_model_link=None, **data):
+        data = {
+            k: (
+                v.model_dump()
+                if isinstance(v, BaseModel)
+                and not isinstance(v, self.__annotations__[k])
+                else v
+            )
+            for k, v in data.items()
+        }
         super().__init__(**data)
         self._base_model_link = _base_model_link
         for field_name in self.model_fields:
