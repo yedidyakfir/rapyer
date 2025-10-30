@@ -125,7 +125,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
-        self.bind_value_with_link(new_val)
+        self.init_redis_field(key, new_val)
         super().__setitem__(key, new_val)
 
     async def adel_item(self, key):
@@ -194,8 +194,8 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             k: v.clone() if isinstance(v, RedisType) else v for k, v in self.items()
         }
 
-    def iterate_values(self):
-        return self.values()
+    def iterate_items(self):
+        return self.items()
 
     @classmethod
     def full_serializer(cls, value, info: core_schema.SerializationInfo):

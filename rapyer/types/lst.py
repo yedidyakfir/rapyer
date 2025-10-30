@@ -39,7 +39,7 @@ class RedisList(list, GenericRedisType[T]):
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
-        new_val._base_model_link = self._base_model_link
+        self.init_redis_field(f"[{key}]", new_val)
         super().__setitem__(key, new_val)
 
     async def aappend(self, __object):
@@ -122,8 +122,9 @@ class RedisList(list, GenericRedisType[T]):
     def clone(self):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]
 
-    def iterate_values(self):
-        return self
+    def iterate_items(self):
+        keys = [f"[{i}]" for i in range(len(self))]
+        return zip(keys, self)
 
     @classmethod
     def full_serializer(cls, value, info: SerializationInfo):

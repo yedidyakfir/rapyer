@@ -30,7 +30,7 @@ class AtomicRedisModel(BaseModel):
     _base_model_link: Self | RedisType = PrivateAttr(default=None)
 
     Meta: ClassVar[RedisConfig] = RedisConfig()
-    field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
+    _field_name: str = PrivateAttr(default="")
     model_config = ConfigDict(validate_assignment=True)
 
     @property
@@ -42,14 +42,21 @@ class AtomicRedisModel(BaseModel):
         self._pk = value
 
     @property
+    def field_name(self):
+        return self._field_name
+
+    @field_name.setter
+    def field_name(self, value: str):
+        self._field_name = value
+
+    @property
     def field_path(self):
-        field_name = self.field_config.field_name
         if not self._base_model_link:
-            return field_name
+            return self.field_name
         parent_field_path = self._base_model_link.field_path
         if parent_field_path:
-            return f"{parent_field_path}.{field_name}"
-        return field_name
+            return f"{parent_field_path}.{self.field_name}"
+        return self.field_name
 
     @classmethod
     def class_key_initials(cls):
@@ -112,7 +119,7 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, attr_name, adapter.validate_python(value))
 
     def is_inner_model(self):
-        return self.field_config.field_name
+        return self.field_name
 
     async def save(self) -> Self:
         if self.is_inner_model():

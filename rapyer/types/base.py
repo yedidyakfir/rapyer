@@ -42,9 +42,10 @@ class RedisType(ABC):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
         self._base_model_link = None
 
-    def bind_value_with_link(self, val):
+    def init_redis_field(self, key, val):
         if hasattr(val, "_base_model_link"):
             val._base_model_link = self
+            val.field_name = key
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -95,8 +96,8 @@ T = TypeVar("T")
 class GenericRedisType(RedisType, Generic[T], ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for val in self.iterate_values():
-            self.bind_value_with_link(val)
+        for key, val in self.iterate_items():
+            self.init_redis_field(key, val)
 
     @classmethod
     def find_inner_type(cls, type_):
@@ -105,7 +106,7 @@ class GenericRedisType(RedisType, Generic[T], ABC):
 
     def create_new_type(self, key):
         inner_original_type = self.find_inner_type(self.original_type)
-        type_transformer = RedisTypeTransformer(key, self.Meta)
+        type_transformer = RedisTypeTransformer(str(key), self.Meta)
         inner_type_orig = get_origin(inner_original_type) or inner_original_type
         inner_type_args = get_args(inner_original_type)
         new_type = type_transformer[inner_type_orig, inner_type_args]
@@ -139,7 +140,7 @@ class GenericRedisType(RedisType, Generic[T], ABC):
         return issubclass(origin, AtomicRedisModel) or issubclass(origin, RedisType)
 
     @abc.abstractmethod
-    def iterate_values(self):
+    def iterate_items(self):
         pass
 
     @classmethod
@@ -202,11 +203,10 @@ class RedisTypeTransformer:
         from rapyer.base import AtomicRedisModel
 
         if safe_issubclass(origin, AtomicRedisModel):
-            field_conf = RedisFieldConfig(field_name=self.field_name)
             return type(
                 origin.__name__,
                 (origin,),
-                dict(field_config=field_conf),
+                dict(_field_name=PrivateAttr(default=self.field_name)),
             )
         if safe_issubclass(origin, BaseModel):
             origin: type[BaseModel]
@@ -214,7 +214,7 @@ class RedisTypeTransformer:
             return type(
                 f"Redis{origin.__name__}",
                 (AtomicRedisModel, origin),
-                dict(field_config=field_conf),
+                dict(_field_name=PrivateAttr(default=self.field_name)),
             )
 
         if safe_issubclass(origin, RedisType):
