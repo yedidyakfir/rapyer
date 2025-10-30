@@ -10,6 +10,7 @@ from tests.models.collection_types import (
     SimpleDictModel,
 )
 from tests.models.unit_types import SimpleIntDictModel
+from tests.unit.assertions import assert_redis_list_correct_types
 
 
 @pytest.mark.parametrize(
@@ -47,13 +48,7 @@ def test_redis_list_extend_operation_sanity(initial_items, extend_items):
 
     # Assert
     assert isinstance(model.items, RedisList)
-    assert len(model.items) == len(initial_items) + len(extend_items)
-
-    for i, item in enumerate(extend_items):
-        idx = len(initial_items) + i
-        assert isinstance(model.items[idx], RedisStr)
-        assert str(model.items[idx]) == item
-        assert model.items[idx].key == model.key
+    assert_redis_list_correct_types(model.items, model.key, "items", RedisStr)
 
 
 @pytest.mark.parametrize(
@@ -226,3 +221,86 @@ def test_redis_list_insert_operation_sanity():
     assert isinstance(model.items[1], RedisStr)
     assert str(model.items[1]) == "middle"
     assert model.items[1].key == model.key
+
+
+@pytest.mark.parametrize(
+    "initial_items,extend_items",
+    [
+        (["hello"], ["world", "test"]),
+        ([], ["first", "second"]),
+        (["a"], ["b", "c", "d"]),
+    ],
+)
+def test_redis_list_iadd_operation_sanity(initial_items, extend_items):
+    # Arrange
+    model = SimpleListModel(items=initial_items)
+
+    # Act - Test += operator
+    model.items += extend_items
+
+    # Assert
+    assert len(model.items) == len(initial_items) + len(extend_items)
+    assert_redis_list_correct_types(model.items, model.key, "items", RedisStr)
+
+
+@pytest.mark.parametrize(
+    "initial_items,delete_index",
+    [
+        (["hello", "world", "test"], 1),
+        (["single"], 0),
+        (["a", "b", "c"], -1),
+    ],
+)
+def test_redis_list_delitem_operation_sanity(initial_items, delete_index):
+    # Arrange
+    model = SimpleListModel(items=initial_items)
+    original_length = len(model.items)
+    deleted_item = str(model.items[delete_index])
+
+    # Act - Test del operation
+    del model.items[delete_index]
+
+    # Assert
+    assert isinstance(model.items, RedisList)
+    assert len(model.items) == original_length - 1
+
+    # Verify the item was actually removed
+    for item in model.items:
+        assert str(item) != deleted_item or initial_items.count(deleted_item) > 1
+
+
+def test_redis_dict_popitem_operation_sanity():
+    # Arrange
+    model = SimpleDictModel(data={"key1": "value1", "key2": "value2"})
+    original_length = len(model.data)
+
+    # Act
+    popped_key, popped_value = model.data.popitem()
+
+    # Assert
+    assert isinstance(model.data, RedisDict)
+    assert len(model.data) == original_length - 1
+    assert popped_key not in model.data
+    assert popped_value in ["value1", "value2"]
+
+
+@pytest.mark.parametrize(
+    "initial_data,delete_key",
+    [
+        ({"key1": "value1", "key2": "value2"}, "key1"),
+        ({"single": "value"}, "single"),
+        ({"a": "1", "b": "2", "c": "3"}, "b"),
+    ],
+)
+def test_redis_dict_delitem_operation_sanity(initial_data, delete_key):
+    # Arrange
+    model = SimpleDictModel(data=initial_data)
+    original_length = len(model.data)
+
+    # Act - Test del operation
+    del model.data[delete_key]
+
+    # Assert
+    assert isinstance(model.data, RedisDict)
+    assert len(model.data) == original_length - 1
+    assert delete_key not in model.data
