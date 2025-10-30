@@ -75,62 +75,63 @@ async def redis_client():
 
 @pytest_asyncio.fixture(autouse=True)
 async def real_redis_client(redis_client):
-    # Collection types - List models
-    UserListModel.Meta.redis = redis_client
-    ProductListModel.Meta.redis = redis_client
-    IntListModel.Meta.redis = redis_client
-    StrListModel.Meta.redis = redis_client
-    DictListModel.Meta.redis = redis_client
-    BaseModelListModel.Meta.redis = redis_client
-    ListModel.Meta.redis = redis_client
+    # All Redis models that need the client configured
+    redis_models = [
+        # Collection types - List models
+        UserListModel,
+        ProductListModel,
+        IntListModel,
+        StrListModel,
+        DictListModel,
+        BaseModelListModel,
+        ListModel,
+        # Collection types - Dict models
+        IntDictModel,
+        StrDictModel,
+        DictDictModel,
+        BaseModelDictSetitemModel,
+        BytesDictModel,
+        DatetimeDictModel,
+        EnumDictModel,
+        AnyDictModel,
+        BaseModelDictModel,
+        BoolDictModel,
+        ListDictModel,
+        NestedDictModel,
+        DictModel,
+        # Collection types - Mixed and pipeline models
+        MixedTypesModel,
+        PipelineTestModel,
+        ComprehensiveTestModel,
+        # Simple types
+        IntModel,
+        BoolModel,
+        StrModel,
+        BytesModel,
+        DatetimeModel,
+        DatetimeListModel,
+        DatetimeDictModel,
+        UserModelWithTTL,
+        UserModelWithoutTTL,
+        TaskModel,
+        NoneTestModel,
+        # Functionality types
+        LockSaveTestModel,
+        LockUpdateTestModel,
+        RichModel,
+        AllTypesModel,
+        # Specialized types
+        UserModel,
+        # Complex types
+        OuterModel,
+        InnerRedisModel,
+        OuterModelWithRedisNested,
+        TestRedisModel,
+    ]
 
-    # Collection types - Dict models
-    IntDictModel.Meta.redis = redis_client
-    StrDictModel.Meta.redis = redis_client
-    DictDictModel.Meta.redis = redis_client
-    BaseModelDictSetitemModel.Meta.redis = redis_client
-    BytesDictModel.Meta.redis = redis_client
-    DatetimeDictModel.Meta.redis = redis_client
-    EnumDictModel.Meta.redis = redis_client
-    AnyDictModel.Meta.redis = redis_client
-    BaseModelDictModel.Meta.redis = redis_client
-    BoolDictModel.Meta.redis = redis_client
-    ListDictModel.Meta.redis = redis_client
-    NestedDictModel.Meta.redis = redis_client
-    DictModel.Meta.redis = redis_client
-
-    # Collection types - Mixed and pipeline models
-    MixedTypesModel.Meta.redis = redis_client
-    PipelineTestModel.Meta.redis = redis_client
-    ComprehensiveTestModel.Meta.redis = redis_client
-
-    # Simple types
-    IntModel.Meta.redis = redis_client
-    BoolModel.Meta.redis = redis_client
-    StrModel.Meta.redis = redis_client
-    BytesModel.Meta.redis = redis_client
-    DatetimeModel.Meta.redis = redis_client
-    DatetimeListModel.Meta.redis = redis_client
-    DatetimeDictModel.Meta.redis = redis_client
-    UserModelWithTTL.Meta.redis = redis_client
-    UserModelWithoutTTL.Meta.redis = redis_client
-    TaskModel.Meta.redis = redis_client
-    NoneTestModel.Meta.redis = redis_client
-
-    # Functionality types
-    LockSaveTestModel.Meta.redis = redis_client
-    LockUpdateTestModel.Meta.redis = redis_client
-    RichModel.Meta.redis = redis_client
-    AllTypesModel.Meta.redis = redis_client
-
-    # Specialized types
-    UserModel.Meta.redis = redis_client
-
-    # Complex types
-    OuterModel.Meta.redis = redis_client
-    InnerRedisModel.Meta.redis = redis_client
-    OuterModelWithRedisNested.Meta.redis = redis_client
-    TestRedisModel.Meta.redis = redis_client
+    # Configure Redis client for all models
+    for model in redis_models:
+        model.Meta.redis = redis_client
 
     yield redis_client
     await redis_client.aclose()
