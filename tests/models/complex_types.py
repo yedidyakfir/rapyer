@@ -27,8 +27,8 @@ class ComplexNestedModel(AtomicRedisModel):
 
 
 class TripleNestedModel(AtomicRedisModel):
-    triple_list: list[list[list[str]]]
-    triple_dict: dict[str, dict[str, dict[str, str]]]
+    triple_list: list[list[list[str]]] = Field(default_factory=list)
+    triple_dict: dict[str, dict[str, dict[str, str]]] = Field(default_factory=dict)
 
 
 class InnerMostModel(BaseModel):

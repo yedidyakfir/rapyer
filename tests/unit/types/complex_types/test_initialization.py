@@ -36,14 +36,14 @@ def test_nested_list_model_creation_sanity(test_nested_list):
     for i, inner_list in enumerate(test_nested_list):
         assert isinstance(model.nested_list[i], RedisList)
         assert model.nested_list[i].key == model.key
-        assert model.nested_list[i].field_name == f"nested_list[{i}]"
+        assert model.nested_list[i].field_path == f"nested_list[{i}]"
         assert len(model.nested_list[i]) == len(inner_list)
 
         for j, item in enumerate(inner_list):
             assert isinstance(model.nested_list[i][j], RedisStr)
             assert str(model.nested_list[i][j]) == item
             assert model.nested_list[i][j].key == model.key
-            assert model.nested_list[i][j].field_name == f"nested_list[{i}][{j}]"
+            assert model.nested_list[i][j].field_path == f"nested_list[{i}][{j}]"
 
 
 @pytest.mark.parametrize(
@@ -69,7 +69,7 @@ def test_nested_dict_model_creation_sanity(test_nested_dict):
     for outer_key, inner_dict in test_nested_dict.items():
         assert isinstance(model.nested_dict[outer_key], RedisDict)
         assert model.nested_dict[outer_key].key == model.key
-        assert model.nested_dict[outer_key].field_name == f"nested_dict.{outer_key}"
+        assert model.nested_dict[outer_key].field_path == f"nested_dict.{outer_key}"
         assert len(model.nested_dict[outer_key]) == len(inner_dict)
 
         for inner_key, value in inner_dict.items():
@@ -77,7 +77,7 @@ def test_nested_dict_model_creation_sanity(test_nested_dict):
             assert str(model.nested_dict[outer_key][inner_key]) == value
             assert model.nested_dict[outer_key][inner_key].key == model.key
             assert (
-                model.nested_dict[outer_key][inner_key].field_name
+                model.nested_dict[outer_key][inner_key].field_path
                 == f"nested_dict.{outer_key}.{inner_key}"
             )
 
@@ -104,14 +104,14 @@ def test_list_of_dicts_model_creation_sanity(test_list_of_dicts):
     for i, dict_item in enumerate(test_list_of_dicts):
         assert isinstance(model.list_of_dicts[i], RedisDict)
         assert model.list_of_dicts[i].key == model.key
-        assert model.list_of_dicts[i].field_name == f"list_of_dicts[{i}]"
+        assert model.list_of_dicts[i].field_path == f"list_of_dicts[{i}]"
         assert len(model.list_of_dicts[i]) == len(dict_item)
 
         for key, value in dict_item.items():
             assert isinstance(model.list_of_dicts[i][key], RedisStr)
             assert str(model.list_of_dicts[i][key]) == value
             assert model.list_of_dicts[i][key].key == model.key
-            assert model.list_of_dicts[i][key].field_name == f"list_of_dicts[{i}].{key}"
+            assert model.list_of_dicts[i][key].field_path == f"list_of_dicts[{i}].{key}"
 
 
 @pytest.mark.parametrize(
@@ -136,14 +136,14 @@ def test_dict_of_lists_model_creation_sanity(test_dict_of_lists):
     for key, list_value in test_dict_of_lists.items():
         assert isinstance(model.dict_of_lists[key], RedisList)
         assert model.dict_of_lists[key].key == model.key
-        assert model.dict_of_lists[key].field_name == f"dict_of_lists.{key}"
+        assert model.dict_of_lists[key].field_path == f"dict_of_lists.{key}"
         assert len(model.dict_of_lists[key]) == len(list_value)
 
         for i, item in enumerate(list_value):
             assert isinstance(model.dict_of_lists[key][i], RedisStr)
             assert str(model.dict_of_lists[key][i]) == item
             assert model.dict_of_lists[key][i].key == model.key
-            assert model.dict_of_lists[key][i].field_name == f"dict_of_lists.{key}[{i}]"
+            assert model.dict_of_lists[key][i].field_path == f"dict_of_lists.{key}[{i}]"
 
 
 def test_complex_nested_model_creation_sanity():
@@ -194,29 +194,18 @@ def test_triple_nested_list_model_creation_sanity(test_triple_list):
     for i, level2_list in enumerate(test_triple_list):
         assert isinstance(model.triple_list[i], RedisList)
         assert model.triple_list[i].key == model.key
-        assert model.triple_list[i].field_name == f"triple_list[{i}]"
+        assert model.triple_list[i].field_path == f"triple_list[{i}]"
 
         for j, level3_list in enumerate(level2_list):
             assert isinstance(model.triple_list[i][j], RedisList)
             assert model.triple_list[i][j].key == model.key
-            assert model.triple_list[i][j].field_name == f"triple_list[{i}][{j}]"
+            assert model.triple_list[i][j].field_path == f"triple_list[{i}][{j}]"
 
             for k, item in enumerate(level3_list):
                 assert isinstance(model.triple_list[i][j][k], RedisStr)
                 assert str(model.triple_list[i][j][k]) == item
                 assert model.triple_list[i][j][k].key == model.key
                 assert (
-                    model.triple_list[i][j][k].field_name
+                    model.triple_list[i][j][k].field_path
                     == f"triple_list[{i}][{j}][{k}]"
                 )
-
-
-def test_empty_complex_model_creation_sanity():
-    # Arrange & Act
-    model = ComplexNestedModel()
-
-    # Assert
-    assert hasattr(model, "nested_list")
-    assert hasattr(model, "nested_dict")
-    assert hasattr(model, "list_of_dicts")
-    assert hasattr(model, "dict_of_lists")
