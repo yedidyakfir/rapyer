@@ -5,11 +5,11 @@ import pickle
 from abc import ABC
 from typing import get_args, Any, TypeVar, Generic, get_origin
 
-from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel
+from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel, PrivateAttr
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, CoreSchema, SerializationInfo
 
-from rapyer.config import RedisFieldConfig, RedisConfig
+from rapyer.config import RedisConfig
 from rapyer.context import _context_var
 from rapyer.utils import safe_issubclass
 
@@ -103,41 +103,6 @@ class GenericRedisType(RedisType, Generic[T], ABC):
     def find_inner_type(cls, type_):
         args = get_args(type_)
         return args[0] if args else Any
-
-    def create_new_type(self, key):
-        inner_original_type = self.find_inner_type(self.original_type)
-        type_transformer = RedisTypeTransformer(str(key), self.Meta)
-        inner_type_orig = get_origin(inner_original_type) or inner_original_type
-        inner_type_args = get_args(inner_original_type)
-        new_type = type_transformer[inner_type_orig, inner_type_args]
-        return new_type
-
-    def create_new_value_with_adapter(self, key, value):
-        if not self.is_type_supported:
-            return value, TypeAdapter(Any)
-        new_type = self.create_new_type(key)
-        if issubclass(new_type, BaseModel):
-            adapter = TypeAdapter(new_type)
-        elif issubclass(new_type, RedisType):
-            adapter = new_type._adapter  # noqa
-        else:
-            return value, TypeAdapter(new_type)
-        normalized_object = adapter.validate_python(
-            value, context={REDIS_DUMP_FLAG_NAME: True}
-        )
-        return normalized_object, adapter
-
-    def create_new_value(self, key, value):
-        new_value, adapter = self.create_new_value_with_adapter(key, value)
-        return new_value
-
-    @functools.cached_property
-    def is_type_supported(self):
-        from rapyer.base import AtomicRedisModel
-
-        inner_type = self.find_inner_type(self._adapter._type)
-        origin = get_origin(inner_type) or inner_type
-        return issubclass(origin, AtomicRedisModel) or issubclass(origin, RedisType)
 
     @abc.abstractmethod
     def iterate_items(self):
