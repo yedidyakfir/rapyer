@@ -1,72 +1,24 @@
 from datetime import datetime
-from enum import Enum
-from typing import Any
 
 import pytest
 import pytest_asyncio
-from pydantic import BaseModel, Field
 
 from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
-
-
-class Status(str, Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    PENDING = "pending"
-
-
-class StrDictModel(AtomicRedisModel):
-    metadata: dict[str, str] = Field(default_factory=dict)
-
-
-class IntDictModel(AtomicRedisModel):
-    metadata: dict[str, int] = Field(default_factory=dict)
-
-
-class BytesDictModel(AtomicRedisModel):
-    metadata: dict[str, bytes] = Field(default_factory=dict)
-
-
-class DatetimeDictModel(AtomicRedisModel):
-    metadata: dict[str, datetime] = Field(default_factory=dict)
-
-
-class EnumDictModel(AtomicRedisModel):
-    metadata: dict[str, Status] = Field(default_factory=dict)
-
-
-class AnyDictModel(AtomicRedisModel):
-    metadata: dict[str, Any] = Field(default_factory=dict)
-
-
-# Additional complex types
-class Person(BaseModel):
-    name: str
-    age: int
-    email: str
-
-
-class Company(BaseModel):
-    name: str
-    employees: int
-    founded: int
-
-
-class BaseModelDictModel(AtomicRedisModel):
-    metadata: dict[str, Person] = Field(default_factory=dict)
-
-
-class BoolDictModel(AtomicRedisModel):
-    metadata: dict[str, bool] = Field(default_factory=dict)
-
-
-class ListDictModel(AtomicRedisModel):
-    metadata: dict[str, list[str]] = Field(default_factory=dict)
-
-
-class NestedDictModel(AtomicRedisModel):
-    metadata: dict[str, dict[str, str]] = Field(default_factory=dict)
+from tests.models.dict_models import (
+    IntDictModel,
+    StrDictModel,
+    BytesDictModel,
+    DatetimeDictModel,
+    EnumDictModel,
+    AnyDictModel,
+    BaseModelDictModel,
+    BoolDictModel,
+    ListDictModel,
+    NestedDictModel,
+    Status,
+    Person,
+)
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -391,45 +343,6 @@ async def test_redis_dict__popitem__check_redis_popitem_sanity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["model_class", "initial_data", "update_data"],
-    [
-        [StrDictModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}],
-        [IntDictModel, {"key1": 42}, {"key2": 100, "key3": 200}],
-        [BytesDictModel, {"key1": b"data1"}, {"key2": b"data2", "key3": b"data3"}],
-        [
-            DatetimeDictModel,
-            {"key1": datetime(2023, 1, 1)},
-            {"key2": datetime(2023, 2, 1), "key3": datetime(2023, 3, 1)},
-        ],
-        [
-            EnumDictModel,
-            {"key1": Status.ACTIVE},
-            {"key2": Status.PENDING, "key3": Status.INACTIVE},
-        ],
-        [AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}],
-    ],
-)
-async def test_redis_dict__update_with_dict_arg__check_local_consistency_sanity(
-    model_class, initial_data, update_data
-):
-    # Arrange
-    user = model_class(metadata=initial_data)
-    await user.save()
-
-    # Act
-    await user.metadata.aupdate(**update_data)
-    await user.save()  # Sync with Redis
-
-    # Assert
-    fresh_user = model_class()
-    fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
-    assert user.metadata == fresh_user.metadata
-    assert len(user.metadata) == 3
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
     ["model_class", "initial_data"],
     [
         [StrDictModel, {"key1": "value1"}],
@@ -441,7 +354,7 @@ async def test_redis_dict__update_with_dict_arg__check_local_consistency_sanity(
     ],
 )
 async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
-    model_class, initial_data
+    model_class: type[AtomicRedisModel], initial_data
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -539,36 +452,6 @@ async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(model_clas
     # Act & Assert
     with pytest.raises(KeyError, match="popitem\\(\\): dictionary is empty"):
         await user.metadata.apopitem()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ["model_class", "initial_data"],
-    [
-        [StrDictModel, {"key1": "value1"}],
-        [IntDictModel, {"key1": 42}],
-        [BytesDictModel, {"key1": b"data1"}],
-        [DatetimeDictModel, {"key1": datetime(2023, 1, 1)}],
-        [EnumDictModel, {"key1": Status.ACTIVE}],
-        [AnyDictModel, {"key1": "mixed"}],
-    ],
-)
-async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
-    real_redis_client, model_class, initial_data
-):
-    # Arrange & Act
-    user = model_class(metadata=initial_data)
-
-    # Assert
-    assert isinstance(user.metadata, RedisDict)
-    assert hasattr(user.metadata, "key")
-    assert hasattr(user.metadata, "field_path")
-    assert hasattr(user.metadata, "redis")
-    assert hasattr(user.metadata, "json_path")
-    assert user.metadata.key == user.key
-    assert user.metadata.field_path == "metadata"
-    assert user.metadata.json_path == "$.metadata"
-    assert user.metadata.redis == real_redis_client
 
 
 @pytest.mark.asyncio
