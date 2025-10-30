@@ -18,6 +18,7 @@ from tests.models.dict_models import (
     NestedDictModel,
     Status,
     Person,
+    BaseDictMetadataModel,
 )
 
 
@@ -69,7 +70,7 @@ async def real_redis_client(redis_client):
     ],
 )
 async def test_redis_dict__setitem__check_local_consistency_sanity(
-    model_class: type[AtomicRedisModel], initial_data, new_item_key, new_item_value
+    model_class: type[BaseDictMetadataModel], initial_data, new_item_key, new_item_value
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -103,7 +104,7 @@ async def test_redis_dict__setitem__check_local_consistency_sanity(
     ],
 )
 async def test_redis_dict__delitem__check_local_consistency_sanity(
-    model_class, initial_data, key_to_delete
+    model_class: type[BaseDictMetadataModel], initial_data, key_to_delete
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -174,7 +175,7 @@ async def test_redis_dict__update__check_local_consistency_sanity(
     ],
 )
 async def test_redis_dict__clear__check_local_consistency_sanity(
-    model_class, initial_data
+    model_class: type[BaseDictMetadataModel], initial_data
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -210,7 +211,7 @@ async def test_redis_dict__clear__check_local_consistency_sanity(
     ],
 )
 async def test_redis_dict__load__check_redis_load_sanity(
-    model_class, initial_data, new_item_key, new_item_value
+    model_class: type[BaseDictMetadataModel], initial_data, new_item_key, new_item_value
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -256,7 +257,7 @@ async def test_redis_dict__load__check_redis_load_sanity(
     ],
 )
 async def test_redis_dict__pop__check_redis_pop_sanity(
-    model_class, initial_data, key_to_pop, expected_value
+    model_class: type[BaseDictMetadataModel], initial_data, key_to_pop, expected_value
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -288,7 +289,7 @@ async def test_redis_dict__pop__check_redis_pop_sanity(
     ],
 )
 async def test_redis_dict__pop_with_default__check_default_return_sanity(
-    model_class, initial_data, default_value
+    model_class: type[BaseDictMetadataModel], initial_data, default_value
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -318,7 +319,7 @@ async def test_redis_dict__pop_with_default__check_default_return_sanity(
     ],
 )
 async def test_redis_dict__popitem__check_redis_popitem_sanity(
-    model_class, initial_data
+    model_class: type[BaseDictMetadataModel], initial_data
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -401,7 +402,7 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
     ],
 )
 async def test_redis_dict__clone__check_clone_functionality_sanity(
-    model_class, initial_data
+    model_class: type[BaseDictMetadataModel], initial_data
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -411,9 +412,8 @@ async def test_redis_dict__clone__check_clone_functionality_sanity(
 
     # Assert
     assert isinstance(cloned_dict, dict)
-    assert not isinstance(
-        cloned_dict, type(user.metadata)
-    )  # Should be regular dict, not RedisDict
+    # Should be regular dict, not RedisDict
+    assert not isinstance(cloned_dict, type(user.metadata))
     assert cloned_dict == initial_data
     assert cloned_dict == user.metadata
     # Verify it's a copy, not the same object
@@ -444,7 +444,9 @@ async def test_redis_dict__clone__check_clone_functionality_sanity(
         AnyDictModel,
     ],
 )
-async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(model_class):
+async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(
+    model_class: type[BaseDictMetadataModel],
+):
     # Arrange
     user = model_class(metadata={})
     await user.save()
@@ -471,7 +473,7 @@ async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(model_clas
     ],
 )
 async def test__redis_dict_model__ior_sanity(
-    model_class, initial_data, additional_data
+    model_class: type[BaseDictMetadataModel], initial_data, additional_data
 ):
     # Arrange
     user = model_class(metadata=initial_data)
@@ -498,7 +500,7 @@ async def test__redis_dict_model__ior_sanity(
     ],
 )
 async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
-    model_class, default_value
+    model_class: type[BaseDictMetadataModel], default_value
 ):
     # Arrange
     user = model_class()
@@ -523,7 +525,9 @@ async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
         AnyDictModel,
     ],
 )
-async def test_redis_dict__apop_empty_redis__check_no_default_sanity(model_class):
+async def test_redis_dict__apop_empty_redis__check_no_default_sanity(
+    model_class: type[BaseDictMetadataModel],
+):
     # Arrange
     user = model_class()
     await user.save()

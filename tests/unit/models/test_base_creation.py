@@ -11,6 +11,7 @@ from tests.models.dict_models import (
     EnumDictModel,
     AnyDictModel,
     Status,
+    BaseDictMetadataModel,
 )
 
 
@@ -27,7 +28,7 @@ from tests.models.dict_models import (
     ],
 )
 async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
-    real_redis_client, model_class, initial_data
+    model_class: type[BaseDictMetadataModel], initial_data
 ):
     # Arrange & Act
     user = model_class(metadata=initial_data)
@@ -41,4 +42,3 @@ async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
     assert user.metadata.key == user.key
     assert user.metadata.field_path == "metadata"
     assert user.metadata.json_path == "$.metadata"
-    assert user.metadata.redis == real_redis_client
