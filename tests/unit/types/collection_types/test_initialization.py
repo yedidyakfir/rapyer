@@ -30,7 +30,7 @@ def test_redis_list_str_model_creation_sanity(test_items):
         assert isinstance(model.items[i], RedisStr)
         assert str(model.items[i]) == item
         assert model.items[i].key == model.key
-        assert model.items[i].field_name == f"items[{i}]"
+        assert model.items[i].field_path == f"items[{i}]"
 
 
 @pytest.mark.parametrize("test_numbers", [[1, 2, 3], [0, -1, 100], [], [42]])
@@ -49,7 +49,7 @@ def test_redis_list_int_model_creation_sanity(test_numbers):
         assert isinstance(model.numbers[i], RedisInt)
         assert int(model.numbers[i]) == number
         assert model.numbers[i].key == model.key
-        assert model.numbers[i].field_name == f"numbers[{i}]"
+        assert model.numbers[i].field_path == f"numbers[{i}]"
 
 
 @pytest.mark.parametrize(
@@ -77,7 +77,7 @@ def test_redis_dict_str_model_creation_sanity(test_data):
         assert isinstance(model.data[key], RedisStr)
         assert str(model.data[key]) == value
         assert model.data[key].key == model.key
-        assert model.data[key].field_name == f"data.{key}"
+        assert model.data[key].field_path == f"data.{key}"
 
 
 @pytest.mark.parametrize(
@@ -100,7 +100,7 @@ def test_redis_dict_int_model_creation_sanity(test_counts):
         assert isinstance(model.counts[key], RedisInt)
         assert int(model.counts[key]) == value
         assert model.counts[key].key == model.key
-        assert model.counts[key].field_name == f"counts.{key}"
+        assert model.counts[key].field_path == f"counts.{key}"
 
 
 def test_mixed_collection_model_creation_sanity():

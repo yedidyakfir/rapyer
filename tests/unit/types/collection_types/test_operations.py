@@ -115,7 +115,7 @@ def test_redis_dict_setitem_operation_sanity(initial_data, new_key, new_value):
     assert isinstance(model.data[new_key], RedisStr)
     assert str(model.data[new_key]) == new_value
     assert model.data[new_key].key == model.key
-    assert model.data[new_key].field_name == f"data.{new_key}"
+    assert model.data[new_key].field_path == f"data.{new_key}"
 
 
 @pytest.mark.parametrize(
