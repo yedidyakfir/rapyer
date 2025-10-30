@@ -210,7 +210,7 @@ class RedisTypeTransformer:
             )
         if safe_issubclass(origin, BaseModel):
             origin: type[BaseModel]
-            field_conf = RedisFieldConfig(field_name=self.field_name)
+            # TODO - check if switch order inheritance change something
             return type(
                 f"Redis{origin.__name__}",
                 (AtomicRedisModel, origin),
