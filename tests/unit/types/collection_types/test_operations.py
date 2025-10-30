@@ -10,7 +10,11 @@ from tests.models.collection_types import (
     SimpleDictModel,
 )
 from tests.models.unit_types import SimpleIntDictModel
-from tests.unit.assertions import assert_redis_list_correct_types
+from tests.unit.assertions import (
+    assert_redis_list_correct_types,
+    assert_redis_dict_item_correct,
+    assert_redis_list_item_correct,
+)
 
 
 @pytest.mark.parametrize(
@@ -26,9 +30,9 @@ def test_redis_list_append_operation_sanity(initial_items, new_item):
     # Assert
     assert isinstance(model.items, RedisList)
     assert len(model.items) == len(initial_items) + 1
-    assert isinstance(model.items[-1], RedisStr)
-    assert str(model.items[-1]) == new_item
-    assert model.items[-1].key == model.key
+    assert_redis_list_item_correct(
+        model.items, -1, new_item, model.key, f"items[{len(initial_items)}]", RedisStr
+    )
 
 
 @pytest.mark.parametrize(
@@ -68,9 +72,9 @@ def test_redis_list_setitem_operation_sanity(initial_items, index, new_item):
 
     # Assert
     assert isinstance(model.items, RedisList)
-    assert isinstance(model.items[index], RedisStr)
-    assert str(model.items[index]) == new_item
-    assert model.items[index].key == model.key
+    assert_redis_list_item_correct(
+        model.items, index, new_item, model.key, f"items[{index}]", RedisStr
+    )
 
 
 @pytest.mark.parametrize(
@@ -106,11 +110,9 @@ def test_redis_dict_setitem_operation_sanity(initial_data, new_key, new_value):
 
     # Assert
     assert isinstance(model.data, RedisDict)
-    assert new_key in model.data
-    assert isinstance(model.data[new_key], RedisStr)
-    assert str(model.data[new_key]) == new_value
-    assert model.data[new_key].key == model.key
-    assert model.data[new_key].field_path == f"data.{new_key}"
+    assert_redis_dict_item_correct(
+        model.data, new_key, new_value, model.key, f"data.{new_key}", RedisStr
+    )
 
 
 @pytest.mark.parametrize(
@@ -132,10 +134,9 @@ def test_redis_dict_update_operation_sanity(initial_data, update_data):
     assert isinstance(model.data, RedisDict)
 
     for key, value in update_data.items():
-        assert key in model.data
-        assert isinstance(model.data[key], RedisStr)
-        assert str(model.data[key]) == value
-        assert model.data[key].key == model.key
+        assert_redis_dict_item_correct(
+            model.data, key, value, model.key, f"data.{key}", RedisStr
+        )
 
 
 @pytest.mark.parametrize(
@@ -218,9 +219,9 @@ def test_redis_list_insert_operation_sanity():
     # Assert
     assert isinstance(model.items, RedisList)
     assert len(model.items) == 3
-    assert isinstance(model.items[1], RedisStr)
-    assert str(model.items[1]) == "middle"
-    assert model.items[1].key == model.key
+    assert_redis_list_item_correct(
+        model.items, 1, "middle", model.key, "items[1]", RedisStr
+    )
 
 
 @pytest.mark.parametrize(
