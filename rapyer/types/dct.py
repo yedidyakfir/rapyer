@@ -144,7 +144,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         )
         redis_params = {self.json_field_path(key): v for key, v in dumped_data.items()}
 
-        # If I am in a pipeline, update keys in pipeline, otherwise execute pipeline
+        # If I am in a pipeline, update keys in a pipeline, otherwise execute a pipeline
         if self.pipeline:
             update_keys_in_pipeline(self.pipeline, self.key, **redis_params)
             return
