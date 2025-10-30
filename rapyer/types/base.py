@@ -72,9 +72,9 @@ class RedisType(ABC):
         model_dump = self._adapter.dump_python(
             self, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
-        await self.Meta.redis.json().set(self.key, self.json_path, model_dump)
+        await self.client.json().set(self.key, self.json_path, model_dump)
         if self.Meta.ttl is not None:
-            await self.Meta.redis.expire(self.key, self.Meta.ttl)
+            await self.client.expire(self.key, self.Meta.ttl)
         return self
 
     @abc.abstractmethod
