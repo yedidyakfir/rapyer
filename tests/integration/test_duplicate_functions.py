@@ -14,8 +14,9 @@ from tests.models.complex_types import (
 )
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def redis_client_fixture(redis_client):
+    OuterModel.Meta.redis = redis_client
     TestRedisModel.Meta.redis = redis_client
     InnerRedisModel.Meta.redis = redis_client
     yield redis_client
@@ -68,12 +69,7 @@ async def test_duplicate_with_nested_models_sanity():
     # Assert
     assert duplicate.pk != original.pk
     assert (
-        duplicate.middle_model.inner_model.names
-        == original.middle_model.inner_model.names
-    )
-    assert (
-        duplicate.middle_model.inner_model.scores
-        == original.middle_model.inner_model.scores
+        duplicate.middle_model.inner_model.lst == original.middle_model.inner_model.lst
     )
     assert (
         duplicate.middle_model.inner_model.counter
@@ -83,7 +79,6 @@ async def test_duplicate_with_nested_models_sanity():
     assert duplicate.middle_model.metadata == original.middle_model.metadata
     assert duplicate.user_data == original.user_data
     assert duplicate.items == original.items
-    assert duplicate.description == original.description
 
 
 @pytest.mark.asyncio
@@ -282,7 +277,7 @@ async def test_duplicate_many_with_different_counts_sanity(
     assert len(set(pks)) == num_duplicates
     assert original.pk not in pks
 
-    # Verify all exist in Redis
+    # Verify all existing in Redis
     for duplicate in duplicates:
         exists = await redis_client_fixture.exists(duplicate.key)
         assert exists == 1
@@ -313,17 +308,12 @@ async def test_duplicate_preserves_all_redis_types_sanity():
 
     # Check all list types
     assert (
-        duplicate.middle_model.inner_model.names
-        == original.middle_model.inner_model.names
+        duplicate.middle_model.inner_model.lst == original.middle_model.inner_model.lst
     )
     assert duplicate.middle_model.tags == original.middle_model.tags
     assert duplicate.items == original.items
 
     # Check all dict types
-    assert (
-        duplicate.middle_model.inner_model.scores
-        == original.middle_model.inner_model.scores
-    )
     assert duplicate.middle_model.metadata == original.middle_model.metadata
     assert duplicate.user_data == original.user_data
 
@@ -332,4 +322,3 @@ async def test_duplicate_preserves_all_redis_types_sanity():
         duplicate.middle_model.inner_model.counter
         == original.middle_model.inner_model.counter
     )
-    assert duplicate.description == original.description
