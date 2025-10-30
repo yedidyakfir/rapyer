@@ -1,7 +1,6 @@
 import pytest
 from pydantic import ValidationError
 
-from rapyer.types.boolean import RedisBool
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
@@ -223,7 +222,7 @@ def test_default_annotated_model_creation_sanity():
     # Assert
     assert isinstance(model.title, RedisStr)
     assert isinstance(model.count, RedisInt)
-    assert isinstance(model.active, RedisBool)
+    assert isinstance(model.active, bool)
     # NOTE: Fields with default_factory in Field() don't convert to Redis types
     # This is a known limitation with the current implementation
     assert isinstance(model.items, list)
@@ -237,7 +236,6 @@ def test_default_annotated_model_creation_sanity():
 
     assert model.title.field_path == "title"
     assert model.count.field_path == "count"
-    assert model.active.field_path == "active"
 
 
 def test_default_annotated_model_with_values_creation_sanity():

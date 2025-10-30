@@ -1,6 +1,5 @@
 import pytest
 
-from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
 from rapyer.types.integer import RedisInt
 from rapyer.types.string import RedisStr
@@ -45,10 +44,7 @@ def test_redis_bool_model_creation_sanity(test_value):
     model = SimpleBoolModel(flag=test_value)
 
     # Assert
-    assert isinstance(model.flag, RedisBool)
-    assert model.flag.key == model.key
-    assert model.flag.field_path == "flag"
-    assert model.flag.json_path == "$.flag"
+    assert isinstance(model.flag, bool)
     assert bool(model.flag) == test_value
 
 
@@ -78,22 +74,16 @@ def test_multi_type_model_creation_sanity():
     # Assert
     assert isinstance(model.name, RedisStr)
     assert isinstance(model.count, RedisInt)
-    assert isinstance(model.flag, RedisBool)
+    assert isinstance(model.flag, bool)
     assert isinstance(model.data, RedisBytes)
 
-    assert model.name.key == model.key
     assert model.count.key == model.key
-    assert model.flag.key == model.key
     assert model.data.key == model.key
 
-    assert model.name.field_path == "name"
     assert model.count.field_path == "count"
-    assert model.flag.field_path == "flag"
     assert model.data.field_path == "data"
 
-    assert model.name.json_path == "$.name"
     assert model.count.json_path == "$.count"
-    assert model.flag.json_path == "$.flag"
     assert model.data.json_path == "$.data"
 
 

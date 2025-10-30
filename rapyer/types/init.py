@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
 from rapyer.types.datetime import RedisDatetime
 from rapyer.types.dct import RedisDict
@@ -13,7 +12,6 @@ ALL_TYPES = {
     dict: RedisDict,
     bytes: RedisBytes,
     int: RedisInt,
-    bool: RedisBool,
     str: RedisStr,
     datetime: RedisDatetime,
 }

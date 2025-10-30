@@ -2,7 +2,6 @@ from typing import Annotated
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
-from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
@@ -17,10 +16,6 @@ class DirectRedisStringModel(AtomicRedisModel):
 
 class DirectRedisIntModel(AtomicRedisModel):
     count: RedisInt = RedisInt(0)
-
-
-class DirectRedisBoolModel(AtomicRedisModel):
-    flag: RedisBool = RedisBool(False)
 
 
 class DirectRedisBytesModel(AtomicRedisModel):
@@ -46,18 +41,20 @@ class DirectRedisDictIntModel(AtomicRedisModel):
 class MixedDirectRedisTypesModel(AtomicRedisModel):
     name: RedisStr = RedisStr("default")
     count: RedisInt = RedisInt(0)
-    active: RedisBool = RedisBool(True)
+    active: bool = True
     tags: RedisList[str] = Field(default_factory=list)
     config: RedisDict[str, int] = Field(default_factory=dict)
 
 
 class AnnotatedDirectRedisTypesModel(AtomicRedisModel):
-    title: Annotated[RedisStr, Field(description="Title field")] = RedisStr("default_title")
+    title: Annotated[RedisStr, Field(description="Title field")] = RedisStr(
+        "default_title"
+    )
     score: Annotated[RedisInt, Field(ge=0, description="Score field")] = RedisInt(0)
-    enabled: Annotated[RedisBool, Field(description="Enabled flag")] = RedisBool(False)
+    enabled: Annotated[bool, Field(description="Enabled flag")] = False
     categories: Annotated[RedisList[str], Field(description="Categories list")] = Field(
         default_factory=list
     )
-    settings: Annotated[RedisDict[str, str], Field(description="Settings dict")] = Field(
-        default_factory=dict
+    settings: Annotated[RedisDict[str, str], Field(description="Settings dict")] = (
+        Field(default_factory=dict)
     )

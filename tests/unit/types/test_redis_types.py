@@ -1,6 +1,5 @@
 import pytest
 
-from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
@@ -9,7 +8,6 @@ from rapyer.types.string import RedisStr
 from tests.models.redis_types import (
     DirectRedisStringModel,
     DirectRedisIntModel,
-    DirectRedisBoolModel,
     DirectRedisBytesModel,
     DirectRedisListModel,
     DirectRedisListIntModel,
@@ -44,19 +42,6 @@ def test_direct_redis_int_model_creation_sanity(test_value):
     assert model.count.field_path == "count"
     assert model.count.json_path == "$.count"
     assert int(model.count) == test_value
-
-
-@pytest.mark.parametrize("test_value", [True, False])
-def test_direct_redis_bool_model_creation_sanity(test_value):
-    # Arrange & Act
-    model = DirectRedisBoolModel(flag=RedisBool(test_value))
-
-    # Assert
-    assert isinstance(model.flag, RedisBool)
-    assert model.flag.key == model.key
-    assert model.flag.field_path == "flag"
-    assert model.flag.json_path == "$.flag"
-    assert bool(model.flag) == test_value
 
 
 @pytest.mark.parametrize("test_value", [b"hello", b"world", b"", b"\x00\x01\x02"])
@@ -138,7 +123,7 @@ def test_mixed_direct_redis_types_model_creation_sanity():
     model = MixedDirectRedisTypesModel(
         name=RedisStr(name_val),
         count=RedisInt(count_val),
-        active=RedisBool(active_val),
+        active=active_val,
         tags=tags_val,
         config=config_val,
     )
@@ -146,25 +131,22 @@ def test_mixed_direct_redis_types_model_creation_sanity():
     # Assert
     assert isinstance(model.name, RedisStr)
     assert isinstance(model.count, RedisInt)
-    assert isinstance(model.active, RedisBool)
+    assert isinstance(model.active, bool)
     assert isinstance(model.tags, RedisList)
     assert isinstance(model.config, RedisDict)
 
     assert model.name.key == model.key
     assert model.count.key == model.key
-    assert model.active.key == model.key
     assert model.tags.key == model.key
     assert model.config.key == model.key
 
     assert model.name.field_path == "name"
     assert model.count.field_path == "count"
-    assert model.active.field_path == "active"
     assert model.tags.field_path == "tags"
     assert model.config.field_path == "config"
 
     assert model.name.json_path == "$.name"
     assert model.count.json_path == "$.count"
-    assert model.active.json_path == "$.active"
     assert model.tags.json_path == "$.tags"
     assert model.config.json_path == "$.config"
 
@@ -187,7 +169,7 @@ def test_annotated_direct_redis_types_model_creation_sanity():
     model = AnnotatedDirectRedisTypesModel(
         title=RedisStr(title_val),
         score=RedisInt(score_val),
-        enabled=RedisBool(enabled_val),
+        enabled=enabled_val,
         categories=categories_val,
         settings=settings_val,
     )
@@ -195,25 +177,22 @@ def test_annotated_direct_redis_types_model_creation_sanity():
     # Assert
     assert isinstance(model.title, RedisStr)
     assert isinstance(model.score, RedisInt)
-    assert isinstance(model.enabled, RedisBool)
+    assert isinstance(model.enabled, bool)
     assert isinstance(model.categories, RedisList)
     assert isinstance(model.settings, RedisDict)
 
     assert model.title.key == model.key
     assert model.score.key == model.key
-    assert model.enabled.key == model.key
     assert model.categories.key == model.key
     assert model.settings.key == model.key
 
     assert model.title.field_path == "title"
     assert model.score.field_path == "score"
-    assert model.enabled.field_path == "enabled"
     assert model.categories.field_path == "categories"
     assert model.settings.field_path == "settings"
 
     assert model.title.json_path == "$.title"
     assert model.score.json_path == "$.score"
-    assert model.enabled.json_path == "$.enabled"
     assert model.categories.json_path == "$.categories"
     assert model.settings.json_path == "$.settings"
 
@@ -225,7 +204,7 @@ def test_direct_redis_types_model_default_values_sanity():
     # Assert
     assert isinstance(model.name, RedisStr)
     assert isinstance(model.count, RedisInt)
-    assert isinstance(model.active, RedisBool)
+    assert isinstance(model.active, bool)
     assert isinstance(model.tags, RedisList)
     assert isinstance(model.config, RedisDict)
 
@@ -241,11 +220,10 @@ def test_direct_redis_types_field_path_nested_model_sanity():
     model = MixedDirectRedisTypesModel()
 
     # Assert
-    expected_paths = ["name", "count", "active", "tags", "config"]
+    expected_paths = ["name", "count", "tags", "config"]
     actual_paths = [
         model.name.field_path,
         model.count.field_path,
-        model.active.field_path,
         model.tags.field_path,
         model.config.field_path,
     ]
@@ -263,14 +241,12 @@ def test_direct_redis_types_json_path_format_sanity():
     expected_json_paths = [
         "$.title",
         "$.score",
-        "$.enabled",
         "$.categories",
         "$.settings",
     ]
     actual_json_paths = [
         model.title.json_path,
         model.score.json_path,
-        model.enabled.json_path,
         model.categories.json_path,
         model.settings.json_path,
     ]

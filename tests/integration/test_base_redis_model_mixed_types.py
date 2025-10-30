@@ -170,17 +170,15 @@ async def test_bool_dict_operations_functionality(bool_data):
     assert len(model.bool_dict) == len(bool_data)
     for key, value in bool_data.items():
         assert model.bool_dict[key] == value
-        # TODO - Sadly bool cant be inherited from. consider making it non redis type with special case
-        # assert isinstance(model.bool_dict[key], bool)
+        assert isinstance(model.bool_dict[key], bool)
 
     original_data = dict(model.bool_dict)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
     await fresh_model.bool_dict.load()
     assert dict(fresh_model.bool_dict) == original_data
-    # TODO - Sadly bool cant be inherited from. consider making it non redis type with special case
-    # for key, value in fresh_model.bool_dict.items():
-    #     assert isinstance(value, bool)
+    for key, value in fresh_model.bool_dict.items():
+        assert isinstance(value, bool)
 
 
 @pytest.mark.asyncio

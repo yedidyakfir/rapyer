@@ -1,6 +1,5 @@
 import pytest
 
-from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
 from rapyer.types.integer import RedisInt
 from rapyer.types.string import RedisStr
@@ -58,10 +57,8 @@ def test_redis_bool_operations_sanity(initial_value):
     model.flag = new_value
 
     # Assert
-    assert isinstance(model.flag, RedisBool)
+    assert isinstance(model.flag, bool)
     assert bool(model.flag) == new_value
-    assert model.flag.key == model.key
-    assert model.flag.field_path == "flag"
 
 
 @pytest.mark.parametrize(
@@ -106,9 +103,5 @@ def test_redis_bool_logical_operations_sanity():
     assert not (model_false.flag and True)
     assert model_true.flag or False
     assert not model_false.flag or True
-    assert isinstance(model_true.flag, RedisBool)
-    assert isinstance(model_false.flag, RedisBool)
-    assert model_true.flag.key == model_true.key
-    assert model_false.flag.key == model_false.key
-    assert model_true.flag.field_path == "flag"
-    assert model_false.flag.field_path == "flag"
+    assert isinstance(model_true.flag, bool)
+    assert isinstance(model_false.flag, bool)

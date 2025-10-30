@@ -4,7 +4,6 @@ import pytest
 import pytest_asyncio
 from pydantic import ValidationError
 
-from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
 from rapyer.types.datetime import RedisDatetime
 from rapyer.types.dct import RedisDict
@@ -150,8 +149,8 @@ async def test_constructor_bool_fields_converted_to_redis_types_sanity(
     # Arrange & Act (done in fixture)
 
     # Assert - fields initialized in constructor should be Redis types
-    assert isinstance(bool_model_with_values.is_active, RedisBool)
-    assert isinstance(bool_model_with_values.is_deleted, RedisBool)
+    assert isinstance(bool_model_with_values.is_active, bool)
+    assert isinstance(bool_model_with_values.is_deleted, bool)
 
     # Assert - values preserved
     assert bool(bool_model_with_values.is_active) is True
@@ -236,8 +235,8 @@ async def test_assignment_bool_fields_convert_to_redis_types_sanity(
     bool_model_with_values.is_deleted = True
 
     # Assert
-    assert isinstance(bool_model_with_values.is_active, RedisBool)
-    assert isinstance(bool_model_with_values.is_deleted, RedisBool)
+    assert isinstance(bool_model_with_values.is_active, bool)
+    assert isinstance(bool_model_with_values.is_deleted, bool)
     assert bool(bool_model_with_values.is_active) is False
     assert bool(bool_model_with_values.is_deleted) is True
 
