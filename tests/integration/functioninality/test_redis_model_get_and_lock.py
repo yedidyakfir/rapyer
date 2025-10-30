@@ -3,16 +3,8 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
-import pytest_asyncio
 
 from tests.models.functionality_types import RichModel
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    RichModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.mark.asyncio

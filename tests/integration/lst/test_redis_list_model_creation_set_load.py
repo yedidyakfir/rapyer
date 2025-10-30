@@ -1,16 +1,8 @@
 import pytest
-import pytest_asyncio
 
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
 from tests.models.collection_types import ListModel
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    ListModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.mark.parametrize(

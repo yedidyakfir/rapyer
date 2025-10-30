@@ -1,5 +1,4 @@
 import pytest
-import pytest_asyncio
 
 from tests.models.complex_types import (
     InnerMostModel,
@@ -9,15 +8,6 @@ from tests.models.complex_types import (
     ContainerModel,
     OuterModelWithRedisNested,
 )
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    OuterModel.Meta.redis = redis_client
-    OuterModelWithRedisNested.Meta.redis = redis_client
-    InnerRedisModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.mark.asyncio

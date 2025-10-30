@@ -1,16 +1,7 @@
 import pytest
-import pytest_asyncio
 
 from tests.models.collection_types import UserListModel, ProductListModel
 from tests.models.common import User, Product
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    UserListModel.Meta.redis = redis_client
-    ProductListModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.fixture

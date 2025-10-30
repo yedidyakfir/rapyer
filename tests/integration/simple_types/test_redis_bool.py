@@ -1,14 +1,6 @@
 import pytest
-import pytest_asyncio
 
 from tests.models.simple_types import BoolModel
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    BoolModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.mark.parametrize("test_values", [True, False])

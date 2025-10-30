@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pytest
-import pytest_asyncio
 
 from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
@@ -19,22 +18,6 @@ from tests.models.collection_types import (
     BaseDictMetadataModel,
 )
 from tests.models.common import Status, Person
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    StrDictModel.Meta.redis = redis_client
-    IntDictModel.Meta.redis = redis_client
-    BytesDictModel.Meta.redis = redis_client
-    DatetimeDictModel.Meta.redis = redis_client
-    EnumDictModel.Meta.redis = redis_client
-    AnyDictModel.Meta.redis = redis_client
-    BaseModelDictModel.Meta.redis = redis_client
-    BoolDictModel.Meta.redis = redis_client
-    ListDictModel.Meta.redis = redis_client
-    NestedDictModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.mark.asyncio

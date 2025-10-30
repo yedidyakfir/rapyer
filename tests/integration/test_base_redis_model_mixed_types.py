@@ -1,14 +1,6 @@
 import pytest
-import pytest_asyncio
 
 from tests.models.collection_types import MixedTypesModel
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    MixedTypesModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.mark.parametrize("test_bytes", [b"hello", b"world", b"\x00\x01\x02"])

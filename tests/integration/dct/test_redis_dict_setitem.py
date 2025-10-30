@@ -1,5 +1,4 @@
 import pytest
-import pytest_asyncio
 
 from rapyer import AtomicRedisModel
 from tests.models.collection_types import (
@@ -9,16 +8,6 @@ from tests.models.collection_types import (
     BaseModelDictSetitemModel as BaseModelDictModel,
 )
 from tests.models.common import Address, Company, Settings
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    IntDictModel.Meta.redis = redis_client
-    StrDictModel.Meta.redis = redis_client
-    DictDictModel.Meta.redis = redis_client
-    BaseModelDictModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
 
 
 @pytest.fixture

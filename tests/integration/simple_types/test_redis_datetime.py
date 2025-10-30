@@ -1,23 +1,12 @@
 from datetime import datetime, timezone
 
 import pytest
-import pytest_asyncio
 
 from tests.models.simple_types import (
     DatetimeModel,
     DatetimeListModel,
     DatetimeDictModel,
 )
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def real_redis_client(redis_client):
-    DatetimeModel.Meta.redis = redis_client
-    DatetimeListModel.Meta.redis = redis_client
-    DatetimeDictModel.Meta.redis = redis_client
-    yield redis_client
-    await redis_client.aclose()
-
 
 date_values = [
     datetime(2023, 1, 1, 12, 0, 0),
