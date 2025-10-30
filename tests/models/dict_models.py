@@ -13,30 +13,6 @@ class Status(str, Enum):
     PENDING = "pending"
 
 
-class StrDictModel(AtomicRedisModel):
-    metadata: dict[str, str] = Field(default_factory=dict)
-
-
-class IntDictModel(AtomicRedisModel):
-    metadata: dict[str, int] = Field(default_factory=dict)
-
-
-class BytesDictModel(AtomicRedisModel):
-    metadata: dict[str, bytes] = Field(default_factory=dict)
-
-
-class DatetimeDictModel(AtomicRedisModel):
-    metadata: dict[str, datetime] = Field(default_factory=dict)
-
-
-class EnumDictModel(AtomicRedisModel):
-    metadata: dict[str, Status] = Field(default_factory=dict)
-
-
-class AnyDictModel(AtomicRedisModel):
-    metadata: dict[str, Any] = Field(default_factory=dict)
-
-
 # Additional complex types
 class Person(BaseModel):
     name: str
@@ -50,17 +26,45 @@ class Company(BaseModel):
     founded: int
 
 
-class BaseModelDictModel(AtomicRedisModel):
+class BaseDictMetadataModel(AtomicRedisModel):
+    metadata: dict
+
+
+class StrDictModel(BaseDictMetadataModel):
+    metadata: dict[str, str] = Field(default_factory=dict)
+
+
+class IntDictModel(BaseDictMetadataModel):
+    metadata: dict[str, int] = Field(default_factory=dict)
+
+
+class BytesDictModel(BaseDictMetadataModel):
+    metadata: dict[str, bytes] = Field(default_factory=dict)
+
+
+class DatetimeDictModel(BaseDictMetadataModel):
+    metadata: dict[str, datetime] = Field(default_factory=dict)
+
+
+class EnumDictModel(BaseDictMetadataModel):
+    metadata: dict[str, Status] = Field(default_factory=dict)
+
+
+class AnyDictModel(BaseDictMetadataModel):
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class BaseModelDictModel(BaseDictMetadataModel):
     metadata: dict[str, Person] = Field(default_factory=dict)
 
 
-class BoolDictModel(AtomicRedisModel):
+class BoolDictModel(BaseDictMetadataModel):
     metadata: dict[str, bool] = Field(default_factory=dict)
 
 
-class ListDictModel(AtomicRedisModel):
+class ListDictModel(BaseDictMetadataModel):
     metadata: dict[str, list[str]] = Field(default_factory=dict)
 
 
-class NestedDictModel(AtomicRedisModel):
+class NestedDictModel(BaseDictMetadataModel):
     metadata: dict[str, dict[str, str]] = Field(default_factory=dict)
