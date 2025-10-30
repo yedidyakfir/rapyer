@@ -294,7 +294,7 @@ async def test_redis_list_setitem_redis_field_paths_sanity():
     model.items[1] = 42
 
     # Assert
-    assert model.items[1].redis_key == model.key
+    assert model.items[1].key == model.key
     assert model.items[1].field_path == "items[1]"
     assert model.items[1].json_path == "$.items[1]"
 

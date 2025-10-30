@@ -267,7 +267,7 @@ async def test_redis_dict_setitem_redis_field_paths_sanity():
     model.metadata["test_key"] = 42
 
     # Assert
-    assert model.metadata["test_key"].redis_key == model.key
+    assert model.metadata["test_key"].key == model.key
     assert model.metadata["test_key"].field_path == "metadata.test_key"
     assert model.metadata["test_key"].json_path == "$.metadata.test_key"
 

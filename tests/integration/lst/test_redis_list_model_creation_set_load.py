@@ -42,7 +42,7 @@ async def test_redis_list_model_creation_with_initial_value_and_set_load_sanity(
     for i in range(len(test_value)):
         assert isinstance(model.items[i], RedisStr)
         assert model.items[i].key == model.key
-        assert model.items[i].json_path == f"$..items.{i}"
+        assert model.items[i].json_path == f"$.items[{i}]"
 
     # Act - Save and test load operations
     await model.save()
@@ -64,8 +64,6 @@ async def test_redis_list_model_creation_with_list_operations_sanity():
     model = ListModel(items=["initial"])
 
     # Assert model creation
-    from rapyer.types.lst import RedisList
-
     assert isinstance(model.items, RedisList)
     assert model.items.json_path == "$.items"
     assert isinstance(model.items[0], RedisStr)

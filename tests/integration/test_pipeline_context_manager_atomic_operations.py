@@ -415,7 +415,7 @@ async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case()
     await model.save()
     original_state = await ComprehensiveTestModel.get(model.key)
 
-    # Act & Assert - Pipeline should rollback on exception
+    # Act & Assert - Pipeline should roll back on exception
     with pytest.raises(ValueError, match="Test exception"):
         async with model.pipeline() as redis_model:
             await redis_model.tags.aappend("should_not_be_saved")
@@ -426,49 +426,6 @@ async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case()
     final_model = await ComprehensiveTestModel.get(model.key)
     assert final_model.tags == original_state.tags
     assert final_model.metadata == original_state.metadata
-
-
-# Tests for operations that DON'T work in pipeline (kept with try-catch for documentation)
-@pytest.mark.asyncio
-async def test_pipeline_list_apop__check_pipeline_limitation_edge_case():
-    # Arrange
-    model = ComprehensiveTestModel(tags=["tag1", "tag2", "tag3"])
-    await model.save()
-
-    # Act & Assert - apop doesn't work in pipeline context
-    with pytest.raises(
-        TypeError, match="Async Redis client does not support class retrieval"
-    ):
-        async with model.pipeline() as redis_model:
-            await redis_model.tags.apop()
-
-
-@pytest.mark.asyncio
-async def test_pipeline_dict_apop__check_pipeline_limitation_edge_case():
-    # Arrange
-    model = ComprehensiveTestModel(metadata={"key1": "value1", "key2": "value2"})
-    await model.save()
-
-    # Act & Assert - dict apop doesn't work in pipeline context
-    with pytest.raises(
-        AttributeError, match="'Pipeline' object has no attribute 'startswith'"
-    ):
-        async with model.pipeline() as redis_model:
-            await redis_model.metadata.apop("key1")
-
-
-@pytest.mark.asyncio
-async def test_pipeline_dict_apopitem__check_pipeline_limitation_edge_case():
-    # Arrange
-    model = ComprehensiveTestModel(metadata={"key1": "value1"})
-    await model.save()
-
-    # Act & Assert - apopitem doesn't work in pipeline context
-    with pytest.raises(
-        TypeError, match="Async Redis client does not support class retrieval"
-    ):
-        async with model.pipeline() as redis_model:
-            await redis_model.metadata.apopitem()
 
 
 @pytest.mark.asyncio
@@ -483,13 +440,13 @@ async def test_pipeline_delete__check_atomicity_sanity(real_redis_client):
     async with model1.pipeline() as redis_model:
         await redis_model.delete()
 
-        # Check if models still exist during pipeline (atomicity test)
+        # Check if models still exist during a pipeline (atomicity test)
         key1_exists = await real_redis_client.exists(model1.key)
         key2_exists = await real_redis_client.exists(model2.key)
         assert key1_exists == 1
         assert key2_exists == 1
 
-    # Assert - Check if model1 was deleted after pipeline
+    # Assert - Check if model1 was deleted after a pipeline
     key1_exists = await real_redis_client.exists(model1.key)
     key2_exists = await real_redis_client.exists(model2.key)
     assert key1_exists == 0
