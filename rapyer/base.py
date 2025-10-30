@@ -60,7 +60,8 @@ class AtomicRedisModel(BaseModel):
 
     @property
     def json_path(self):
-        return f"$.{self.field_path}"
+        field_path = self.field_path
+        return f"$.{field_path}" if field_path else "$"
 
     @classmethod
     def class_key_initials(cls):
@@ -126,11 +127,8 @@ class AtomicRedisModel(BaseModel):
         return self.field_name
 
     async def save(self) -> Self:
-        if self.is_inner_model():
-            raise RuntimeError("Can only save from top level model")
-
         model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
-        await self.Meta.redis.json().set(self.key, "$", model_dump)
+        await self.Meta.redis.json().set(self.key, self.json_path, model_dump)
         if self.Meta.ttl is not None:
             await self.Meta.redis.expire(self.key, self.Meta.ttl)
         return self

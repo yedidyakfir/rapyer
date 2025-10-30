@@ -1,9 +1,8 @@
 import abc
 import base64
-import functools
 import pickle
 from abc import ABC
-from typing import get_args, Any, TypeVar, Generic, get_origin
+from typing import get_args, Any, TypeVar, Generic, Self
 
 from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel, PrivateAttr
 from pydantic_core import core_schema
@@ -36,23 +35,10 @@ class RedisType(ABC):
     @property
     def field_path(self) -> str:
         base_path = self._base_model_link.field_path
-        return f"{base_path}.{self.field_name}" if base_path else self.field_name
-
-    def __init__(self, *args, **kwargs):
-        # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
-        self._base_model_link = None
-
-    def init_redis_field(self, key, val):
-        if hasattr(val, "_base_model_link"):
-            val._base_model_link = self
-            val.field_name = key
-
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
-        return core_schema.no_info_after_validator_function(
-            cls, handler(cls.original_type)
+        # TODO - This method is terrible, need to think on other way
+        seperator = "" if self.field_name.startswith("[") else "."
+        return (
+            f"{base_path}{seperator}{self.field_name}" if base_path else self.field_name
         )
 
     @property
@@ -67,11 +53,29 @@ class RedisType(ABC):
     def json_path(self):
         return f"$.{self.field_path}"
 
+    def __init__(self, *args, **kwargs):
+        # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
+        self._base_model_link = None
+
+    def init_redis_field(self, key, val):
+        if hasattr(val, "_base_model_link"):
+            val._base_model_link = self
+            val.field_name = key
+
     def sub_field_path(self, field_name: str):
         return f"{self.field_path}.{field_name}"
 
     def json_field_path(self, field_name: str):
         return f"$.{self.sub_field_path(field_name)}"
+
+    async def save(self) -> Self:
+        model_dump = self._adapter.dump_python(
+            self, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
+        await self.Meta.redis.json().set(self.key, self.json_path, model_dump)
+        if self.Meta.ttl is not None:
+            await self.Meta.redis.expire(self.key, self.Meta.ttl)
+        return self
 
     @abc.abstractmethod
     async def load(self):
@@ -80,6 +84,14 @@ class RedisType(ABC):
     @abc.abstractmethod
     def clone(self):
         pass
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_after_validator_function(
+            cls, handler(cls.original_type)
+        )
 
     @staticmethod
     def serialize_unknown(value: Any):
