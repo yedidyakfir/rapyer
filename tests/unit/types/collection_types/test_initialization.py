@@ -4,12 +4,12 @@ from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
-from tests.models.unit_types import MixedCollectionModel, SimpleIntDictModel
 from tests.models.collection_types import (
     SimpleListModel,
     SimpleIntListModel,
     SimpleDictModel,
 )
+from tests.models.unit_types import MixedCollectionModel, SimpleIntDictModel
 
 
 @pytest.mark.parametrize(

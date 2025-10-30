@@ -9,7 +9,7 @@ from tests.models.unit_types import (
     SimpleIntModel,
     SimpleBoolModel,
     SimpleBytesModel,
-    MultiTypeModel
+    MultiTypeModel,
 )
 
 

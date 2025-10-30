@@ -4,7 +4,17 @@ from typing import List, Dict, Any
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
-from tests.models.common import Status, Person, User, Product, UserProfile, NestedConfig, Address, Company, Settings
+from tests.models.common import (
+    Status,
+    Person,
+    User,
+    Product,
+    UserProfile,
+    NestedConfig,
+    Address,
+    Company,
+    Settings,
+)
 
 
 class SimpleListModel(AtomicRedisModel):
