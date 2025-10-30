@@ -1,12 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import AtomicRedisModel
-
-
-class StrModel(AtomicRedisModel):
-    name: str = ""
-    description: str = "default"
+from tests.models.simple_types import StrModel
 
 
 @pytest_asyncio.fixture(autouse=True)

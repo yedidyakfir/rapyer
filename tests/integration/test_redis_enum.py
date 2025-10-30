@@ -1,28 +1,8 @@
-from enum import Enum
-
 import pytest
 import pytest_asyncio
 
-from rapyer.base import AtomicRedisModel
-
-
-class TaskStatus(str, Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-
-class Priority(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-
-
-class TaskModel(AtomicRedisModel):
-    name: str
-    status: TaskStatus = TaskStatus.PENDING
-    priority: Priority = Priority.MEDIUM
+from tests.models.common import TaskStatus, Priority
+from tests.models.simple_types import TaskModel
 
 
 @pytest_asyncio.fixture

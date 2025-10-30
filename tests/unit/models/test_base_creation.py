@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 
 from rapyer.types.dct import RedisDict
-from tests.models.dict_models import (
+from tests.models.collection_types import (
     IntDictModel,
     StrDictModel,
     BytesDictModel,

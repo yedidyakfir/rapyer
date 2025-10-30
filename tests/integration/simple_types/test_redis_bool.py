@@ -1,12 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import AtomicRedisModel
-
-
-class BoolModel(AtomicRedisModel):
-    is_active: bool = False
-    is_deleted: bool = True
+from tests.models.simple_types import BoolModel
 
 
 @pytest_asyncio.fixture(autouse=True)

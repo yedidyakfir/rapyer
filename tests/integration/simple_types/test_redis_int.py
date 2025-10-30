@@ -1,12 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import AtomicRedisModel
-
-
-class IntModel(AtomicRedisModel):
-    count: int = 0
-    score: int = 100
+from tests.models.simple_types import IntModel
 
 
 @pytest_asyncio.fixture(autouse=True)

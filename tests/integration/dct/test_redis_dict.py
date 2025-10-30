@@ -5,7 +5,7 @@ import pytest_asyncio
 
 from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
-from tests.models.dict_models import (
+from tests.models.collection_types import (
     IntDictModel,
     StrDictModel,
     BytesDictModel,
@@ -16,10 +16,9 @@ from tests.models.dict_models import (
     BoolDictModel,
     ListDictModel,
     NestedDictModel,
-    Status,
-    Person,
     BaseDictMetadataModel,
 )
+from tests.models.common import Status, Person
 
 
 @pytest_asyncio.fixture(autouse=True)

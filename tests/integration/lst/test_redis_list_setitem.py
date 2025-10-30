@@ -1,44 +1,14 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field, BaseModel
 
-from rapyer.base import AtomicRedisModel
-
-
-class IntListModel(AtomicRedisModel):
-    items: list[int] = Field(default_factory=list)
-
-
-class StrListModel(AtomicRedisModel):
-    items: list[str] = Field(default_factory=list)
-
-
-class DictListModel(AtomicRedisModel):
-    items: list[dict[str, str]] = Field(default_factory=list)
-
-
-# BaseModel classes for testing nested models
-class UserProfile(BaseModel):
-    name: str
-    age: int
-    email: str
-
-
-class Product(BaseModel):
-    name: str
-    price: int  # Changed from float to int since float isn't supported
-    in_stock: bool
-
-
-class NestedConfig(BaseModel):
-    settings: dict[str, str] = Field(default_factory=dict)
-    options: list[str] = Field(default_factory=list)
-
-
-class BaseModelListModel(AtomicRedisModel):
-    users: list[UserProfile] = Field(default_factory=list)
-    products: list[Product] = Field(default_factory=list)
-    configs: list[NestedConfig] = Field(default_factory=list)
+from rapyer import AtomicRedisModel
+from tests.models.collection_types import (
+    IntListModel,
+    StrListModel,
+    DictListModel,
+    BaseModelListModel,
+)
+from tests.models.common import Product, NestedConfig, UserProfile
 
 
 @pytest_asyncio.fixture(autouse=True)

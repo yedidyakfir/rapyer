@@ -2,22 +2,12 @@ from datetime import datetime, timezone
 
 import pytest
 import pytest_asyncio
-from pydantic import Field
 
-from rapyer.base import AtomicRedisModel
-
-
-class DatetimeModel(AtomicRedisModel):
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-
-
-class DatetimeListModel(AtomicRedisModel):
-    dates: list[datetime] = Field(default_factory=list)
-
-
-class DatetimeDictModel(AtomicRedisModel):
-    event_dates: dict[str, datetime] = Field(default_factory=dict)
+from tests.models.simple_types import (
+    DatetimeModel,
+    DatetimeListModel,
+    DatetimeDictModel,
+)
 
 
 @pytest_asyncio.fixture(autouse=True)

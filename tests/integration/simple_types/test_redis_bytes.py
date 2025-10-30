@@ -1,12 +1,7 @@
 import pytest
 import pytest_asyncio
 
-from rapyer.base import AtomicRedisModel
-
-
-class BytesModel(AtomicRedisModel):
-    data: bytes = b""
-    binary_content: bytes = b"default"
+from tests.models.simple_types import BytesModel
 
 
 @pytest_asyncio.fixture(autouse=True)

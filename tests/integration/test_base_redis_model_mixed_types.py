@@ -1,23 +1,7 @@
-from typing import List, Dict, Any
-
 import pytest
 import pytest_asyncio
-from pydantic import Field
 
-from rapyer.base import AtomicRedisModel
-
-
-class MixedTypesModel(AtomicRedisModel):
-    str_list: List[str] = Field(default_factory=list)
-    bytes_list: List[bytes] = Field(default_factory=list)
-    int_list: List[int] = Field(default_factory=list)
-    bool_list: List[bool] = Field(default_factory=list)
-    mixed_list: List[Any] = Field(default_factory=list)
-    str_dict: Dict[str, str] = Field(default_factory=dict)
-    bytes_dict: Dict[str, bytes] = Field(default_factory=dict)
-    int_dict: Dict[str, int] = Field(default_factory=dict)
-    bool_dict: Dict[str, bool] = Field(default_factory=dict)
-    mixed_dict: Dict[str, Any] = Field(default_factory=dict)
+from tests.models.collection_types import MixedTypesModel
 
 
 @pytest_asyncio.fixture(autouse=True)

@@ -11,23 +11,21 @@ from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
-from tests.integration.models.test_base_redis_model import UserModel as BaseUserModel
-
-# Import existing models from other test files
-from tests.integration.test_base_redis_model_mixed_types import MixedTypesModel
-from tests.integration.models.test_nested_redis_models import (
-    InnerMostModel,
-    MiddleModel,
-    OuterModel,
+from tests.models.collection_types import MixedTypesModel, StrDictModel
+from tests.models.common import TaskStatus, Priority
+from tests.models.complex_types import InnerMostModel, MiddleModel, OuterModel
+from tests.models.simple_types import (
+    NoneTestModel,
+    BoolModel,
+    BytesModel,
+    DatetimeModel,
+    TaskModel,
+    IntModel,
+    StrModel,
 )
-from tests.integration.test_none_values import NoneTestModel
-from tests.integration.simple_types.test_redis_bool import BoolModel
-from tests.integration.simple_types.test_redis_bytes import BytesModel
-from tests.integration.simple_types.test_redis_datetime import DatetimeModel
-from tests.integration.dct.test_redis_dict import StrDictModel
-from tests.integration.test_redis_enum import TaskModel, TaskStatus, Priority
-from tests.integration.simple_types.test_redis_int import IntModel
-from tests.integration.simple_types.test_redis_str import StrModel
+
+# Import models from centralized location
+from tests.models.specialized import UserModel as BaseUserModel
 
 
 @pytest_asyncio.fixture

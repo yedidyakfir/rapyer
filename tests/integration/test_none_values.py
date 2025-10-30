@@ -1,18 +1,7 @@
-from typing import List, Dict, Optional
-
 import pytest
 import pytest_asyncio
 
-from rapyer.base import AtomicRedisModel
-
-
-class NoneTestModel(AtomicRedisModel):
-    optional_string: Optional[str] = None
-    optional_int: Optional[int] = None
-    optional_bool: Optional[bool] = None
-    optional_bytes: Optional[bytes] = None
-    optional_list: Optional[List[str]] = None
-    optional_dict: Optional[Dict[str, str]] = None
+from tests.models.simple_types import NoneTestModel
 
 
 @pytest_asyncio.fixture(autouse=True)

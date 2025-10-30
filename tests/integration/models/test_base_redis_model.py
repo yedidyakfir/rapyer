@@ -1,12 +1,7 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field
 
-from rapyer.base import AtomicRedisModel
-
-
-class UserModel(AtomicRedisModel):
-    tags: list[str] = Field(default_factory=list)
+from tests.models.specialized import UserModel
 
 
 @pytest_asyncio.fixture(autouse=True)
