@@ -117,17 +117,6 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
                 self.init_redis_field(key, value)
         return new_dct
 
-    async def aset_item(self, key, value):
-        self.__setitem__(key, value)
-
-        # Serialize the value for Redis storage using a type adapter
-        serialized_value = self._adapter.dump_python(
-            {key: value}, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
-        )
-        return await self.client.json().set(
-            self.key, self.json_field_path(key), serialized_value[key]
-        )
-
     def update(self, m=None, /, **kwargs):
         m_new_val = self.validate_dict(m) if m else {}
         kwargs_new_val = self.validate_dict(kwargs)
@@ -140,6 +129,17 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     def __setitem__(self, key, value):
         new_val = self.validate_dict({key: value})[key]
         super().__setitem__(key, new_val)
+
+    async def aset_item(self, key, value):
+        self.__setitem__(key, value)
+
+        # Serialize the value for Redis storage using a type adapter
+        serialized_value = self._adapter.dump_python(
+            {key: value}, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
+        return await self.client.json().set(
+            self.key, self.json_field_path(key), serialized_value[key]
+        )
 
     async def adel_item(self, key):
         super().__delitem__(key)
