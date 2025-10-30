@@ -125,7 +125,6 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
-        self.init_redis_field(key, new_val)
         super().__setitem__(key, new_val)
 
     async def adel_item(self, key):
