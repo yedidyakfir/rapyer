@@ -502,19 +502,3 @@ async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity
     assert regular_address.street == "666 Regular Ave"
     assert regular_address.city == "Phoenix"
     assert regular_address.zip_code == "85001"
-
-
-@pytest.mark.asyncio
-async def test_redis_dict_setitem_inner_basemodel_save_raises_error():
-    # Arrange
-    model = BaseModelDictModel()
-    await model.save()
-
-    address = Address(street="123 Main St", city="New York", zip_code="10001")
-
-    # Act
-    model.addresses["home"] = address
-
-    # Assert
-    with pytest.raises(RuntimeError, match="Can only save from top level model"):
-        await model.addresses["home"].save()

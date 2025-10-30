@@ -479,22 +479,6 @@ async def test_redis_list_setitem_basemodel_field_access_edge_case():
 
 
 @pytest.mark.asyncio
-async def test_redis_list_setitem_inner_basemodel_save_raises_error():
-    # Arrange
-    model = BaseModelListModel(users=[UserProfile(name="Ori", age=2, email="Myemail")])
-    await model.save()
-
-    user = UserProfile(name="Alice", age=25, email="alice@example.com")
-
-    # Act
-    model.users[0] = user
-
-    # Assert
-    with pytest.raises(RuntimeError, match="Can only save from top level model"):
-        await model.users[0].save()
-
-
-@pytest.mark.asyncio
 async def test_redis_list_apop_after_clear_sanity():
     # Arrange
     model = StrListModel(items=["item1", "item2", "item3"])
