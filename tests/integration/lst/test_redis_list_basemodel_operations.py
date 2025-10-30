@@ -1,28 +1,8 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field, BaseModel
 
-from rapyer.base import AtomicRedisModel
-
-
-class User(BaseModel):
-    name: str
-    age: int
-    email: str
-
-
-class Product(BaseModel):
-    name: str
-    price: int
-    in_stock: bool
-
-
-class UserListModel(AtomicRedisModel):
-    users: list[User] = Field(default_factory=list)
-
-
-class ProductListModel(AtomicRedisModel):
-    products: list[Product] = Field(default_factory=list)
+from tests.models.collection_types import UserListModel, ProductListModel
+from tests.models.common import User, Product
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -36,9 +16,9 @@ async def real_redis_client(redis_client):
 @pytest.fixture
 def sample_users():
     return [
-        User(name="Alice", age=25, email="alice@example.com"),
-        User(name="Bob", age=30, email="bob@example.com"),
-        User(name="Charlie", age=35, email="charlie@example.com"),
+        User(name="Alice", id=25, email="alice@example.com"),
+        User(name="Bob", id=30, email="bob@example.com"),
+        User(name="Charlie", id=35, email="charlie@example.com"),
     ]
 
 
@@ -54,8 +34,8 @@ def sample_products():
 @pytest.mark.parametrize(
     "user_data",
     [
-        User(name="Test User", age=20, email="test@example.com"),
-        User(name="Another User", age=40, email="another@example.com"),
+        User(name="Test User", id=20, email="test@example.com"),
+        User(name="Another User", id=40, email="another@example.com"),
     ],
 )
 @pytest.mark.asyncio
@@ -73,7 +53,7 @@ async def test_redis_list_aappend_basemodel_operations_sanity(user_data):
     loaded_users = await fresh_model.users.load()
     assert len(loaded_users) == 1
     assert loaded_users[0].name == user_data.name
-    assert loaded_users[0].age == user_data.age
+    assert loaded_users[0].id == user_data.id
     assert loaded_users[0].email == user_data.email
 
 
@@ -93,7 +73,7 @@ async def test_redis_list_aextend_basemodel_operations_sanity(sample_users):
     assert len(loaded_users) == len(sample_users)
     for i, expected_user in enumerate(sample_users):
         assert loaded_users[i].name == expected_user.name
-        assert loaded_users[i].age == expected_user.age
+        assert loaded_users[i].id == expected_user.id
         assert loaded_users[i].email == expected_user.email
 
 
@@ -109,7 +89,7 @@ async def test_redis_list_apop_basemodel_operations_sanity(sample_users):
     # Assert
     expected_user = sample_users[-1]  # Last user should be popped
     assert popped_user.name == expected_user.name
-    assert popped_user.age == expected_user.age
+    assert popped_user.id == expected_user.id
     assert popped_user.email == expected_user.email
 
     # Verify the user was removed from Redis
@@ -130,7 +110,7 @@ async def test_redis_list_ainsert_basemodel_operations_sanity(
     # Arrange
     model = UserListModel(users=sample_users)
     await model.save()
-    new_user = User(name="Inserted User", age=28, email="inserted@example.com")
+    new_user = User(name="Inserted User", id=28, email="inserted@example.com")
 
     # Act
     await model.users.ainsert(insert_index, new_user)
@@ -141,7 +121,7 @@ async def test_redis_list_ainsert_basemodel_operations_sanity(
     loaded_users = await fresh_model.users.load()
     assert len(loaded_users) == len(sample_users) + 1
     assert loaded_users[insert_index].name == new_user.name
-    assert loaded_users[insert_index].age == new_user.age
+    assert loaded_users[insert_index].id == new_user.id
     assert loaded_users[insert_index].email == new_user.email
 
 
@@ -219,15 +199,15 @@ async def test_redis_list_operations_preserve_basemodel_data_integrity_sanity():
     model = UserListModel()
     await model.save()
     complex_user = User(
-        name="Complex User", age=45, email="complex.user+test@example.com"
+        name="Complex User", id=45, email="complex.user+test@example.com"
     )
 
     # Act
     await model.users.aappend(complex_user)
     await model.users.aextend(
         [
-            User(name="User 1", age=20, email="user1@test.com"),
-            User(name="User 2", age=30, email="user2@test.com"),
+            User(name="User 1", id=20, email="user1@test.com"),
+            User(name="User 2", id=30, email="user2@test.com"),
         ]
     )
 
@@ -238,7 +218,7 @@ async def test_redis_list_operations_preserve_basemodel_data_integrity_sanity():
 
     # Verify complex user data integrity
     assert loaded_users[0].name == complex_user.name
-    assert loaded_users[0].age == complex_user.age
+    assert loaded_users[0].id == complex_user.id
     assert loaded_users[0].email == complex_user.email
 
     # Verify extended users
@@ -251,19 +231,19 @@ async def test_redis_list_operations_preserve_basemodel_data_integrity_sanity():
 async def test_redis_list_basemodel_operations_after_model_creation_set_load_sanity():
     # Arrange
     initial_users = [
-        User(name="Initial User 1", age=25, email="init1@example.com"),
-        User(name="Initial User 2", age=30, email="init2@example.com"),
+        User(name="Initial User 1", id=25, email="init1@example.com"),
+        User(name="Initial User 2", id=30, email="init2@example.com"),
     ]
     model = UserListModel(users=initial_users)
     await model.save()
 
     # Act - Perform operations after model creation
     await model.users.aappend(
-        User(name="Appended User", age=35, email="append@example.com")
+        User(name="Appended User", id=35, email="append@example.com")
     )
     popped_user = await model.users.apop(0)  # Pop first user
     await model.users.ainsert(
-        0, User(name="Inserted User", age=40, email="insert@example.com")
+        0, User(name="Inserted User", id=40, email="insert@example.com")
     )
 
     # Assert

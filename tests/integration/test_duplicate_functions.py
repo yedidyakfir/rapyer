@@ -6,7 +6,12 @@ from tests.integration.models.test_nested_redis_models import (
     ContainerModel,
     OuterModelWithRedisNested,
 )
-from tests.models.complex_types import TestRedisModel, InnerMostModel, MiddleModel
+from tests.models.complex_types import (
+    TestRedisModel,
+    InnerMostModel,
+    MiddleModel,
+    OuterModel,
+)
 
 
 @pytest_asyncio.fixture
@@ -42,21 +47,18 @@ async def test_duplicate_basic_functionality_sanity(redis_client_fixture):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_with_nested_models_sanity(redis_client_fixture):
+async def test_duplicate_with_nested_models_sanity():
     # Arrange
-    inner_model = InnerMostModel(
-        names=["alice", "bob"], scores={"alice": 95, "bob": 87}, counter=42
-    )
+    inner_model = InnerMostModel(lst=["alice", "bob"], counter=42)
     middle_model = MiddleModel(
         inner_model=inner_model,
         tags=["important", "test"],
         metadata={"env": "staging", "version": "1.0"},
     )
-    original = TestRedisModel(
+    original = OuterModel(
         middle_model=middle_model,
         user_data={"admin": 1000},
         items=[10, 20, 30],
-        description="complex_model",
     )
     await original.save()
 
@@ -103,22 +105,20 @@ async def test_duplicate_many_functionality_sanity(redis_client_fixture):
     assert len(set(pks)) == 3  # All unique
     assert original.pk not in pks  # Original not in duplicates
 
-    # Check all have same values
+    # Check all have the same values
     for duplicate in duplicates:
         assert duplicate.description == original.description
         assert duplicate.items == original.items
         assert duplicate.user_data == original.user_data
 
-    # Verify all exist in Redis
+    # Verify all existing in Redis
     for duplicate in duplicates:
         exists = await redis_client_fixture.exists(duplicate.key)
         assert exists == 1
 
 
 @pytest.mark.asyncio
-async def test_duplicate_redis_operations_on_duplicated_models_sanity(
-    redis_client_fixture,
-):
+async def test_duplicate_redis_operations_on_duplicated_models_sanity():
     # Arrange
     original = TestRedisModel(items=[1, 2], user_data={"count": 10})
     await original.save()
@@ -126,7 +126,7 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity(
     # Act
     duplicate = await original.duplicate()
 
-    # Perform Redis operations on duplicate
+    # Perform Redis operations in duplicate
     await duplicate.items.aappend(3)
     await duplicate.user_data.aset_item("new_key", 20)
 
@@ -143,7 +143,7 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity(
 
 
 @pytest.mark.asyncio
-async def test_duplicate_redis_operations_on_nested_models_sanity(redis_client_fixture):
+async def test_duplicate_redis_operations_on_nested_models_sanity():
     # Arrange
     original = TestRedisModel()
     await original.save()
@@ -172,7 +172,7 @@ async def test_duplicate_redis_operations_on_nested_models_sanity(redis_client_f
 
 
 @pytest.mark.asyncio
-async def test_duplicate_with_redis_nested_models_sanity(redis_client_fixture):
+async def test_duplicate_with_redis_nested_models_sanity():
     # Arrange
     inner_redis = InnerRedisModel(
         tags=["redis_tag"], metadata={"redis_key": "redis_value"}, counter=5
@@ -200,9 +200,7 @@ async def test_duplicate_with_redis_nested_models_sanity(redis_client_fixture):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_redis_operations_on_redis_nested_models_sanity(
-    redis_client_fixture,
-):
+async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
     # Arrange
     original = OuterModelWithRedisNested()
     await original.save()
@@ -235,7 +233,7 @@ async def test_duplicate_redis_operations_on_redis_nested_models_sanity(
 
 
 @pytest.mark.asyncio
-async def test_cannot_duplicate_inner_model_edge_case(redis_client_fixture):
+async def test_cannot_duplicate_inner_model_edge_case():
     # Arrange
     original = TestRedisModel()
     await original.save()
@@ -250,7 +248,7 @@ async def test_cannot_duplicate_inner_model_edge_case(redis_client_fixture):
 
 
 @pytest.mark.asyncio
-async def test_cannot_duplicate_redis_inner_model_edge_case(redis_client_fixture):
+async def test_cannot_duplicate_redis_inner_model_edge_case():
     # Arrange
     original = OuterModelWithRedisNested()
     await original.save()
@@ -292,21 +290,18 @@ async def test_duplicate_many_with_different_counts_sanity(
 
 
 @pytest.mark.asyncio
-async def test_duplicate_preserves_all_redis_types_sanity(redis_client_fixture):
+async def test_duplicate_preserves_all_redis_types_sanity():
     # Arrange
-    inner_model = InnerMostModel(
-        names=["test1", "test2"], scores={"test1": 100, "test2": 90}, counter=15
-    )
+    inner_model = InnerMostModel(lst=["test1", "test2"], counter=15)
     middle_model = MiddleModel(
         inner_model=inner_model,
         tags=["tag1", "tag2"],
         metadata={"key1": "value1", "key2": "value2"},
     )
-    original = TestRedisModel(
+    original = OuterModel(
         middle_model=middle_model,
         user_data={"user1": 50, "user2": 75},
         items=[10, 20, 30, 40],
-        description="comprehensive_test",
     )
     await original.save()
 

@@ -55,3 +55,14 @@ class UserProfile(BaseModel):
 class NestedConfig(BaseModel):
     settings: dict[str, str] = Field(default_factory=dict)
     options: list[str] = Field(default_factory=list)
+
+
+class Address(BaseModel):
+    street: str
+    city: str
+    zip_code: str
+
+
+class Settings(BaseModel):
+    preferences: dict[str, str] = Field(default_factory=dict)
+    features: list[str] = Field(default_factory=list)

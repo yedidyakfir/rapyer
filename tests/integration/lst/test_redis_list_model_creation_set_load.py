@@ -1,15 +1,9 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field
 
-from rapyer.base import AtomicRedisModel
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
-
-
-class ListModel(AtomicRedisModel):
-    items: list[str] = Field(default_factory=list)
-    numbers: list[int] = Field(default_factory=list)
+from tests.models.collection_types import ListModel
 
 
 @pytest_asyncio.fixture(autouse=True)

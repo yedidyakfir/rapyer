@@ -1,17 +1,7 @@
-from typing import List
-
 import pytest
 import pytest_asyncio
-from pydantic import Field
 
-from rapyer.base import AtomicRedisModel
-
-
-class LockTestModel(AtomicRedisModel):
-    name: str = ""
-    age: int = 0
-    tags: List[str] = Field(default_factory=list)
-    active: bool = True
+from tests.models.functionality_types import LockSaveTestModel as LockTestModel
 
 
 @pytest_asyncio.fixture(autouse=True)

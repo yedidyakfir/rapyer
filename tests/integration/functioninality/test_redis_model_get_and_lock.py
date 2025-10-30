@@ -1,21 +1,11 @@
 import asyncio
 from datetime import datetime
-from typing import List
 from unittest.mock import Mock
 
 import pytest
 import pytest_asyncio
-from pydantic import Field
 
-from rapyer.base import AtomicRedisModel
-
-
-class RichModel(AtomicRedisModel):
-    name: str = ""
-    age: int = 0
-    tags: List[str] = Field(default_factory=list)
-    active: bool = True
-    date1: str = ""
+from tests.models.functionality_types import RichModel
 
 
 @pytest_asyncio.fixture(autouse=True)

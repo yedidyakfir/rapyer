@@ -4,19 +4,19 @@ from typing import List, Dict, Any
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
-from tests.models.common import Status, Person, User, Product, UserProfile, NestedConfig
+from tests.models.common import Status, Person, User, Product, UserProfile, NestedConfig, Address, Company, Settings
 
 
 class SimpleListModel(AtomicRedisModel):
-    items: list[str]
+    items: list[str] = Field(default_factory=list)
 
 
 class SimpleIntListModel(AtomicRedisModel):
-    numbers: list[int]
+    numbers: list[int] = Field(default_factory=list)
 
 
 class SimpleDictModel(AtomicRedisModel):
-    data: dict[str, str]
+    data: dict[str, str] = Field(default_factory=dict)
 
 
 class ListModel(AtomicRedisModel):
@@ -122,3 +122,13 @@ class ComprehensiveTestModel(AtomicRedisModel):
 class PipelineTestModel(AtomicRedisModel):
     metadata: dict[str, str] = Field(default_factory=dict)
     config: dict[str, int] = Field(default_factory=dict)
+
+
+class DictDictModel(AtomicRedisModel):
+    metadata: dict[str, dict[str, str]] = Field(default_factory=dict)
+
+
+class BaseModelDictSetitemModel(AtomicRedisModel):
+    addresses: dict[str, Address] = Field(default_factory=dict)
+    companies: dict[str, Company] = Field(default_factory=dict)
+    configs: dict[str, Settings] = Field(default_factory=dict)

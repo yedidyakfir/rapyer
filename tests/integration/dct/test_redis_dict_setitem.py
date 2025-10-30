@@ -1,44 +1,14 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field, BaseModel
 
-from rapyer.base import AtomicRedisModel
-
-
-class IntDictModel(AtomicRedisModel):
-    metadata: dict[str, int] = Field(default_factory=dict)
-
-
-class StrDictModel(AtomicRedisModel):
-    metadata: dict[str, str] = Field(default_factory=dict)
-
-
-class DictDictModel(AtomicRedisModel):
-    metadata: dict[str, dict[str, str]] = Field(default_factory=dict)
-
-
-# BaseModel classes for testing nested models
-class Address(BaseModel):
-    street: str
-    city: str
-    zip_code: str
-
-
-class Company(BaseModel):
-    name: str
-    employees: int
-    founded: int
-
-
-class Settings(BaseModel):
-    preferences: dict[str, str] = Field(default_factory=dict)
-    features: list[str] = Field(default_factory=list)
-
-
-class BaseModelDictModel(AtomicRedisModel):
-    addresses: dict[str, Address] = Field(default_factory=dict)
-    companies: dict[str, Company] = Field(default_factory=dict)
-    configs: dict[str, Settings] = Field(default_factory=dict)
+from rapyer import AtomicRedisModel
+from tests.models.collection_types import (
+    IntDictModel,
+    StrDictModel,
+    DictDictModel,
+    BaseModelDictSetitemModel as BaseModelDictModel,
+)
+from tests.models.common import Address, Company, Settings
 
 
 @pytest_asyncio.fixture(autouse=True)

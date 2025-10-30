@@ -1,26 +1,15 @@
 import pytest
 
-from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
-
-
-class SimpleListModel(AtomicRedisModel):
-    items: list[str]
-
-
-class SimpleIntListModel(AtomicRedisModel):
-    numbers: list[int]
-
-
-class SimpleDictModel(AtomicRedisModel):
-    data: dict[str, str]
-
-
-class SimpleIntDictModel(AtomicRedisModel):
-    counts: dict[str, int]
+from tests.models.collection_types import (
+    SimpleListModel,
+    SimpleIntListModel,
+    SimpleDictModel,
+)
+from tests.models.unit_types import SimpleIntDictModel
 
 
 @pytest.mark.parametrize(

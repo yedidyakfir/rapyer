@@ -1,15 +1,9 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field
 
-from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
 from rapyer.types.string import RedisStr
-
-
-class DictModel(AtomicRedisModel):
-    data: dict[str, str] = Field(default_factory=dict)
-    config: dict[str, int] = Field(default_factory=dict)
+from tests.models.collection_types import DictModel
 
 
 @pytest_asyncio.fixture(autouse=True)

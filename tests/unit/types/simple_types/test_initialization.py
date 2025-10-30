@@ -1,33 +1,16 @@
 import pytest
 
-from rapyer.base import AtomicRedisModel
 from rapyer.types.boolean import RedisBool
 from rapyer.types.byte import RedisBytes
 from rapyer.types.integer import RedisInt
 from rapyer.types.string import RedisStr
-
-
-class SimpleStringModel(AtomicRedisModel):
-    name: str
-
-
-class SimpleIntModel(AtomicRedisModel):
-    count: int
-
-
-class SimpleBoolModel(AtomicRedisModel):
-    flag: bool
-
-
-class SimpleBytesModel(AtomicRedisModel):
-    data: bytes
-
-
-class MultiTypeModel(AtomicRedisModel):
-    name: str
-    count: int
-    flag: bool
-    data: bytes
+from tests.models.unit_types import (
+    SimpleStringModel,
+    SimpleIntModel,
+    SimpleBoolModel,
+    SimpleBytesModel,
+    MultiTypeModel
+)
 
 
 @pytest.mark.parametrize("test_value", ["hello", "world", "", "test_string"])
