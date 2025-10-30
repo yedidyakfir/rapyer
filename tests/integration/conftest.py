@@ -27,6 +27,7 @@ from tests.models.collection_types import (
     MixedTypesModel,
     PipelineTestModel,
     ComprehensiveTestModel,
+    BaseDictMetadataModel,
 )
 
 # Complex types
@@ -86,6 +87,7 @@ async def real_redis_client(redis_client):
         BaseModelListModel,
         ListModel,
         # Collection types - Dict models
+        BaseDictMetadataModel,
         IntDictModel,
         StrDictModel,
         DictDictModel,
