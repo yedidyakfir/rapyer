@@ -58,6 +58,10 @@ class AtomicRedisModel(BaseModel):
             return f"{parent_field_path}.{self.field_name}"
         return self.field_name
 
+    @property
+    def json_path(self):
+        return f"$.{self.field_path}"
+
     @classmethod
     def class_key_initials(cls):
         return cls.__name__
