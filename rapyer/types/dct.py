@@ -122,10 +122,6 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         kwargs_new_val = self.validate_dict(kwargs)
         return super().update(m_new_val, **kwargs_new_val)
 
-    def __ior__(self, other):
-        new_other = self.validate_dict(other)
-        return super().__ior__(new_other)
-
     def __setitem__(self, key, value):
         new_val = self.validate_dict({key: value})[key]
         super().__setitem__(key, new_val)
