@@ -282,10 +282,10 @@ async def test_nested_model_with_initial_list_data_update_sanity():
 
     outer.items.clear()
     outer.middle_model.tags.clear()
-    await outer.load()
+    loaded = await outer.load()
 
-    assert outer.items == [100, 200, 300]
-    assert outer.middle_model.tags == ["initial_tag1", "inserted_tag", "initial_tag2"]
+    assert loaded.items == [100, 200, 300]
+    assert loaded.middle_model.tags == ["initial_tag1", "inserted_tag", "initial_tag2"]
 
 
 @pytest.mark.asyncio
@@ -309,7 +309,7 @@ async def test_nested_model_with_initial_dict_data_update_sanity():
 
     outer.user_data.clear()
     outer.middle_model.metadata.clear()
-    await outer.load()
+    outer = await outer.load()
 
     expected_user_data = {"initial_user": 50, "another_user": 75, "new_user": 125}
     expected_metadata = {
@@ -333,6 +333,7 @@ async def test_nested_model_with_initial_deep_data_update_sanity():
     # Act
     await outer.middle_model.inner_model.lst.aextend(["deep3", "deep4"])
     outer.middle_model.inner_model.counter = 25
+    await outer.middle_model.inner_model.counter.save()
 
     # Assert
     assert "deep3" in outer.middle_model.inner_model.lst
@@ -341,7 +342,7 @@ async def test_nested_model_with_initial_deep_data_update_sanity():
     assert outer.middle_model.inner_model.counter == 25
 
     outer.middle_model.inner_model.lst.clear()
-    await outer.load()
+    outer = await outer.load()
 
     assert outer.middle_model.inner_model.lst == ["deep1", "deep2", "deep3", "deep4"]
     assert outer.middle_model.inner_model.counter == 25
@@ -379,7 +380,7 @@ async def test_nested_model_with_mixed_initial_data_update_sanity():
     outer.middle_model.metadata.clear()
     outer.middle_model.inner_model.lst.clear()
 
-    await outer.load()
+    outer = await outer.load()
 
     assert outer.items == [1, 2, 3, 4]
     assert outer.user_data == {"existing": 100, "new_key": 200, "another": 300}

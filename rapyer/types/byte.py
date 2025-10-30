@@ -13,14 +13,6 @@ class RedisBytes(bytes, RedisType):
             redis_value, context={REDIS_DUMP_FLAG_NAME: True}
         )
 
-    async def set(self, value: bytes):
-        if not isinstance(value, bytes):
-            raise TypeError("Value must be bytes")
-
-        value = self._adapter.dump_python(
-            value, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
-        )
-        return await self.client.json().set(self.key, self.json_path, value)
 
     def clone(self):
         return bytes(self)

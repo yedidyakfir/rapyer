@@ -29,7 +29,8 @@ async def test_redis_types_pipeline_ignore_if_deleted_true__model_not_saved_pipe
     # Act
     async with model.pipeline(ignore_if_deleted=True) as redis_model:
         field = getattr(redis_model, field_name)
-        await field.set(test_value)
+        setattr(redis_model, field_name, test_value)
+        await field.save()
 
         # Assert - model should not be created yet
         model_exists = await real_redis_client.exists(model.key)
@@ -63,7 +64,8 @@ async def test_redis_types_pipeline_ignore_if_deleted_false__model_not_saved_err
     with pytest.raises(Exception):
         async with model.pipeline(ignore_if_deleted=False) as redis_model:
             field = getattr(redis_model, field_name)
-            await field.set(test_value)
+            setattr(redis_model, field_name, test_value)
+            await field.save()
 
 
 @pytest.mark.asyncio
@@ -139,12 +141,18 @@ async def test_redis_types_pipeline_multiple_operations_ignore_if_deleted_true__
 
     # Act
     async with model.pipeline(ignore_if_deleted=True) as redis_model:
-        await redis_model.str_field.set("test")
-        await redis_model.int_field.set(100)
-        await redis_model.bool_field.set(True)
-        await redis_model.bytes_field.set(b"test")
-        await redis_model.any_field.set({"test": "data"})
-        await redis_model.enum_field.set(MyTestEnum.OPTION_B)
+        redis_model.str_field = "test"
+        await redis_model.str_field.save()
+        redis_model.int_field = 100
+        await redis_model.int_field.save()
+        redis_model.bool_field = True
+        await redis_model.bool_field.save()
+        redis_model.bytes_field = b"test"
+        await redis_model.bytes_field.save()
+        redis_model.any_field = {"test": "data"}
+        await redis_model.any_field.save()
+        redis_model.enum_field = MyTestEnum.OPTION_B
+        await redis_model.enum_field.save()
         await redis_model.list_field.aappend("item")
         await redis_model.dict_field.aset_item("key", "value")
 
@@ -165,6 +173,9 @@ async def test_redis_types_pipeline_multiple_operations_ignore_if_deleted_false_
     # Act & Assert
     with pytest.raises(Exception):
         async with model.pipeline(ignore_if_deleted=False) as redis_model:
-            await redis_model.str_field.set("test")
-            await redis_model.int_field.set(100)
-            await redis_model.bool_field.set(True)
+            redis_model.str_field = "test"
+            await redis_model.str_field.save()
+            redis_model.int_field = 100
+            await redis_model.int_field.save()
+            redis_model.bool_field = True
+            await redis_model.bool_field.save()

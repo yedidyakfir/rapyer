@@ -11,7 +11,8 @@ async def test_redis_bool_set_functionality_sanity(real_redis_client, test_value
     await model.save()
 
     # Act
-    await model.is_active.set(test_values)
+    model.is_active = test_values
+    await model.is_active.save()
 
     # Assert
     redis_value = (
@@ -41,8 +42,8 @@ async def test_redis_bool_set_with_wrong_type_edge_case():
     await model.save()
 
     # Act & Assert
-    with pytest.raises(TypeError, match="Value must be bool"):
-        await model.is_active.set("not a bool")
+    with pytest.raises(ValueError, match="Input should be a valid boolean"):
+        model.is_active = "not a bool"
 
 
 @pytest.mark.asyncio

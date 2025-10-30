@@ -11,7 +11,8 @@ async def test_redis_int_set_functionality_sanity(test_values):
     await model.save()
 
     # Act
-    await model.count.set(test_values)
+    model.count = test_values
+    await model.count.save()
 
     # Assert
     fresh_model = IntModel()
@@ -26,7 +27,8 @@ async def test_redis_int_load_functionality_sanity(test_values):
     # Arrange
     model = IntModel()
     await model.save()
-    await model.count.set(test_values)
+    model.count = test_values
+    await model.count.save()
 
     # Act
     fresh_model = IntModel()
@@ -74,8 +76,8 @@ async def test_redis_int_set_with_wrong_type_edge_case():
     model = IntModel()
 
     # Act & Assert
-    with pytest.raises(TypeError, match="Value must be int"):
-        await model.count.set("not an int")
+    with pytest.raises(ValueError, match="Input should be a valid integer"):
+        model.count = "not an int"
 
 
 @pytest.mark.asyncio
@@ -131,7 +133,8 @@ async def test_redis_int_persistence_across_instances_edge_case():
     # Arrange
     model1 = IntModel(count=100)
     await model1.save()
-    await model1.count.set(100)
+    model1.count = 100
+    await model1.count.save()
 
     # Act
     model2 = IntModel()
@@ -185,7 +188,8 @@ async def test_redis_int_increase_functionality_sanity(
     # Arrange
     model = IntModel()
     await model.save()
-    await model.count.set(initial_value)
+    model.count = initial_value
+    await model.count.save()
 
     # Act
     result = await model.count.increase(increase_amount)
@@ -203,7 +207,8 @@ async def test_redis_int_increase_default_amount_sanity():
     # Arrange
     model = IntModel()
     await model.save()
-    await model.count.set(10)
+    model.count = 10
+    await model.count.save()
 
     # Act
     result = await model.count.increase()

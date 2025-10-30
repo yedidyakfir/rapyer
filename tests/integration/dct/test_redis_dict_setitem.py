@@ -105,8 +105,8 @@ async def test_redis_dict_setitem_int_operations_sanity(key, test_value):
     await model.save()
 
     # Act
-    model.metadata[key] = test_value
-    await model.metadata[key].set(test_value + 50)
+    model.metadata[key] = test_value + 50
+    await model.metadata[key].save()
 
     # Assert
     fresh_model = IntDictModel()
@@ -131,8 +131,8 @@ async def test_redis_dict_setitem_str_operations_sanity(key, test_value):
     await model.save()
 
     # Act
-    model.metadata[key] = test_value
-    await model.metadata[key].set(test_value + "_modified")
+    model.metadata[key] = test_value + "_modified"
+    await model.metadata[key].save()
 
     # Assert
     fresh_model = StrDictModel()
@@ -257,7 +257,7 @@ async def test_redis_dict_setitem_persistence_across_instances_edge_case():
 
     # Act
     model1.metadata["test_key"] = 99
-    await model1.metadata["test_key"].set(99)
+    await model1.metadata["test_key"].save()
 
     # Assert
     model2 = IntDictModel()
@@ -276,12 +276,14 @@ async def test_redis_dict_setitem_with_existing_redis_operations_sanity():
 
     # Act - use setitem to add a new key
     model.metadata["new_key"] = "new_value"
-    await model.metadata["new_key"].set("updated_value")
+    model.metadata["new_key"] = "updated_value"
+    await model.metadata["new_key"].save()
 
     # Also use setitem to convert existing key to Redis type
     # Convert to Redis type via setitem
     model.metadata["existing_key"] = "existing_value"
-    await model.metadata["existing_key"].set("updated_existing")
+    model.metadata["existing_key"] = "updated_existing"
+    await model.metadata["existing_key"].save()
 
     # Assert
     fresh_model = StrDictModel()
@@ -299,8 +301,8 @@ async def test_redis_dict_setitem_overwrite_existing_key_sanity():
     await model.save()
 
     # Act - overwrite existing key with setitem
-    model.metadata["key1"] = 99
-    await model.metadata["key1"].set(150)
+    model.metadata["key1"] = 150
+    await model.metadata["key1"].save()
 
     # Assert
     fresh_model = IntDictModel()
@@ -321,7 +323,8 @@ async def test_redis_dict_setitem_mixed_operations_sanity():
     await model.metadata.aupdate(key3="value3")  # aupdate
 
     # Use Redis operations on setitem-created value
-    await model.metadata["key1"].set("modified_value1")
+    model.metadata["key1"] = "modified_value1"
+    await model.metadata["key1"].save()
 
     # Assert
     fresh_model = StrDictModel()

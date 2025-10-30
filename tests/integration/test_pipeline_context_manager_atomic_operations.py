@@ -319,13 +319,14 @@ async def test_pipeline_string_set__check_atomicity_sanity():
 
     # Act
     async with model.pipeline() as redis_model:
-        await redis_model.name.set("updated")
+        redis_model.name = "updated"
+        await redis_model.name.save()
 
-        # Check if change is not applied yet (atomicity test)
+        # Check if the change is not applied yet (atomicity test)
         loaded_model = await ComprehensiveTestModel.get(model.key)
         assert loaded_model.name == "original"
 
-    # Assert - Check if change was applied after pipeline
+    # Assert - Check if a change was applied after a pipeline
     final_model = await ComprehensiveTestModel.get(model.key)
     assert final_model.name == "updated"
 
@@ -338,13 +339,14 @@ async def test_pipeline_int_set__check_atomicity_sanity():
 
     # Act
     async with model.pipeline() as redis_model:
-        await redis_model.counter.set(99)
+        redis_model.counter = 99
+        await redis_model.counter.save()
 
-        # Check if change is not applied yet (atomicity test)
+        # Check if a change is not applied yet (atomicity test)
         loaded_model = await ComprehensiveTestModel.get(model.key)
         assert loaded_model.counter == 10
 
-    # Assert - Check if change was applied after pipeline
+    # Assert - Check if a change was applied after a pipeline
     final_model = await ComprehensiveTestModel.get(model.key)
     assert final_model.counter == 99
 
@@ -357,14 +359,16 @@ async def test_pipeline_multiple_operations__check_combined_atomicity_sanity():
     )
     await model.save()
 
-    # Act - Test multiple operations in single pipeline
+    # Act - Test multiple operations in a single pipeline
     async with model.pipeline() as redis_model:
         await redis_model.tags.aappend("tag2")
         await redis_model.tags.aextend(["tag3", "tag4"])
         await redis_model.metadata.aupdate(key2="value2", key3="value3")
         await redis_model.metadata.aset_item("key4", "value4")
-        await redis_model.name.set("updated")
-        await redis_model.counter.set(100)
+        redis_model.name = "updated"
+        await redis_model.name.save()
+        redis_model.counter = 100
+        await redis_model.counter.save()
 
         # Check intermediate state - should be unchanged
         loaded_model = await ComprehensiveTestModel.get(model.key)
@@ -400,7 +404,7 @@ async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case()
             await redis_model.metadata.aset_item("new_key", "should_not_be_saved")
             raise ValueError("Test exception")
 
-    # Assert - No changes should be applied when exception occurs
+    # Assert - No changes should be applied when an exception occurs
     final_model = await ComprehensiveTestModel.get(model.key)
     assert final_model.tags == original_state.tags
     assert final_model.metadata == original_state.metadata

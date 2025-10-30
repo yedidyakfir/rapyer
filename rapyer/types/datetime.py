@@ -29,11 +29,6 @@ class RedisDatetime(datetime, RedisType):
             return datetime.fromisoformat(redis_value)
         return None
 
-    async def set(self, value: datetime):
-        if value is not None and not isinstance(value, datetime):
-            raise TypeError("Value must be datetime or None")
-
-        return await self.client.json().set(self.key, self.json_path, value.isoformat())
 
     def clone(self):
         return datetime.fromtimestamp(self.timestamp())

@@ -8,11 +8,6 @@ class RedisBool(int, RedisType):
         redis_value = await self.client.json().get(self.key, self.field_path)
         return redis_value
 
-    async def set(self, value: bool):
-        if not isinstance(value, bool):
-            raise TypeError("Value must be bool")
-
-        return await self.client.json().set(self.key, self.json_path, value)
 
     def clone(self):
         return bool(self)

@@ -131,8 +131,8 @@ async def test_redis_list_setitem_int_operations_sanity(index, test_value):
     await model.save()
 
     # Act
-    model.items[index] = test_value
-    await model.items[index].set(test_value + 50)
+    model.items[index] = test_value + 50
+    await model.items[index].save()
 
     # Assert
     fresh_model = IntListModel()
@@ -158,8 +158,8 @@ async def test_redis_list_setitem_str_operations_sanity(index, test_value):
     await model.save()
 
     # Act
-    model.items[index] = test_value
-    await model.items[index].set(test_value + "_modified")
+    model.items[index] = test_value + "_modified"
+    await model.items[index].save()
 
     # Assert
     fresh_model = StrListModel()
@@ -285,7 +285,7 @@ async def test_redis_list_setitem_persistence_across_instances_edge_case():
 
     # Act
     model1.items[1] = 99
-    await model1.items[1].set(99)
+    await model1.items[1].save()
 
     # Assert
     model2 = IntListModel()

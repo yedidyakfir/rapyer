@@ -24,7 +24,8 @@ async def test_redis_datetime_set_functionality_sanity(test_values):
     await model.save()
 
     # Act
-    await model.created_at.set(test_values)
+    model.created_at = test_values
+    await model.created_at.save()
 
     # Assert
     fresh_model = DatetimeModel()
@@ -39,7 +40,8 @@ async def test_redis_datetime_load_functionality_sanity(test_values):
     # Arrange
     model = DatetimeModel()
     await model.save()
-    await model.created_at.set(test_values)
+    model.created_at = test_values
+    await model.created_at.save()
 
     # Act
     fresh_model = DatetimeModel()
@@ -68,8 +70,8 @@ async def test_redis_datetime_set_with_wrong_type_edge_case():
     model = DatetimeModel()
 
     # Act & Assert
-    with pytest.raises(TypeError, match="Value must be datetime or None"):
-        await model.created_at.set("2023-01-01")
+    with pytest.raises(ValueError, match="Input should be a valid datetime"):
+        model.created_at = "not a valid datetime"
 
 
 @pytest.mark.asyncio
@@ -80,7 +82,8 @@ async def test_redis_datetime_serialization_functionality_sanity(real_redis_clie
     await model.save()
 
     # Act
-    await model.created_at.set(test_datetime)
+    model.created_at = test_datetime
+    await model.created_at.save()
 
     # Assert
     raw_value = await real_redis_client.json().get(
@@ -128,7 +131,8 @@ async def test_redis_datetime_persistence_across_instances_edge_case():
     test_datetime = datetime(2023, 1, 1, 12, 0, 0)
     model1 = DatetimeModel()
     await model1.save()
-    await model1.created_at.set(test_datetime)
+    model1.created_at = test_datetime
+    await model1.created_at.save()
 
     # Act
     model2 = DatetimeModel()
@@ -156,10 +160,10 @@ async def test_redis_datetime_list_functionality_sanity(test_dates):
     # Act
     fresh_model = DatetimeListModel()
     fresh_model.pk = model.pk
-    await fresh_model.load()
+    loaded_model = await fresh_model.load()
 
     # Assert
-    assert fresh_model.dates == test_dates
+    assert loaded_model.dates == test_dates
 
 
 @pytest.mark.parametrize(
@@ -179,10 +183,10 @@ async def test_redis_datetime_dict_functionality_sanity(test_date_dict):
     # Act
     fresh_model = DatetimeDictModel()
     fresh_model.pk = model.pk
-    await fresh_model.load()
+    loaded_model = await fresh_model.load()
 
     # Assert
-    assert fresh_model.event_dates == test_date_dict
+    assert loaded_model.event_dates == test_date_dict
 
 
 @pytest.mark.asyncio

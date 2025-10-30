@@ -21,7 +21,8 @@ async def test_redis_bytes_set_functionality_sanity(test_values):
     await model.save()
 
     # Act
-    await model.data.set(test_values)
+    model.data = test_values
+    await model.data.save()
 
     # Assert
     fresh_model = BytesModel()
@@ -38,7 +39,8 @@ async def test_redis_bytes_load_functionality_sanity(test_values):
     # Arrange
     model = BytesModel()
     await model.save()
-    await model.data.set(test_values)
+    model.data = test_values
+    await model.data.save()
 
     # Act
     fresh_model = BytesModel()
@@ -76,7 +78,8 @@ async def test_redis_bytes_load_type_conversion_edge_case(redis_values):
     redis_value, expected = redis_values
     model = BytesModel()
     await model.save()
-    await model.data.set(redis_value)
+    model.data = redis_value
+    await model.data.save()
 
     # Act
     fresh_model = BytesModel()

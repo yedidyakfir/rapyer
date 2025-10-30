@@ -14,7 +14,8 @@ async def test_redis_str_set_functionality_sanity(test_values):
     await model.save()
 
     # Act
-    await model.name.set(test_values)
+    model.name = test_values
+    await model.name.save()
 
     # Assert
     fresh_model = StrModel()
@@ -32,7 +33,8 @@ async def test_redis_str_load_functionality_sanity(test_values):
     # Arrange
     model = StrModel()
     await model.save()
-    await model.name.set(test_values)
+    model.name = test_values
+    await model.name.save()
 
     # Act
     fresh_model = StrModel()
@@ -61,8 +63,8 @@ async def test_redis_str_set_with_wrong_type_edge_case():
     model = StrModel()
 
     # Act & Assert
-    with pytest.raises(TypeError, match="Value must be str"):
-        await model.name.set(42)
+    with pytest.raises(ValueError, match="Input should be a valid string"):
+        model.name = 42
 
 
 @pytest.mark.asyncio
@@ -118,7 +120,8 @@ async def test_redis_str_persistence_across_instances_edge_case():
     # Arrange
     model1 = StrModel(name="original")
     await model1.save()
-    await model1.name.set("modified")
+    model1.name = "modified"
+    await model1.name.save()
 
     # Act
     model2 = StrModel()
@@ -171,7 +174,8 @@ async def test_redis_str_empty_string_functionality_edge_case():
     await model.save()
 
     # Act
-    await model.name.set("")
+    model.name = ""
+    await model.name.save()
 
     # Assert
     fresh_model = StrModel()
