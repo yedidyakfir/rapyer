@@ -92,7 +92,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
     @classmethod
     def find_inner_type(cls, type_):
         args = get_args(type_)
-        return args[1] if args else Any
+        return args[1] if len(args) >= 2 else Any
 
     async def load(self):
         # Get all items from Redis dict
