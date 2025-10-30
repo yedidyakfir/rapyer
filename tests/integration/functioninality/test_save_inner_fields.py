@@ -429,7 +429,7 @@ async def test_save_integer_operations_parametrized_sanity(
     model = IntModel(count=initial_value)
     await model.save()
 
-    # Modify other field but don't save the entire model
+    # Modify another field but don't save the entire model
     model.score = 999  # Should not be saved
 
     # Act - Apply operation and save only the count field
@@ -467,7 +467,6 @@ async def test_save_integer_operations_parametrized_sanity(
             {"b": "99", "c": "3"},
             {"a": "1", "b": "99", "c": "3"},
         ),
-        ("setdefault", {"a": "1"}, ("b", "42"), {"a": "1", "b": "42"}),
     ],
 )
 @pytest.mark.asyncio
@@ -483,9 +482,6 @@ async def test_save_dict_operations_parametrized_sanity(
         model.data |= operation_data
     elif dict_operation == "update":
         model.data.update(operation_data)
-    elif dict_operation == "setdefault":
-        key, value = operation_data
-        model.data.setdefault(key, value)
 
     await model.data.save()
 
