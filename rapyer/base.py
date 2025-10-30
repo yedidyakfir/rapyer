@@ -154,7 +154,7 @@ class AtomicRedisModel(BaseModel):
             raise KeyNotFound(f"{key} is missing in redis")
         model_dump = model_dump[0]
 
-        instance = cls(**model_dump, should_serialize=True)
+        instance = cls(**model_dump)
         # Extract pk from the key format: "ClassName:pk"
         pk = key.split(":", 1)[1]
         instance._pk = pk
