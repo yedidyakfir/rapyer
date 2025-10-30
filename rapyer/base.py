@@ -182,11 +182,6 @@ class AtomicRedisModel(BaseModel):
         client = _context_var.get() or self.Meta.redis
         return await client.delete(self.key)
 
-    async def load(self):
-        await asyncio.gather(
-            *[getattr(self, field_name).load() for field_name in self.model_dump()]
-        )
-
     @classmethod
     @contextlib.asynccontextmanager
     async def lock_from_key(
