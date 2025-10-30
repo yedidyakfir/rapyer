@@ -8,7 +8,7 @@ from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter, model_vali
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 
-from rapyer.config import RedisConfig, RedisFieldConfig
+from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
 from rapyer.types.base import (
