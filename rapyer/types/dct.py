@@ -102,14 +102,23 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             redis_items = {}
 
         # Deserialize items using a type adapter
-        deserialized_items = self._adapter.validate_python(redis_items)
+        deserialized_items = self._adapter.validate_python(
+            redis_items, context={REDIS_DUMP_FLAG_NAME: True}
+        )
 
         # Clear local dict and populate with Redis data
         super().clear()
         super().update(deserialized_items)
 
+    def validate_dict(self, dct: dict):
+        new_dct = self._adapter.validate_python(dct)
+        if new_dct:
+            for key, value in new_dct.items():
+                self.init_redis_field(key, value)
+        return new_dct
+
     async def aset_item(self, key, value):
-        super().__setitem__(key, value)
+        self.__setitem__(key, value)
 
         # Serialize the value for Redis storage using a type adapter
         serialized_value = self._adapter.dump_python(
@@ -119,12 +128,17 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             self.key, self.json_field_path(key), serialized_value[key]
         )
 
+    def update(self, m=None, /, **kwargs):
+        m_new_val = self.validate_dict(m) if m else {}
+        kwargs_new_val = self.validate_dict(kwargs)
+        return super().update(m_new_val, **kwargs_new_val)
+
     def __ior__(self, other):
-        self.update(other)
-        return self
+        new_other = self.validate_dict(other)
+        return super().__ior__(new_other)
 
     def __setitem__(self, key, value):
-        new_val = self.create_new_value(key, value)
+        new_val = self.validate_dict({key: value})[key]
         super().__setitem__(key, new_val)
 
     async def adel_item(self, key):
@@ -135,11 +149,8 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         self.update(**kwargs)
 
         # Serialize values using type adapter
-        validated_data = self._adapter.validate_python(
-            kwargs, context={REDIS_DUMP_FLAG_NAME: True}
-        )
         dumped_data = self._adapter.dump_python(
-            validated_data, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            kwargs, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
         redis_params = {self.json_field_path(key): v for key, v in dumped_data.items()}
 

@@ -18,9 +18,6 @@ class RedisList(list, GenericRedisType[T]):
         list.__init__(self, *args, **kwargs)
         GenericRedisType.__init__(self, *args, **kwargs)
 
-    def sub_field_path(self, field_name: str):
-        return f"{self.field_path}[{field_name}]"
-
     async def load(self) -> list[T]:
         # Get all items from Redis list
         redis_items = await self.client.json().get(self.key, self.field_path)
@@ -37,9 +34,13 @@ class RedisList(list, GenericRedisType[T]):
             super().extend(deserialized_items)
         return list(self)
 
+    def create_new_value(self, key, value):
+        new_value = self._adapter.validate_python([value])[0]
+        self.init_redis_field(f"[{key}]", new_value)
+        return new_value
+
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
-        self.init_redis_field(f"[{key}]", new_val)
         super().__setitem__(key, new_val)
 
     async def aappend(self, __object):
@@ -49,7 +50,7 @@ class RedisList(list, GenericRedisType[T]):
 
         # Serialize the object for Redis storage using a type adapter
         serialized_object = self._adapter.dump_python(
-            [new_val], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            [__object], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
         return await self.client.json().arrappend(
             self.key, self.json_path, *serialized_object
@@ -65,11 +66,9 @@ class RedisList(list, GenericRedisType[T]):
 
         # Convert iterable to list and serialize items using type adapter
         if items:
-            normalized_items = self._adapter.validate_python(
-                items, context={REDIS_DUMP_FLAG_NAME: True}
-            )
+            # normalized_items = self._adapter.validate_python(items)
             serialized_items = self._adapter.dump_python(
-                normalized_items, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+                items, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
             )
             return await self.client.json().arrappend(
                 self.key,
@@ -102,11 +101,8 @@ class RedisList(list, GenericRedisType[T]):
         super().insert(index, new_val)
 
         # Serialize the object for Redis storage using a type adapter
-        normalized_object = self._adapter.validate_python(
-            [__object], context={REDIS_DUMP_FLAG_NAME: True}
-        )
         serialized_object = self._adapter.dump_python(
-            normalized_object, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            [__object], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
         return await self.client.json().arrinsert(
             self.key, self.json_path, index, *serialized_object
