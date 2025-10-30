@@ -34,19 +34,40 @@ class RedisList(list, GenericRedisType[T]):
             super().extend(deserialized_items)
         return list(self)
 
+    def create_new_values(self, keys, values):
+        new_values = self._adapter.validate_python(values)
+        for key, value in zip(keys, new_values):
+            self.init_redis_field(f"[{key}]", value)
+        return new_values
+
     def create_new_value(self, key, value):
-        new_value = self._adapter.validate_python([value])[0]
-        self.init_redis_field(f"[{key}]", new_value)
-        return new_value
+        new_val = self.create_new_values([key], [value])[0]
+        return new_val
 
     def __setitem__(self, key, value):
         new_val = self.create_new_value(key, value)
         super().__setitem__(key, new_val)
 
-    async def aappend(self, __object):
+    def __iadd__(self, other):
+        self.extend(other)
+        return self
+
+    def append(self, __object):
         key = len(self)
         new_val = self.create_new_value(key, __object)
-        super().append(new_val)
+        return super().append(new_val)
+
+    def extend(self, new_lst):
+        new_keys = range(len(self), len(self) + len(new_lst))
+        new_vals = self.create_new_values(list(new_keys), new_lst)
+        return super().extend(new_vals)
+
+    def insert(self, index, __object):
+        new_val = self.create_new_value(index, __object)
+        return super().insert(index, new_val)
+
+    async def aappend(self, __object):
+        super().append(__object)
 
         # Serialize the object for Redis storage using a type adapter
         serialized_object = self._adapter.dump_python(
@@ -58,11 +79,7 @@ class RedisList(list, GenericRedisType[T]):
 
     async def aextend(self, __iterable):
         items = list(__iterable)
-        base_idx = len(self)
-        redis_items = [
-            self.create_new_value(base_idx + i, item) for i, item in enumerate(items)
-        ]
-        super().extend(redis_items)
+        self.extend(items)
 
         # Convert iterable to list and serialize items using type adapter
         if items:
@@ -96,9 +113,7 @@ class RedisList(list, GenericRedisType[T]):
         )[0]
 
     async def ainsert(self, index, __object):
-        key = len(self)
-        new_val = self.create_new_value(key, __object)
-        super().insert(index, new_val)
+        self.insert(index, __object)
 
         # Serialize the object for Redis storage using a type adapter
         serialized_object = self._adapter.dump_python(
