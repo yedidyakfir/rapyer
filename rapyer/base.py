@@ -163,6 +163,16 @@ class AtomicRedisModel(BaseModel):
         # Update Redis field parameters to use the correct redis_key
         return instance
 
+    async def load(self) -> Self:
+        model_dump = await self.Meta.redis.json().get(self.key, self.json_path)
+        if not model_dump:
+            raise KeyNotFound(f"{self.key} is missing in redis")
+        model_dump = model_dump[0]
+        instance = self.__class__(**model_dump)
+        instance._pk = self._pk
+        instance._base_model_link = self._base_model_link
+        return instance
+
     @classmethod
     async def try_delete(cls, key: str) -> bool:
         client = _context_var.get() or cls.Meta.redis
