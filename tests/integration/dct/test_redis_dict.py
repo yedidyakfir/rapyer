@@ -49,6 +49,7 @@ from tests.models.common import Status, Person
             "key2",
             {"nested2": "value2"},
         ],
+        [BaseDictMetadataModel, {"key1": "value1"}, "key2", "value2"],
     ],
 )
 async def test_redis_dict__setitem__check_local_consistency_sanity(
@@ -83,6 +84,7 @@ async def test_redis_dict__setitem__check_local_consistency_sanity(
         ],
         [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}, "key1"],
         [AnyDictModel, {"key1": "mixed", "key2": 42}, "key1"],
+        [BaseDictMetadataModel, {"key1": "value1", "key2": "value2"}, "key1"],
     ],
 )
 async def test_redis_dict__delitem__check_local_consistency_sanity(
@@ -121,6 +123,7 @@ async def test_redis_dict__delitem__check_local_consistency_sanity(
             {"key2": Status.PENDING, "key3": Status.INACTIVE},
         ],
         [AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}],
+        [BaseDictMetadataModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}],
     ],
 )
 async def test_redis_dict__update__check_local_consistency_sanity(
@@ -154,6 +157,7 @@ async def test_redis_dict__update__check_local_consistency_sanity(
         ],
         [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}],
         [AnyDictModel, {"key1": "mixed", "key2": 42}],
+        [BaseDictMetadataModel, {"key1": "value1", "key2": "value2"}],
     ],
 )
 async def test_redis_dict__clear__check_local_consistency_sanity(
@@ -190,6 +194,7 @@ async def test_redis_dict__clear__check_local_consistency_sanity(
         ],
         [EnumDictModel, {"key1": Status.ACTIVE}, "key2", Status.PENDING],
         [AnyDictModel, {"key1": "mixed"}, "key2", 42],
+        [BaseDictMetadataModel, {"key1": "value1"}, "key2", "value2"],
     ],
 )
 async def test_redis_dict__load__check_redis_load_sanity(
@@ -236,6 +241,7 @@ async def test_redis_dict__load__check_redis_load_sanity(
             Status.ACTIVE,
         ],
         [AnyDictModel, {"key1": "mixed", "key2": 42}, "key1", "mixed"],
+        [BaseDictMetadataModel, {"key1": "value1", "key2": "value2"}, "key1", "value1"],
     ],
 )
 async def test_redis_dict__pop__check_redis_pop_sanity(
@@ -268,6 +274,7 @@ async def test_redis_dict__pop__check_redis_pop_sanity(
         [DatetimeDictModel, {"key1": datetime(2023, 1, 1)}, datetime(2023, 12, 31)],
         [EnumDictModel, {"key1": Status.ACTIVE}, Status.INACTIVE],
         [AnyDictModel, {"key1": "mixed"}, "default_any"],
+        [BaseDictMetadataModel, {"key1": "value1"}, "default_value"],
     ],
 )
 async def test_redis_dict__pop_with_default__check_default_return_sanity(
@@ -298,6 +305,7 @@ async def test_redis_dict__pop_with_default__check_default_return_sanity(
         ],
         [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}],
         [AnyDictModel, {"key1": "mixed", "key2": 42}],
+        [BaseDictMetadataModel, {"key1": "value1", "key2": "value2"}],
     ],
 )
 async def test_redis_dict__popitem__check_redis_popitem_sanity(
@@ -334,6 +342,7 @@ async def test_redis_dict__popitem__check_redis_popitem_sanity(
         [DatetimeDictModel, {"key1": datetime(2023, 1, 1)}],
         [EnumDictModel, {"key1": Status.ACTIVE}],
         [AnyDictModel, {"key1": "mixed"}],
+        [BaseDictMetadataModel, {"key1": "value1"}],
     ],
 )
 async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
@@ -358,6 +367,8 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
         await user.metadata.aupdate(key2=Status.PENDING, key3=Status.INACTIVE)
     elif model_class == AnyDictModel:
         await user.metadata.aupdate(key2=42, key3=[1, 2, 3])
+    elif model_class == BaseDictMetadataModel:
+        await user.metadata.aupdate(key2="value2", key3="value3")
     await user.save()  # Sync with Redis
 
     # Assert
@@ -381,6 +392,7 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
         ],
         [EnumDictModel, {"key1": Status.ACTIVE, "key2": Status.PENDING}],
         [AnyDictModel, {"key1": "mixed", "key2": 42}],
+        [BaseDictMetadataModel, {"key1": "value1", "key2": "value2"}],
     ],
 )
 async def test_redis_dict__clone__check_clone_functionality_sanity(
@@ -411,6 +423,8 @@ async def test_redis_dict__clone__check_clone_functionality_sanity(
         cloned_dict["key3"] = Status.INACTIVE
     elif model_class == AnyDictModel:
         cloned_dict["key3"] = [1, 2, 3]
+    elif model_class == BaseDictMetadataModel:
+        cloned_dict["key3"] = "value3"
     assert "key3" not in user.metadata
 
 
@@ -424,6 +438,7 @@ async def test_redis_dict__clone__check_clone_functionality_sanity(
         DatetimeDictModel,
         EnumDictModel,
         AnyDictModel,
+        BaseDictMetadataModel,
     ],
 )
 async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(
@@ -452,6 +467,7 @@ async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(
         ],
         [EnumDictModel, {"key1": Status.ACTIVE}, {"key2": Status.PENDING}],
         [AnyDictModel, {"key1": "mixed"}, {"key2": 42}],
+        [BaseDictMetadataModel, {"key1": "value1"}, {"key2": "value2"}],
     ],
 )
 async def test__redis_dict_model__ior_sanity(
@@ -479,6 +495,7 @@ async def test__redis_dict_model__ior_sanity(
         [DatetimeDictModel, datetime(2023, 12, 31)],
         [EnumDictModel, Status.INACTIVE],
         [AnyDictModel, "default_any"],
+        [BaseDictMetadataModel, "default_value"],
     ],
 )
 async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
@@ -505,6 +522,7 @@ async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
         DatetimeDictModel,
         EnumDictModel,
         AnyDictModel,
+        BaseDictMetadataModel,
     ],
 )
 async def test_redis_dict__apop_empty_redis__check_no_default_sanity(

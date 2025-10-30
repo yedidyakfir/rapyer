@@ -53,7 +53,7 @@ class MixedTypesModel(AtomicRedisModel):
 
 
 class BaseDictMetadataModel(AtomicRedisModel):
-    metadata: dict
+    metadata: dict = Field(default_factory=dict)
 
 
 class StrDictModel(BaseDictMetadataModel):
