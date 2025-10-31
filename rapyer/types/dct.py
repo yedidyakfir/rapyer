@@ -94,22 +94,6 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         args = get_args(type_)
         return args[1] if len(args) >= 2 else Any
 
-    async def load(self):
-        # Get all items from Redis dict
-        redis_items = await self.client.json().get(self.key, self.field_path)
-
-        if redis_items is None:
-            redis_items = {}
-
-        # Deserialize items using a type adapter
-        deserialized_items = self._adapter.validate_python(
-            redis_items, context={REDIS_DUMP_FLAG_NAME: True}
-        )
-
-        # Clear local dict and populate with Redis data
-        super().clear()
-        super().update(deserialized_items)
-
     def validate_dict(self, dct: dict):
         new_dct = self._adapter.validate_python(dct)
         if new_dct:

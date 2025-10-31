@@ -77,9 +77,13 @@ class RedisType(ABC):
             await self.client.expire(self.key, self.Meta.ttl)
         return self
 
-    @abc.abstractmethod
     async def load(self):
-        pass
+        redis_value = await self.client.json().get(self.key, self.field_path)
+        if redis_value is None:
+            return None
+        return self._adapter.validate_python(
+            redis_value, context={REDIS_DUMP_FLAG_NAME: True}
+        )
 
     @abc.abstractmethod
     def clone(self):

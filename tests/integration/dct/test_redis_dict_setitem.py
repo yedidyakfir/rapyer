@@ -111,7 +111,7 @@ async def test_redis_dict_setitem_int_operations_sanity(key, test_value):
     # Assert
     fresh_model = IntDictModel()
     fresh_model.pk = model.pk
-    await fresh_model.metadata.load()
+    fresh_model.metadata = await fresh_model.metadata.load()
     # After loading, values are regular Python types, not Redis types
     assert fresh_model.metadata[key] == test_value + 50
 
@@ -137,7 +137,7 @@ async def test_redis_dict_setitem_str_operations_sanity(key, test_value):
     # Assert
     fresh_model = StrDictModel()
     fresh_model.pk = model.pk
-    await fresh_model.metadata.load()
+    fresh_model.metadata = await fresh_model.metadata.load()
     # After loading, values are regular Python types, not Redis types
     assert fresh_model.metadata[key] == test_value + "_modified"
 
@@ -164,7 +164,7 @@ async def test_redis_dict_setitem_nested_dict_operations_sanity(key, test_value)
     # Assert
     fresh_model = DictDictModel()
     fresh_model.pk = model.pk
-    await fresh_model.metadata.load()
+    fresh_model.metadata = await fresh_model.metadata.load()
     # After loading, values are regular Python types, not Redis types
     expected_dict = {**test_value, "new_setting": "new_value"}
     assert fresh_model.metadata[key] == expected_dict
@@ -262,7 +262,7 @@ async def test_redis_dict_setitem_persistence_across_instances_edge_case():
     # Assert
     model2 = IntDictModel()
     model2.pk = model1.pk
-    await model2.metadata.load()
+    model2.metadata = await model2.metadata.load()
     # After loading, values are regular Python types, not Redis types
     assert model2.metadata["test_key"] == 99
 
@@ -288,7 +288,7 @@ async def test_redis_dict_setitem_with_existing_redis_operations_sanity():
     # Assert
     fresh_model = StrDictModel()
     fresh_model.pk = model.pk
-    await fresh_model.metadata.load()
+    fresh_model.metadata = await fresh_model.metadata.load()
     assert fresh_model.metadata["new_key"] == "updated_value"
     assert fresh_model.metadata["existing_key"] == "updated_existing"
 
@@ -307,7 +307,7 @@ async def test_redis_dict_setitem_overwrite_existing_key_sanity():
     # Assert
     fresh_model = IntDictModel()
     fresh_model.pk = model.pk
-    await fresh_model.metadata.load()
+    fresh_model.metadata = await fresh_model.metadata.load()
     assert fresh_model.metadata["key1"] == 150
 
 
@@ -329,7 +329,7 @@ async def test_redis_dict_setitem_mixed_operations_sanity():
     # Assert
     fresh_model = StrDictModel()
     fresh_model.pk = model.pk
-    await fresh_model.metadata.load()
+    fresh_model.metadata = await fresh_model.metadata.load()
     assert fresh_model.metadata["key1"] == "modified_value1"
     assert fresh_model.metadata["key2"] == "value2"
     assert fresh_model.metadata["key3"] == "value3"
@@ -500,7 +500,7 @@ async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity
     assert setitem_address.zip_code == "80201"
 
     # regular aset_item should also work when loaded
-    await model.addresses.load()
+    model.addresses = await model.addresses.load()
     regular_address = model.addresses["regular_key"]
     assert regular_address.street == "666 Regular Ave"
     assert regular_address.city == "Phoenix"

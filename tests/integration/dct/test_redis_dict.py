@@ -66,7 +66,7 @@ async def test_redis_dict__setitem__check_local_consistency_sanity(
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
 
 
@@ -101,7 +101,7 @@ async def test_redis_dict__delitem__check_local_consistency_sanity(
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
 
 
@@ -144,7 +144,7 @@ async def test_redis_dict__update__check_local_consistency_sanity(
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
 
 
@@ -178,7 +178,7 @@ async def test_redis_dict__clear__check_local_consistency_sanity(
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert len(user.metadata) == 0
     assert user.metadata == fresh_user.metadata
 
@@ -210,16 +210,16 @@ async def test_redis_dict__load__check_redis_load_sanity(
     # Use another user instance to set a value and verify load works
     other_user = model_class()
     other_user.pk = user.pk
-    await other_user.metadata.load()
+    other_user.metadata = await other_user.metadata.load()
     await other_user.metadata.aset_item(new_item_key, new_item_value)
 
     # Act
-    await user.metadata.load()
+    user.metadata = await user.metadata.load()
 
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
     assert new_item_key in user.metadata
     assert user.metadata[new_item_key] == new_item_value
@@ -261,7 +261,7 @@ async def test_redis_dict__pop__check_redis_pop_sanity(
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
     assert popped_value == expected_value
     assert key_to_pop not in user.metadata
@@ -325,7 +325,7 @@ async def test_redis_dict__popitem__check_redis_popitem_sanity(
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
     # popitem should remove one item, leaving one remaining
     assert len(user.metadata) == 1
@@ -378,7 +378,7 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
     # Assert
     fresh_user = model_class()
     fresh_user.pk = user.pk
-    await fresh_user.metadata.load()
+    fresh_user.metadata = await fresh_user.metadata.load()
     assert user.metadata == fresh_user.metadata
     assert len(user.metadata) == 3
 

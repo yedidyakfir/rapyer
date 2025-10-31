@@ -30,13 +30,13 @@ async def test_redis_dict_model_creation_with_initial_value_and_set_load_sanity(
     await model.save()
 
     # Assert - Load and verify
-    await model.data.load()
+    model.data = await model.data.load()
     assert dict(model.data) == test_value
 
     # Test load from fresh model
     fresh_model = DictModel()
     fresh_model.pk = model.pk
-    await fresh_model.data.load()
+    fresh_model.data = await fresh_model.data.load()
     assert dict(fresh_model.data) == test_value
 
 
@@ -56,7 +56,7 @@ async def test_redis_dict_model_creation_with_dict_operations_sanity():
     await model.data.aupdate(extra="data")
 
     # Assert - Load and verify operations worked
-    await model.data.load()
+    model.data = await model.data.load()
     assert model.data["initial"] == "value"
     assert model.data["new_key"] == "new_value"
     assert model.data["extra"] == "data"

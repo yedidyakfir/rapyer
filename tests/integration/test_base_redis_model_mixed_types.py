@@ -20,7 +20,7 @@ async def test_bytes_list_append_functionality(test_bytes):
     original_data = list(model.bytes_list)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.bytes_list.load()
+    fresh_model.bytes_list = await fresh_model.bytes_list.load()
     assert list(fresh_model.bytes_list) == original_data
 
 
@@ -41,7 +41,7 @@ async def test_int_list_extend_functionality(test_ints):
     original_data = list(model.int_list)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.int_list.load()
+    fresh_model.int_list = await fresh_model.int_list.load()
     assert list(fresh_model.int_list) == original_data
 
 
@@ -65,7 +65,7 @@ async def test_bool_list_operations_functionality(bool_values):
     original_data = list(model.bool_list)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.bool_list.load()
+    fresh_model.bool_list = await fresh_model.bool_list.load()
     assert list(fresh_model.bool_list) == original_data
 
 
@@ -87,7 +87,7 @@ async def test_mixed_list_with_different_types_functionality():
     assert 42 in model.mixed_list
     assert True in model.mixed_list
 
-    await model.mixed_list.load()
+    model.mixed_list = await model.mixed_list.load()
     assert "string" in model.mixed_list
     assert 42 in model.mixed_list
     assert "inserted" in model.mixed_list
@@ -119,7 +119,7 @@ async def test_bytes_dict_operations_functionality(test_data):
     original_data = dict(model.bytes_dict)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.bytes_dict.load()
+    fresh_model.bytes_dict = await fresh_model.bytes_dict.load()
     assert dict(fresh_model.bytes_dict) == original_data
 
 
@@ -145,7 +145,7 @@ async def test_int_dict_operations_functionality(int_data):
     original_data = dict(model.int_dict)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.int_dict.load()
+    fresh_model.int_dict = await fresh_model.int_dict.load()
     assert dict(fresh_model.int_dict) == original_data
 
 
@@ -175,7 +175,7 @@ async def test_bool_dict_operations_functionality(bool_data):
     original_data = dict(model.bool_dict)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.bool_dict.load()
+    fresh_model.bool_dict = await fresh_model.bool_dict.load()
     assert dict(fresh_model.bool_dict) == original_data
     for key, value in fresh_model.bool_dict.items():
         assert isinstance(value, bool)
@@ -205,7 +205,7 @@ async def test_mixed_dict_with_various_types_functionality():
     assert model.mixed_dict["string_key"] == "string_value"
     assert model.mixed_dict["bool_key"] is True
 
-    await model.mixed_dict.load()
+    model.mixed_dict = await model.mixed_dict.load()
     assert model.mixed_dict["string_key"] == "string_value"
     assert model.mixed_dict["bool_key"] is True
     assert model.mixed_dict["bytes_key"] == b"bytes_value"
@@ -268,7 +268,7 @@ async def test_list_persistence_across_instances_edge_case(list_type, test_value
     model2 = MixedTypesModel()
     model2.pk = model1.pk
     target_list2 = getattr(model2, list_type)
-    await target_list2.load()
+    target_list2 = await target_list2.load()
 
     # Assert
     assert list(target_list2) == test_values
@@ -297,7 +297,7 @@ async def test_dict_persistence_across_instances_edge_case(dict_type, test_data)
     model2 = MixedTypesModel()
     model2.pk = model1.pk
     target_dict2 = getattr(model2, dict_type)
-    await target_dict2.load()
+    target_dict2 = await target_dict2.load()
 
     # Assert
     assert dict(target_dict2) == test_data
@@ -321,7 +321,7 @@ async def test_bytes_list_with_special_characters_edge_case():
     original_data = list(model.bytes_list)
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.bytes_list.load()
+    fresh_model.bytes_list = await fresh_model.bytes_list.load()
     assert list(fresh_model.bytes_list) == original_data
 
 
@@ -352,10 +352,10 @@ async def test_mixed_operations_on_same_model_functionality():
 
     fresh_model = MixedTypesModel()
     fresh_model.pk = model.pk
-    await fresh_model.str_list.load()
-    await fresh_model.int_list.load()
-    await fresh_model.bool_dict.load()
-    await fresh_model.mixed_dict.load()
+    fresh_model.str_list = await fresh_model.str_list.load()
+    fresh_model.int_list = await fresh_model.int_list.load()
+    fresh_model.bool_dict = await fresh_model.bool_dict.load()
+    fresh_model.mixed_dict = await fresh_model.mixed_dict.load()
 
     assert list(fresh_model.str_list) == original_str_list
     assert list(fresh_model.int_list) == original_int_list

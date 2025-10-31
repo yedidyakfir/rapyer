@@ -24,7 +24,7 @@ async def test_nested_model_deep_list_append_sanity():
     assert len(outer.middle_model.inner_model.lst) == 1
 
     outer.middle_model.inner_model.lst.clear()
-    await outer.middle_model.inner_model.lst.load()
+    outer.middle_model.inner_model.lst = await outer.middle_model.inner_model.lst.load()
 
     assert outer.middle_model.inner_model.lst == ["deep_item"]
 
@@ -44,7 +44,7 @@ async def test_nested_model_deep_list_extend_sanity():
     assert len(outer.middle_model.inner_model.lst) == 3
 
     outer.middle_model.inner_model.lst.clear()
-    await outer.middle_model.inner_model.lst.load()
+    outer.middle_model.inner_model.lst = await outer.middle_model.inner_model.lst.load()
     assert outer.middle_model.inner_model.lst == test_items
 
 
@@ -64,7 +64,7 @@ async def test_nested_model_middle_list_operations_sanity():
     assert len(outer.middle_model.tags) == 3
 
     outer.middle_model.tags.clear()
-    await outer.middle_model.tags.load()
+    outer.middle_model.tags = await outer.middle_model.tags.load()
 
     assert outer.middle_model.tags == ["tag1", "inserted_tag", "tag2"]
 
@@ -85,7 +85,7 @@ async def test_nested_model_middle_dict_operations_sanity():
     assert len(outer.middle_model.metadata) == 2
 
     outer.middle_model.metadata.clear()
-    await outer.middle_model.metadata.load()
+    outer.middle_model.metadata = await outer.middle_model.metadata.load()
 
     assert outer.middle_model.metadata == test_metadata
 
@@ -108,8 +108,8 @@ async def test_nested_model_outer_level_operations_sanity():
 
     outer.user_data.clear()
     outer.items.clear()
-    await outer.user_data.load()
-    await outer.items.load()
+    outer.user_data = await outer.user_data.load()
+    outer.items = await outer.items.load()
 
     assert outer.user_data == test_user_data
     assert outer.items == test_items
@@ -135,7 +135,7 @@ async def test_nested_model_deep_list_multiple_operations_sanity(test_values):
     assert all(val in outer.middle_model.inner_model.lst for val in test_values)
 
     outer.middle_model.inner_model.lst.clear()
-    await outer.middle_model.inner_model.lst.load()
+    outer.middle_model.inner_model.lst = await outer.middle_model.inner_model.lst.load()
 
     assert outer.middle_model.inner_model.lst == test_values
 
@@ -153,8 +153,8 @@ async def test_nested_model_persistence_across_instances_sanity():
     # Create new instance with same pk
     outer2 = OuterModel()
     outer2.pk = outer1.pk
-    await outer2.middle_model.inner_model.lst.load()
-    await outer2.middle_model.tags.load()
+    outer2.middle_model.inner_model.lst = await outer2.middle_model.inner_model.lst.load()
+    outer2.middle_model.tags = await outer2.middle_model.tags.load()
 
     # Assert
     assert "persistent_item" in outer2.middle_model.inner_model.lst
@@ -222,11 +222,11 @@ async def test_nested_model_mixed_operations_on_different_levels_edge_case():
     outer.user_data.clear()
     outer.middle_model.metadata.clear()
 
-    await outer.items.load()
-    await outer.middle_model.tags.load()
-    await outer.middle_model.inner_model.lst.load()
-    await outer.user_data.load()
-    await outer.middle_model.metadata.load()
+    outer.items = await outer.items.load()
+    outer.middle_model.tags = await outer.middle_model.tags.load()
+    outer.middle_model.inner_model.lst = await outer.middle_model.inner_model.lst.load()
+    outer.user_data = await outer.user_data.load()
+    outer.middle_model.metadata = await outer.middle_model.metadata.load()
 
     assert outer.items == [10]
     assert outer.middle_model.tags == ["middle_tag"]
@@ -254,8 +254,8 @@ async def test_nested_model_load_operations_after_external_changes_edge_case(
     )
 
     # Load changes
-    await outer.middle_model.inner_model.lst.load()
-    await outer.middle_model.metadata.load()
+    outer.middle_model.inner_model.lst = await outer.middle_model.inner_model.lst.load()
+    outer.middle_model.metadata = await outer.middle_model.metadata.load()
 
     # Assert
     assert "external_item" in outer.middle_model.inner_model.lst
@@ -408,9 +408,9 @@ async def test_nested_model_with_redis_inner_model_basic_operations_sanity():
     outer.container.inner_redis.tags.clear()
     outer.container.inner_redis.metadata.clear()
     outer.outer_data.clear()
-    await outer.container.inner_redis.tags.load()
-    await outer.container.inner_redis.metadata.load()
-    await outer.outer_data.load()
+    outer.container.inner_redis.tags = await outer.container.inner_redis.tags.load()
+    outer.container.inner_redis.metadata = await outer.container.inner_redis.metadata.load()
+    outer.outer_data = await outer.outer_data.load()
 
     assert outer.container.inner_redis.tags == ["redis_tag"]
     assert outer.container.inner_redis.metadata == {"key1": "value1"}
@@ -449,9 +449,9 @@ async def test_nested_model_with_redis_inner_model_persistence_sanity():
     # Create new instance with same pk
     outer2 = OuterModelWithRedisNested()
     outer2.pk = outer1.pk
-    await outer2.container.inner_redis.tags.load()
-    await outer2.container.inner_redis.metadata.load()
-    await outer2.outer_data.load()
+    outer2.container.inner_redis.tags = await outer2.container.inner_redis.tags.load()
+    outer2.container.inner_redis.metadata = await outer2.container.inner_redis.metadata.load()
+    outer2.outer_data = await outer2.outer_data.load()
 
     # Assert
     assert outer2.container.inner_redis.tags == ["tag1", "tag2"]
@@ -479,7 +479,7 @@ async def test_nested_model_with_redis_inner_model_parameterized_operations_sani
     assert len(outer.container.inner_redis.tags) == len(tag_sets) - 1
 
     outer.container.inner_redis.tags.clear()
-    await outer.container.inner_redis.tags.load()
+    outer.container.inner_redis.tags = await outer.container.inner_redis.tags.load()
 
     assert outer.container.inner_redis.tags == tag_sets[1:]
 

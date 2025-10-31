@@ -18,22 +18,6 @@ class RedisList(list, GenericRedisType[T]):
         list.__init__(self, *args, **kwargs)
         GenericRedisType.__init__(self, *args, **kwargs)
 
-    async def load(self) -> list[T]:
-        # Get all items from Redis list
-        redis_items = await self.client.json().get(self.key, self.field_path)
-
-        if redis_items is None:
-            redis_items = []
-
-        # Clear the local list and populate with Redis data using type adapter
-        super().clear()
-        if redis_items:
-            deserialized_items = self._adapter.validate_python(
-                redis_items, context={REDIS_DUMP_FLAG_NAME: True}
-            )
-            super().extend(deserialized_items)
-        return list(self)
-
     def create_new_values(self, keys, values):
         new_values = self._adapter.validate_python(values)
         for key, value in zip(keys, new_values):
