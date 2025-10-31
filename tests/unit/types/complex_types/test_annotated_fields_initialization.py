@@ -29,7 +29,7 @@ def test_simple_annotated_model_creation_sanity():
     assert isinstance(model.count, RedisInt)
     assert isinstance(model.items, RedisList)
     assert model.name.key == model.key
-    assert model.name.field_path == "name"
+    assert model.name.field_path == ".name"
     assert str(model.name) == name
     assert int(model.count) == count
     assert len(model.items) == len(items)
@@ -53,7 +53,7 @@ def test_annotated_fields_model_email_creation_sanity(email):
     assert isinstance(model.tags, RedisList)
     assert isinstance(model.metadata, RedisDict)
     assert model.email.key == model.key
-    assert model.email.field_path == "email"
+    assert model.email.field_path == ".email"
     assert str(model.email) == email
 
 
@@ -70,7 +70,7 @@ def test_annotated_fields_model_age_validation_sanity(age):
     # Assert
     assert isinstance(model.age, RedisInt)
     assert int(model.age) == age
-    assert model.age.field_path == "age"
+    assert model.age.field_path == ".age"
 
 
 @pytest.mark.parametrize("invalid_age", [-1, 151, 200])
@@ -118,7 +118,7 @@ def test_annotated_fields_model_tags_initialization_sanity(tags):
     # Assert
     assert isinstance(model.tags, RedisList)
     assert len(model.tags) == len(tags)
-    assert model.tags.field_path == "tags"
+    assert model.tags.field_path == ".tags"
     for i, tag in enumerate(tags):
         assert isinstance(model.tags[i], RedisStr)
         assert str(model.tags[i]) == tag
@@ -151,7 +151,7 @@ def test_validation_fields_model_creation_sanity(username, password):
     assert isinstance(model.settings, RedisDict)
     assert str(model.username) == username
     assert str(model.password) == password
-    assert model.username.field_path == "username"
+    assert model.username.field_path == ".username"
 
 
 @pytest.mark.parametrize(
@@ -211,8 +211,8 @@ def test_complex_annotated_model_creation_sanity():
     assert model.nested_data._base_model_link == model
     assert isinstance(model.identifiers, RedisList)
     assert isinstance(model.config, RedisDict)
-    assert model.identifiers.field_path == "identifiers"
-    assert model.config.field_path == "config"
+    assert model.identifiers.field_path == ".identifiers"
+    assert model.config.field_path == ".config"
 
 
 def test_default_annotated_model_creation_sanity():
@@ -234,8 +234,8 @@ def test_default_annotated_model_creation_sanity():
     assert len(model.items) == 0
     assert len(model.attributes) == 0
 
-    assert model.title.field_path == "title"
-    assert model.count.field_path == "count"
+    assert model.title.field_path == ".title"
+    assert model.count.field_path == ".count"
 
 
 def test_default_annotated_model_with_values_creation_sanity():

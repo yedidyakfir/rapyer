@@ -1,5 +1,6 @@
 import pytest
 
+from rapyer.types.integer import RedisInt
 from tests.models.simple_types import IntModel
 
 
@@ -107,25 +108,6 @@ async def test_redis_int_clone_functionality_sanity():
     assert isinstance(cloned_int, int)
     assert not isinstance(cloned_int, type(model.count))
     assert cloned_int == 42
-
-
-@pytest.mark.asyncio
-async def test_redis_int_model_creation_functionality_sanity(real_redis_client):
-    # Arrange & Act
-    model = IntModel(count=42)
-
-    # Assert
-    from rapyer.types.integer import RedisInt
-
-    assert isinstance(model.count, RedisInt)
-    assert hasattr(model.count, "key")
-    assert hasattr(model.count, "field_path")
-    assert hasattr(model.count, "redis")
-    assert hasattr(model.count, "json_path")
-    assert model.count.key == model.key
-    assert model.count.field_path == "count"
-    assert model.count.json_path == "$.count"
-    assert model.count.redis == real_redis_client
 
 
 @pytest.mark.asyncio

@@ -26,7 +26,7 @@ def test_redis_str_operations_sanity(initial_value, new_value):
     assert isinstance(model.name, RedisStr)
     assert str(model.name) == new_value
     assert model.name.key == model.key
-    assert model.name.field_path == "name"
+    assert model.name.field_path == ".name"
 
 
 @pytest.mark.parametrize(
@@ -44,7 +44,7 @@ def test_redis_int_operations_sanity(initial_value, increment):
     assert isinstance(model.count, RedisInt)
     assert int(model.count) == new_value
     assert model.count.key == model.key
-    assert model.count.field_path == "count"
+    assert model.count.field_path == ".count"
 
 
 @pytest.mark.parametrize("initial_value", [True, False])
@@ -76,7 +76,7 @@ def test_redis_bytes_operations_sanity(initial_value, new_value):
     assert isinstance(model.data, RedisBytes)
     assert bytes(model.data) == new_value
     assert model.data.key == model.key
-    assert model.data.field_path == "data"
+    assert model.data.field_path == ".data"
 
 
 def test_redis_str_concatenation_operation_sanity():
@@ -90,7 +90,7 @@ def test_redis_str_concatenation_operation_sanity():
     assert result == "hello world"
     assert isinstance(model.name, RedisStr)
     assert model.name.key == model.key
-    assert model.name.field_path == "name"
+    assert model.name.field_path == ".name"
 
 
 def test_redis_bool_logical_operations_sanity():

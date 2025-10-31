@@ -26,7 +26,7 @@ def test_direct_redis_str_model_creation_sanity(test_value):
     # Assert
     assert isinstance(model.name, RedisStr)
     assert model.name.key == model.key
-    assert model.name.field_path == "name"
+    assert model.name.field_path == ".name"
     assert model.name.json_path == "$.name"
     assert str(model.name) == test_value
 
@@ -39,7 +39,7 @@ def test_direct_redis_int_model_creation_sanity(test_value):
     # Assert
     assert isinstance(model.count, RedisInt)
     assert model.count.key == model.key
-    assert model.count.field_path == "count"
+    assert model.count.field_path == ".count"
     assert model.count.json_path == "$.count"
     assert int(model.count) == test_value
 
@@ -52,7 +52,7 @@ def test_direct_redis_bytes_model_creation_sanity(test_value):
     # Assert
     assert isinstance(model.data, RedisBytes)
     assert model.data.key == model.key
-    assert model.data.field_path == "data"
+    assert model.data.field_path == ".data"
     assert model.data.json_path == "$.data"
     assert bytes(model.data) == test_value
 
@@ -65,7 +65,7 @@ def test_direct_redis_list_str_model_creation_sanity(test_items):
     # Assert
     assert isinstance(model.items, RedisList)
     assert model.items.key == model.key
-    assert model.items.field_path == "items"
+    assert model.items.field_path == ".items"
     assert model.items.json_path == "$.items"
     assert list(model.items) == test_items
 
@@ -78,7 +78,7 @@ def test_direct_redis_list_int_model_creation_sanity(test_numbers):
     # Assert
     assert isinstance(model.numbers, RedisList)
     assert model.numbers.key == model.key
-    assert model.numbers.field_path == "numbers"
+    assert model.numbers.field_path == ".numbers"
     assert model.numbers.json_path == "$.numbers"
     assert list(model.numbers) == test_numbers
 
@@ -93,7 +93,7 @@ def test_direct_redis_dict_str_model_creation_sanity(test_dict):
     # Assert
     assert isinstance(model.metadata, RedisDict)
     assert model.metadata.key == model.key
-    assert model.metadata.field_path == "metadata"
+    assert model.metadata.field_path == ".metadata"
     assert model.metadata.json_path == "$.metadata"
     assert dict(model.metadata) == test_dict
 
@@ -106,7 +106,7 @@ def test_direct_redis_dict_int_model_creation_sanity(test_dict):
     # Assert
     assert isinstance(model.counters, RedisDict)
     assert model.counters.key == model.key
-    assert model.counters.field_path == "counters"
+    assert model.counters.field_path == ".counters"
     assert model.counters.json_path == "$.counters"
     assert dict(model.counters) == test_dict
 
@@ -140,10 +140,10 @@ def test_mixed_direct_redis_types_model_creation_sanity():
     assert model.tags.key == model.key
     assert model.config.key == model.key
 
-    assert model.name.field_path == "name"
-    assert model.count.field_path == "count"
-    assert model.tags.field_path == "tags"
-    assert model.config.field_path == "config"
+    assert model.name.field_path == ".name"
+    assert model.count.field_path == ".count"
+    assert model.tags.field_path == ".tags"
+    assert model.config.field_path == ".config"
 
     assert model.name.json_path == "$.name"
     assert model.count.json_path == "$.count"
@@ -186,10 +186,10 @@ def test_annotated_direct_redis_types_model_creation_sanity():
     assert model.categories.key == model.key
     assert model.settings.key == model.key
 
-    assert model.title.field_path == "title"
-    assert model.score.field_path == "score"
-    assert model.categories.field_path == "categories"
-    assert model.settings.field_path == "settings"
+    assert model.title.field_path == ".title"
+    assert model.score.field_path == ".score"
+    assert model.categories.field_path == ".categories"
+    assert model.settings.field_path == ".settings"
 
     assert model.title.json_path == "$.title"
     assert model.score.json_path == "$.score"
@@ -220,7 +220,7 @@ def test_direct_redis_types_field_path_nested_model_sanity():
     model = MixedDirectRedisTypesModel()
 
     # Assert
-    expected_paths = ["name", "count", "tags", "config"]
+    expected_paths = [".name", ".count", ".tags", ".config"]
     actual_paths = [
         model.name.field_path,
         model.count.field_path,
@@ -262,11 +262,11 @@ def test_direct_redis_types_empty_collections_edge_case():
     # Assert
     assert isinstance(model.items, RedisList)
     assert list(model.items) == []
-    assert model.items.field_path == "items"
+    assert model.items.field_path == ".items"
 
     assert isinstance(dict_model.metadata, RedisDict)
     assert dict(dict_model.metadata) == {}
-    assert dict_model.metadata.field_path == "metadata"
+    assert dict_model.metadata.field_path == ".metadata"
 
 
 def test_direct_redis_types_key_consistency_edge_case():

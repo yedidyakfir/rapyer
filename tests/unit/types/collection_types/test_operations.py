@@ -31,7 +31,7 @@ def test_redis_list_append_operation_sanity(initial_items, new_item):
     assert isinstance(model.items, RedisList)
     assert len(model.items) == len(initial_items) + 1
     assert_redis_list_item_correct(
-        model.items, -1, new_item, model.key, f"items[{len(initial_items)}]", RedisStr
+        model.items, -1, new_item, model.key, f".items[{len(initial_items)}]", RedisStr
     )
 
 
@@ -52,7 +52,7 @@ def test_redis_list_extend_operation_sanity(initial_items, extend_items):
 
     # Assert
     assert isinstance(model.items, RedisList)
-    assert_redis_list_correct_types(model.items, model.key, "items", RedisStr)
+    assert_redis_list_correct_types(model.items, model.key, ".items", RedisStr)
 
 
 @pytest.mark.parametrize(
@@ -73,7 +73,7 @@ def test_redis_list_setitem_operation_sanity(initial_items, index, new_item):
     # Assert
     assert isinstance(model.items, RedisList)
     assert_redis_list_item_correct(
-        model.items, index, new_item, model.key, f"items[{index}]", RedisStr
+        model.items, index, new_item, model.key, f".items[{index}]", RedisStr
     )
 
 
@@ -111,7 +111,7 @@ def test_redis_dict_setitem_operation_sanity(initial_data, new_key, new_value):
     # Assert
     assert isinstance(model.data, RedisDict)
     assert_redis_dict_item_correct(
-        model.data, new_key, new_value, model.key, f"data.{new_key}", RedisStr
+        model.data, new_key, new_value, model.key, f".data.{new_key}", RedisStr
     )
 
 
@@ -135,7 +135,7 @@ def test_redis_dict_update_operation_sanity(initial_data, update_data):
 
     for key, value in update_data.items():
         assert_redis_dict_item_correct(
-            model.data, key, value, model.key, f"data.{key}", RedisStr
+            model.data, key, value, model.key, f".data.{key}", RedisStr
         )
 
 
@@ -220,7 +220,7 @@ def test_redis_list_insert_operation_sanity():
     assert isinstance(model.items, RedisList)
     assert len(model.items) == 3
     assert_redis_list_item_correct(
-        model.items, 1, "middle", model.key, "items[1]", RedisStr
+        model.items, 1, "middle", model.key, ".items[1]", RedisStr
     )
 
 
@@ -241,7 +241,7 @@ def test_redis_list_iadd_operation_sanity(initial_items, extend_items):
 
     # Assert
     assert len(model.items) == len(initial_items) + len(extend_items)
-    assert_redis_list_correct_types(model.items, model.key, "items", RedisStr)
+    assert_redis_list_correct_types(model.items, model.key, ".items", RedisStr)
 
 
 @pytest.mark.parametrize(

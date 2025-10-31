@@ -98,7 +98,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         new_dct = self._adapter.validate_python(dct)
         if new_dct:
             for key, value in new_dct.items():
-                self.init_redis_field(key, value)
+                self.init_redis_field(f".{key}", value)
         return new_dct
 
     def update(self, m=None, /, **kwargs):
@@ -185,7 +185,8 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         }
 
     def iterate_items(self):
-        return self.items()
+        keys = [f".{k}" for k in self.keys()]
+        return zip(keys, self.values())
 
     @classmethod
     def full_serializer(cls, value, info: core_schema.SerializationInfo):

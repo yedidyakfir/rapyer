@@ -107,25 +107,6 @@ async def test_redis_datetime_clone_functionality_sanity():
 
 
 @pytest.mark.asyncio
-async def test_redis_datetime_model_creation_functionality_sanity(real_redis_client):
-    # Arrange & Act
-    model = DatetimeModel()
-
-    # Assert
-    from rapyer.types.datetime import RedisDatetime
-
-    assert isinstance(model.created_at, RedisDatetime)
-    assert hasattr(model.created_at, "key")
-    assert hasattr(model.created_at, "field_path")
-    assert hasattr(model.created_at, "redis")
-    assert hasattr(model.created_at, "json_path")
-    assert model.created_at.key == model.key
-    assert model.created_at.field_path == "created_at"
-    assert model.created_at.json_path == "$.created_at"
-    assert model.created_at.redis == real_redis_client
-
-
-@pytest.mark.asyncio
 async def test_redis_datetime_persistence_across_instances_edge_case():
     # Arrange
     test_datetime = datetime(2023, 1, 1, 12, 0, 0)

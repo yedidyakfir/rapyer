@@ -35,11 +35,7 @@ class RedisType(ABC):
     @property
     def field_path(self) -> str:
         base_path = self._base_model_link.field_path
-        # TODO - This method is terrible, need to think on other way
-        seperator = "" if self.field_name.startswith("[") else "."
-        return (
-            f"{base_path}{seperator}{self.field_name}" if base_path else self.field_name
-        )
+        return f"{base_path}{self.field_name}"
 
     @property
     def pipeline(self):
@@ -51,7 +47,7 @@ class RedisType(ABC):
 
     @property
     def json_path(self):
-        return f"$.{self.field_path}"
+        return f"${self.field_path}"
 
     def __init__(self, *args, **kwargs):
         # Note: This should be overridden in the base class AtomicRedisModel, it would allow me to get access to a redis key
@@ -62,11 +58,11 @@ class RedisType(ABC):
             val._base_model_link = self
             val.field_name = key
 
-    def sub_field_path(self, field_name: str):
-        return f"{self.field_path}.{field_name}"
+    def sub_field_path(self, key: str):
+        return f"{self.field_path}.{key}"
 
     def json_field_path(self, field_name: str):
-        return f"$.{self.sub_field_path(field_name)}"
+        return f"${self.sub_field_path(field_name)}"
 
     async def save(self) -> Self:
         model_dump = self._adapter.dump_python(

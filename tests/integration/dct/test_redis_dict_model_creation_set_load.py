@@ -23,7 +23,7 @@ async def test_redis_dict_model_creation_with_initial_value_and_set_load_sanity(
 
     assert isinstance(model.data, RedisDict)
     assert model.data.key == model.key
-    assert model.data.field_path == "data"
+    assert model.data.field_path == ".data"
     assert model.data.json_path == "$.data"
 
     # Act - Save and test load operations

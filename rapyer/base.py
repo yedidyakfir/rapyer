@@ -55,13 +55,13 @@ class AtomicRedisModel(BaseModel):
             return self.field_name
         parent_field_path = self._base_model_link.field_path
         if parent_field_path:
-            return f"{parent_field_path}.{self.field_name}"
+            return f"{parent_field_path}{self.field_name}"
         return self.field_name
 
     @property
     def json_path(self):
         field_path = self.field_path
-        return f"$.{field_path}" if field_path else "$"
+        return f"${field_path}" if field_path else "$"
 
     @classmethod
     def class_key_initials(cls):
@@ -83,7 +83,7 @@ class AtomicRedisModel(BaseModel):
         )
         new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type, RedisTypeTransformer(field_name, cls.Meta)
+                field_type, RedisTypeTransformer(f".{field_name}", cls.Meta)
             )
             for field_name, field_type in original_annotations.items()
         }
