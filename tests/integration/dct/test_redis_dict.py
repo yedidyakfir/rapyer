@@ -123,7 +123,11 @@ async def test_redis_dict__delitem__check_local_consistency_sanity(
             {"key2": Status.PENDING, "key3": Status.INACTIVE},
         ],
         [AnyDictModel, {"key1": "mixed"}, {"key2": 42, "key3": [1, 2, 3]}],
-        [BaseDictMetadataModel, {"key1": "value1"}, {"key2": "value2", "key3": "value3"}],
+        [
+            BaseDictMetadataModel,
+            {"key1": "value1"},
+            {"key2": "value2", "key3": "value3"},
+        ],
     ],
 )
 async def test_redis_dict__update__check_local_consistency_sanity(
