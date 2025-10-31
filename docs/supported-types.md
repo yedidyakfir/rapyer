@@ -16,8 +16,8 @@ Native types have optimized Redis storage and specialized atomic operations.
 
 ### String (`str`)
 
-**Atomic Operations:**
-- `set(value)` - Set string value
+**Operations:**
+- `save()` - Save to Redis
 - `load()` - Load from Redis
 
 ```python
@@ -28,16 +28,19 @@ class User(AtomicRedisModel):
 user = User(name="John", bio="Developer")
 await user.save()
 
-# Atomic string operations
-await user.name.set("John Doe")
-await user.bio.set("Senior Python Developer")
+# Update string values
+user.name = "John Doe"
+await user.name.save()
+user.bio = "Senior Python Developer"
+await user.bio.save()
 ```
 
 ### Integer (`int`)
 
-**Atomic Operations:**
-- `set(value)` - Set integer value
+**Operations:**
+- `save()` - Save to Redis
 - `load()` - Load from Redis
+- `increase(amount=1)` - Atomic increment operation
 
 ```python
 class Counter(AtomicRedisModel):
@@ -47,15 +50,21 @@ class Counter(AtomicRedisModel):
 counter = Counter()
 await counter.save()
 
-# Atomic integer operations
-await counter.count.set(42)
-await counter.score.set(100)
+# Update integer values
+counter.count = 42
+await counter.count.save()
+counter.score = 100
+await counter.score.save()
+
+# Atomic increment operations
+await counter.count.increase(10)  # Increments count by 10
+await counter.score.increase()    # Increments score by 1 (default)
 ```
 
 ### Boolean (`bool`)
 
-**Atomic Operations:**
-- `set(value)` - Set boolean value
+**Operations:**
+- `save()` - Save to Redis
 - `load()` - Load from Redis
 
 ```python
@@ -66,9 +75,11 @@ class Settings(AtomicRedisModel):
 settings = Settings()
 await settings.save()
 
-# Atomic boolean operations
-await settings.is_active.set(False)
-await settings.debug_mode.set(True)
+# Update boolean values
+settings.is_active = False
+await settings.is_active.save()
+settings.debug_mode = True
+await settings.debug_mode.save()
 ```
 
 ### List (`List[T]`)
@@ -103,7 +114,8 @@ first_task = await todo.tasks.apop(0)  # Remove first item
 await todo.tasks.aclear()
 
 # Replace entire list
-await todo.tasks.set(["New task 1", "New task 2"])
+todo.tasks = ["New task 1", "New task 2"]
+await todo.tasks.save()
 ```
 
 **List Item Assignment:**
@@ -146,7 +158,8 @@ await profile.metadata.adel_item("department")  # Just remove
 await profile.metadata.aclear()
 
 # Replace entire dictionary
-await profile.metadata.set({"status": "active", "tier": "premium"})
+profile.metadata = {"status": "active", "tier": "premium"}
+await profile.metadata.save()
 ```
 
 **Dictionary Item Assignment:**
@@ -158,8 +171,8 @@ profile.scores["high_score"] = 9999
 
 ### Bytes (`bytes`)
 
-**Atomic Operations:**
-- `set(value)` - Set bytes value
+**Operations:**
+- `save()` - Save to Redis
 - `load()` - Load from Redis
 
 ```python
@@ -170,15 +183,17 @@ class FileModel(AtomicRedisModel):
 file_model = FileModel(file_data=b"binary content")
 await file_model.save()
 
-# Atomic bytes operations
-await file_model.file_data.set(b"updated binary content")
-await file_model.thumbnail.set(b"thumbnail data")
+# Update bytes values
+file_model.file_data = b"updated binary content"
+await file_model.file_data.save()
+file_model.thumbnail = b"thumbnail data"
+await file_model.thumbnail.save()
 ```
 
 ### DateTime (`datetime`)
 
-**Atomic Operations:**
-- `set(value)` - Set datetime value
+**Operations:**
+- `save()` - Save to Redis
 - `load()` - Load from Redis
 
 ```python
@@ -191,9 +206,11 @@ class Event(AtomicRedisModel):
 event = Event(created_at=datetime.now())
 await event.save()
 
-# Atomic datetime operations
-await event.updated_at.set(datetime.now())
-await event.created_at.set(datetime(2023, 1, 1, 12, 0, 0))
+# Update datetime values
+event.updated_at = datetime.now()
+await event.updated_at.save()
+event.created_at = datetime(2023, 1, 1, 12, 0, 0)
+await event.created_at.save()
 ```
 
 ## Complex Types
@@ -221,9 +238,10 @@ user = User(
 )
 await user.save()
 
-# Atomic operations on complex types
+# Update complex types
 new_address = Address("456 Oak Ave", "Cambridge", "02139")
-await user.address.set(new_address)
+user.address = new_address
+await user.address.save()
 ```
 
 ### Enums
@@ -243,8 +261,9 @@ class Application(AtomicRedisModel):
 app = Application()
 await app.save()
 
-# Atomic enum operations
-await app.status.set(Status.APPROVED)
+# Update enum values
+app.status = Status.APPROVED
+await app.status.save()
 ```
 
 ### Union Types
@@ -259,10 +278,13 @@ class FlexibleModel(AtomicRedisModel):
 model = FlexibleModel(value=42)
 await model.save()
 
-# Atomic operations work with any union type
-await model.value.set("now a string")
-await model.value.set(3.14)
-await model.optional_data.set({"key": "value"})
+# Update union type values
+model.value = "now a string"
+await model.value.save()
+model.value = 3.14
+await model.value.save()
+model.optional_data = {"key": "value"}
+await model.optional_data.save()
 ```
 
 ### Custom Classes
@@ -285,8 +307,9 @@ app = App(
 )
 await app.save()
 
-# Atomic operations on custom objects
-await app.config.set(CustomConfig(debug=False, timeout=120))
+# Update custom objects
+app.config = CustomConfig(debug=False, timeout=120)
+await app.config.save()
 ```
 
 ## Generic Types with Type Parameters
@@ -332,96 +355,55 @@ await mappings.int_to_str.aset_item(1, "first")
 await mappings.nested_data.aset_item("tags", ["python", "redis"])
 ```
 
-## Important: Primitive vs Complex Type Behavior
+## Type Behavior Summary
 
-**⚠️ Critical Distinction:** Primitive types (`str`, `int`, `bool`, `bytes`, `datetime`) have different behavior than complex types (`List`, `Dict`, nested models) when using operations like `set()` and `load()`.
+### Primitive Types vs Complex Types
 
-### Primitive Types (str, int, bool, bytes, datetime)
+**Primitive Types** (`str`, `int`, `bool`, `bytes`, `datetime`):
+- Updated via direct assignment: `model.field = new_value`
+- Persisted via: `await model.field.save()`
+- Special atomic operations: `increase()` for integers
 
-For primitive types, `set()` and `load()` operations **only affect the Redis value**, not the Python model instance:
+**Complex Types** (`List`, `Dict`, nested models):
+- Updated via atomic operations: `await model.list.aappend(item)`
+- Operations update both Redis and Python model automatically
+- Support index assignment: `model.list[0] = new_value`
 
 ```python
 class User(AtomicRedisModel):
     name: str = "John"
     age: int = 25
-
-user = User()
-await user.save()
-
-# ❌ This updates Redis but NOT the Python model
-await user.name.set("Jane")
-print(user.name)  # Still prints "John" - Python model unchanged!
-
-# ❌ This loads from Redis but does NOT update the Python model
-redis_name = await user.name.load()
-print(redis_name)  # Prints "Jane" - the Redis value
-print(user.name)   # Still prints "John" - Python model unchanged!
-
-# ✅ To update the Python model, you must assign directly:
-user.name = "Jane"  # This updates the Python model
-await user.save()   # This persists to Redis
-```
-
-### Complex Types (List, Dict, nested models)
-
-For complex types, operations **do update** both Redis and the Python model:
-
-```python
-class User(AtomicRedisModel):
     tags: List[str] = []
     metadata: Dict[str, str] = {}
 
 user = User()
 await user.save()
 
-# ✅ This updates BOTH Redis AND the Python model
-await user.tags.aappend("python")
-print(user.tags)  # Prints ["python"] - Python model is updated!
+# Primitive type updates
+user.name = "Jane"
+await user.name.save()  # Persists to Redis
 
-# ✅ This updates BOTH Redis AND the Python model  
+# Integer atomic operations
+await user.age.increase(1)  # Atomic increment
+
+# Complex type operations (update both Redis and model)
+await user.tags.aappend("python")
 await user.metadata.aupdate(role="admin")
-print(user.metadata)  # Prints {"role": "admin"} - Python model is updated!
+
+# Load all fields from Redis
+await user.load()  # Syncs all fields from Redis
 ```
 
-### Why This Difference Exists
-
-- **Primitive types** are immutable in Python, so operations return new values rather than modifying in place
-- **Complex types** (lists, dicts) are mutable and can be modified in place, maintaining reference consistency
-- **Nested models** inherit the behavior of complex types
-
-### Best Practices
-
-1. **For primitive types**: Use direct assignment to update the Python model, then save:
-   ```python
-   user.name = "New Name"  # Updates Python model
-   await user.save()       # Persists to Redis
-   ```
-
-2. **For complex types**: Use atomic operations which update both:
-   ```python
-   await user.tags.aappend("new_tag")        # Updates both
-   await user.metadata.aupdate(key="value")  # Updates both
-   ```
-
-3. **To sync primitive types from Redis**:
-   ```python
-   await user.load()  # Loads ALL fields from Redis to Python model
-   ```
-
-## Type Behavior Summary
-
-| Type | Storage | Atomic Ops | Index Assignment | Complex Nesting | Model Update |
-|------|---------|------------|------------------|-----------------|--------------|
-| `str` | Native | ✅ | N/A | N/A | Redis only* |
-| `int` | Native | ✅ | N/A | N/A | Redis only* |
-| `bool` | Native | ✅ | N/A | N/A | Redis only* |
-| `bytes` | Native | ✅ | N/A | N/A | Redis only* |
-| `datetime` | Native | ✅ | N/A | N/A | Redis only* |
-| `List[T]` | Native | ✅ | ✅ | ✅ | Both |
-| `Dict[K,V]` | Native | ✅ | ✅ | ✅ | Both |
-| Custom Types | Serialized | ✅ | N/A | ✅ | Redis only* |
-
-*\* Use `model.load()` to sync primitive types from Redis to Python model*
+| Type | Storage | Operations | Assignment | Atomic Operations |
+|------|---------|------------|------------|------------------|
+| `str` | Native | `save()`, `load()` | Direct | - |
+| `int` | Native | `save()`, `load()`, `increase()` | Direct | `increase()` |
+| `bool` | Native | `save()`, `load()` | Direct | - |
+| `bytes` | Native | `save()`, `load()` | Direct | - |
+| `datetime` | Native | `save()`, `load()` | Direct | - |
+| `List[T]` | Native | All list atomic ops | Index assignment | `aappend()`, `aextend()`, etc. |
+| `Dict[K,V]` | Native | All dict atomic ops | Key assignment | `aupdate()`, `aset_item()`, etc. |
+| Custom Types | Serialized | `save()`, `load()` | Direct | - |
 
 ## Performance Considerations
 

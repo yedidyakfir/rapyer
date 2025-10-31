@@ -60,7 +60,8 @@ Every operation in Rapyer is designed to be atomic and race-condition safe:
 # These operations are atomic and safe in concurrent environments
 await user.tags.aappend("python")           # Add to list atomically
 await user.metadata.aupdate(role="dev")     # Update dict atomically
-await user.age.set(31)                      # Set value atomically
+user.age = 31                               # Update value
+await user.age.save()                        # Save to Redis atomically
 ```
 
 ### Lock Context Manager
