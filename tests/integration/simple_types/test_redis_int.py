@@ -1,6 +1,5 @@
 import pytest
 
-from rapyer.types.integer import RedisInt
 from tests.models.simple_types import IntModel
 
 

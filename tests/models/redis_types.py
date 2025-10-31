@@ -1,4 +1,5 @@
 from typing import Annotated
+
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel

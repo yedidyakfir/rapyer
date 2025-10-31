@@ -111,7 +111,9 @@ def test_list_of_dicts_model_creation_sanity(test_list_of_dicts):
             assert isinstance(model.list_of_dicts[i][key], RedisStr)
             assert str(model.list_of_dicts[i][key]) == value
             assert model.list_of_dicts[i][key].key == model.key
-            assert model.list_of_dicts[i][key].field_path == f".list_of_dicts[{i}].{key}"
+            assert (
+                model.list_of_dicts[i][key].field_path == f".list_of_dicts[{i}].{key}"
+            )
 
 
 @pytest.mark.parametrize(
@@ -143,7 +145,9 @@ def test_dict_of_lists_model_creation_sanity(test_dict_of_lists):
             assert isinstance(model.dict_of_lists[key][i], RedisStr)
             assert str(model.dict_of_lists[key][i]) == item
             assert model.dict_of_lists[key][i].key == model.key
-            assert model.dict_of_lists[key][i].field_path == f".dict_of_lists.{key}[{i}]"
+            assert (
+                model.dict_of_lists[key][i].field_path == f".dict_of_lists.{key}[{i}]"
+            )
 
 
 def test_complex_nested_model_creation_sanity():

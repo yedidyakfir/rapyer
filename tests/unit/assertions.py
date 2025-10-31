@@ -1,5 +1,5 @@
-from rapyer.types.lst import RedisList
 from rapyer.types.dct import RedisDict
+from rapyer.types.lst import RedisList
 
 
 def assert_redis_list_correct_types(

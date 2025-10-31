@@ -1,9 +1,10 @@
 from typing import Generic, TypeVar
+
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class GenericListModel(AtomicRedisModel, Generic[T]):
