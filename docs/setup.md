@@ -163,25 +163,6 @@ class Session(AtomicRedisModel):
         ttl = 3600  # Expire after 1 hour
 ```
 
-#### Custom Key Prefixes
-
-Customize how your model keys are generated:
-
-```python
-from rapyer.base import AtomicRedisModel
-from rapyer.config import RedisFieldConfig
-
-class User(AtomicRedisModel):
-    name: str
-    
-    field_config = RedisFieldConfig(
-        override_class_name="app_user"  # Keys will be "app_user:uuid"
-    )
-    
-    class Meta:
-        redis = redis_client
-```
-
 ## Verification
 
 Test your setup with this simple script:
