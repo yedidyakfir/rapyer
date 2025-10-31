@@ -587,3 +587,27 @@ async def test_nested_model_with_redis_inner_model_with_initial_data_sanity():
     assert outer.outer_data == [100, 200]
     assert outer.container.inner_redis.counter == 5
     assert outer.container.description == "test_container"
+
+
+@pytest.mark.asyncio
+async def test_nested_model_create_inner_save_load_sanity():
+    # Arrange
+    outer = OuterModel()
+    
+    # Act
+    new_inner = InnerMostModel(lst=["item1", "item2"], counter=42)
+    new_middle = MiddleModel(inner_model=new_inner, tags=["tag1", "tag2"], metadata={"env": "test", "version": "1.0"})
+    outer.middle_model = new_middle
+    outer.user_data = {"user1": 100, "user2": 200}
+    outer.items = [10, 20, 30]
+    await outer.save()
+    
+    # Assert
+    loaded_outer = await OuterModel.get(outer.key)
+    
+    assert loaded_outer.middle_model.inner_model.lst == ["item1", "item2"]
+    assert loaded_outer.middle_model.inner_model.counter == 42
+    assert loaded_outer.middle_model.tags == ["tag1", "tag2"]
+    assert loaded_outer.middle_model.metadata == {"env": "test", "version": "1.0"}
+    assert loaded_outer.user_data == {"user1": 100, "user2": 200}
+    assert loaded_outer.items == [10, 20, 30]
