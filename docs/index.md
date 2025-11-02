@@ -62,7 +62,7 @@ from rapyer.types.lst import RedisList
 from rapyer.types.dct import RedisDict
 
 class User(AtomicRedisModel):
-    name: RedisStr = RedisStr("")                              # Enhanced string support
+    name: RedisStr = ""                                        # Enhanced string support
     tags: RedisList[str] = Field(default_factory=list)        # Full list operation autocomplete
     metadata: RedisDict[str, str] = Field(default_factory=dict) # Full dict operation autocomplete
 

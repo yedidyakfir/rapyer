@@ -268,8 +268,8 @@ from rapyer.types.lst import RedisList
 from rapyer.types.dct import RedisDict
 
 class RedisTypedModel(AtomicRedisModel):
-    name: RedisStr = RedisStr("")
-    age: RedisInt = RedisInt(0)
+    name: RedisStr = ""
+    age: RedisInt = 0
     tags: RedisList[str] = Field(default_factory=list)
     metadata: RedisDict[str, str] = Field(default_factory=dict)
 
