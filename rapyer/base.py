@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import functools
 import uuid
-from typing import Self, ClassVar, Any, get_origin
+from typing import Self, ClassVar, Any, get_origin, AsyncGenerator
 
 from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter, model_validator
 from pydantic.fields import FieldInfo
@@ -186,7 +186,7 @@ class AtomicRedisModel(BaseModel):
     @contextlib.asynccontextmanager
     async def lock_from_key(
         cls, key: str, action: str = "default", save_at_end: bool = False
-    ):
+    ) -> AsyncGenerator[Self, None]:
         async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
             redis_model = await cls.get(key)
             yield redis_model
@@ -194,13 +194,15 @@ class AtomicRedisModel(BaseModel):
                 await redis_model.save()
 
     @contextlib.asynccontextmanager
-    async def lock(self, **kwargs):
+    async def lock(self, **kwargs) -> AsyncGenerator[Self, None]:
         async with self.lock_from_key(self.key, **kwargs) as redis_model:
             self.__dict__.update(redis_model.model_dump(exclude_unset=True))
             yield redis_model
 
     @contextlib.asynccontextmanager
-    async def pipeline(self, ignore_if_deleted: bool = False):
+    async def pipeline(
+        self, ignore_if_deleted: bool = False
+    ) -> AsyncGenerator[Self, None]:
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.get(self.key)
