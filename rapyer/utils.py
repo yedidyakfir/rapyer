@@ -6,14 +6,18 @@ from datetime import timedelta
 from types import UnionType
 from typing import get_origin, ClassVar, Union, get_args, Any, Annotated, Callable
 
-from pydantic import TypeAdapter, BaseModel
+from pydantic import TypeAdapter
 from pydantic.fields import ModelPrivateAttr
 from redis.asyncio import Redis
 
 
 @contextlib.asynccontextmanager
 async def acquire_lock(
-    redis: Redis, key: str, lock_timeout: timedelta | int = 10, sleep_time: int = 0.1
+    redis: Redis,
+    key: str,
+    lock_timeout: timedelta | int = 10,
+    sleep_time: int = 0.1,
+    allowed_errors: type[Exception] = None,
 ):
     lock_key = f"{key}:lock"
     lock_token = str(uuid.uuid4())
@@ -21,6 +25,11 @@ async def acquire_lock(
         await asyncio.sleep(sleep_time)
     try:
         yield
+    except Exception as e:
+        if allowed_errors is None:
+            raise e
+        elif not isinstance(e, allowed_errors):
+            raise e
     finally:
         await redis.delete(lock_key)
 
