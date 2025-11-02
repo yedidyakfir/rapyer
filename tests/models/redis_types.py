@@ -12,15 +12,15 @@ from rapyer.types.string import RedisStr
 
 # Models with direct Redis type annotations
 class DirectRedisStringModel(AtomicRedisModel):
-    name: RedisStr = RedisStr("")
+    name: RedisStr = ""
 
 
 class DirectRedisIntModel(AtomicRedisModel):
-    count: RedisInt = RedisInt(0)
+    count: RedisInt = 0
 
 
 class DirectRedisBytesModel(AtomicRedisModel):
-    data: RedisBytes = RedisBytes(b"")
+    data: RedisBytes = b""
 
 
 class DirectRedisListModel(AtomicRedisModel):
@@ -40,18 +40,16 @@ class DirectRedisDictIntModel(AtomicRedisModel):
 
 
 class MixedDirectRedisTypesModel(AtomicRedisModel):
-    name: RedisStr = RedisStr("default")
-    count: RedisInt = RedisInt(0)
+    name: RedisStr = "default"
+    count: RedisInt = 0
     active: bool = True
     tags: RedisList[str] = Field(default_factory=list)
     config: RedisDict[str, int] = Field(default_factory=dict)
 
 
 class AnnotatedDirectRedisTypesModel(AtomicRedisModel):
-    title: Annotated[RedisStr, Field(description="Title field")] = RedisStr(
-        "default_title"
-    )
-    score: Annotated[RedisInt, Field(ge=0, description="Score field")] = RedisInt(0)
+    title: Annotated[RedisStr, Field(description="Title field")] = "default_title"
+    score: Annotated[RedisInt, Field(ge=0, description="Score field")] = 0
     enabled: Annotated[bool, Field(description="Enabled flag")] = False
     categories: Annotated[RedisList[str], Field(description="Categories list")] = Field(
         default_factory=list
