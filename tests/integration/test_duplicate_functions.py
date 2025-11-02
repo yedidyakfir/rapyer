@@ -1,36 +1,22 @@
 import pytest
 import pytest_asyncio
-from pydantic import Field, BaseModel
 
-from rapyer.base import AtomicRedisModel
-from tests.integration.test_nested_redis_models import (
+from tests.integration.models.test_nested_redis_models import (
     InnerRedisModel,
     ContainerModel,
     OuterModelWithRedisNested,
 )
+from tests.models.complex_types import (
+    TestRedisModel,
+    InnerMostModel,
+    MiddleModel,
+    OuterModel,
+)
 
 
-class InnerMostModel(BaseModel):
-    names: list[str] = Field(default_factory=list)
-    scores: dict[str, int] = Field(default_factory=dict)
-    counter: int = 0
-
-
-class MiddleModel(BaseModel):
-    inner_model: InnerMostModel = Field(default_factory=InnerMostModel)
-    tags: list[str] = Field(default_factory=list)
-    metadata: dict[str, str] = Field(default_factory=dict)
-
-
-class TestRedisModel(AtomicRedisModel):
-    middle_model: MiddleModel = Field(default_factory=MiddleModel)
-    user_data: dict[str, int] = Field(default_factory=dict)
-    items: list[int] = Field(default_factory=list)
-    description: str = "test_model"
-
-
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def redis_client_fixture(redis_client):
+    OuterModel.Meta.redis = redis_client
     TestRedisModel.Meta.redis = redis_client
     InnerRedisModel.Meta.redis = redis_client
     yield redis_client
@@ -62,21 +48,18 @@ async def test_duplicate_basic_functionality_sanity(redis_client_fixture):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_with_nested_models_sanity(redis_client_fixture):
+async def test_duplicate_with_nested_models_sanity():
     # Arrange
-    inner_model = InnerMostModel(
-        names=["alice", "bob"], scores={"alice": 95, "bob": 87}, counter=42
-    )
+    inner_model = InnerMostModel(lst=["alice", "bob"], counter=42)
     middle_model = MiddleModel(
         inner_model=inner_model,
         tags=["important", "test"],
         metadata={"env": "staging", "version": "1.0"},
     )
-    original = TestRedisModel(
+    original = OuterModel(
         middle_model=middle_model,
         user_data={"admin": 1000},
         items=[10, 20, 30],
-        description="complex_model",
     )
     await original.save()
 
@@ -86,12 +69,7 @@ async def test_duplicate_with_nested_models_sanity(redis_client_fixture):
     # Assert
     assert duplicate.pk != original.pk
     assert (
-        duplicate.middle_model.inner_model.names
-        == original.middle_model.inner_model.names
-    )
-    assert (
-        duplicate.middle_model.inner_model.scores
-        == original.middle_model.inner_model.scores
+        duplicate.middle_model.inner_model.lst == original.middle_model.inner_model.lst
     )
     assert (
         duplicate.middle_model.inner_model.counter
@@ -101,7 +79,6 @@ async def test_duplicate_with_nested_models_sanity(redis_client_fixture):
     assert duplicate.middle_model.metadata == original.middle_model.metadata
     assert duplicate.user_data == original.user_data
     assert duplicate.items == original.items
-    assert duplicate.description == original.description
 
 
 @pytest.mark.asyncio
@@ -123,22 +100,20 @@ async def test_duplicate_many_functionality_sanity(redis_client_fixture):
     assert len(set(pks)) == 3  # All unique
     assert original.pk not in pks  # Original not in duplicates
 
-    # Check all have same values
+    # Check all have the same values
     for duplicate in duplicates:
         assert duplicate.description == original.description
         assert duplicate.items == original.items
         assert duplicate.user_data == original.user_data
 
-    # Verify all exist in Redis
+    # Verify all existing in Redis
     for duplicate in duplicates:
         exists = await redis_client_fixture.exists(duplicate.key)
         assert exists == 1
 
 
 @pytest.mark.asyncio
-async def test_duplicate_redis_operations_on_duplicated_models_sanity(
-    redis_client_fixture,
-):
+async def test_duplicate_redis_operations_on_duplicated_models_sanity():
     # Arrange
     original = TestRedisModel(items=[1, 2], user_data={"count": 10})
     await original.save()
@@ -146,14 +121,14 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity(
     # Act
     duplicate = await original.duplicate()
 
-    # Perform Redis operations on duplicate
+    # Perform Redis operations in duplicate
     await duplicate.items.aappend(3)
     await duplicate.user_data.aset_item("new_key", 20)
 
     # Assert
     # Original should remain unchanged
-    await original.items.load()
-    await original.user_data.load()
+    original.items = await original.items.load()
+    original.user_data = await original.user_data.load()
     assert original.items == [1, 2]
     assert original.user_data == {"count": 10}
 
@@ -163,7 +138,7 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity(
 
 
 @pytest.mark.asyncio
-async def test_duplicate_redis_operations_on_nested_models_sanity(redis_client_fixture):
+async def test_duplicate_redis_operations_on_nested_models_sanity():
     # Arrange
     original = TestRedisModel()
     await original.save()
@@ -178,9 +153,11 @@ async def test_duplicate_redis_operations_on_nested_models_sanity(redis_client_f
 
     # Assert
     # Original should remain unchanged
-    await original.middle_model.tags.load()
-    await original.middle_model.metadata.load()
-    await original.middle_model.inner_model.names.load()
+    original.middle_model.tags = await original.middle_model.tags.load()
+    original.middle_model.metadata = await original.middle_model.metadata.load()
+    original.middle_model.inner_model.names = (
+        await original.middle_model.inner_model.names.load()
+    )
     assert original.middle_model.tags == []
     assert original.middle_model.metadata == {}
     assert original.middle_model.inner_model.names == []
@@ -192,7 +169,7 @@ async def test_duplicate_redis_operations_on_nested_models_sanity(redis_client_f
 
 
 @pytest.mark.asyncio
-async def test_duplicate_with_redis_nested_models_sanity(redis_client_fixture):
+async def test_duplicate_with_redis_nested_models_sanity():
     # Arrange
     inner_redis = InnerRedisModel(
         tags=["redis_tag"], metadata={"redis_key": "redis_value"}, counter=5
@@ -220,9 +197,7 @@ async def test_duplicate_with_redis_nested_models_sanity(redis_client_fixture):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_redis_operations_on_redis_nested_models_sanity(
-    redis_client_fixture,
-):
+async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
     # Arrange
     original = OuterModelWithRedisNested()
     await original.save()
@@ -239,9 +214,13 @@ async def test_duplicate_redis_operations_on_redis_nested_models_sanity(
 
     # Assert
     # Original should remain unchanged
-    await original.container.inner_redis.tags.load()
-    await original.container.inner_redis.metadata.load()
-    await original.outer_data.load()
+    original.container.inner_redis.tags = (
+        await original.container.inner_redis.tags.load()
+    )
+    original.container.inner_redis.metadata = (
+        await original.container.inner_redis.metadata.load()
+    )
+    original.outer_data = await original.outer_data.load()
     assert original.container.inner_redis.tags == []
     assert original.container.inner_redis.metadata == {}
     assert original.outer_data == []
@@ -255,7 +234,7 @@ async def test_duplicate_redis_operations_on_redis_nested_models_sanity(
 
 
 @pytest.mark.asyncio
-async def test_cannot_duplicate_inner_model_edge_case(redis_client_fixture):
+async def test_cannot_duplicate_inner_model_edge_case():
     # Arrange
     original = TestRedisModel()
     await original.save()
@@ -270,7 +249,7 @@ async def test_cannot_duplicate_inner_model_edge_case(redis_client_fixture):
 
 
 @pytest.mark.asyncio
-async def test_cannot_duplicate_redis_inner_model_edge_case(redis_client_fixture):
+async def test_cannot_duplicate_redis_inner_model_edge_case():
     # Arrange
     original = OuterModelWithRedisNested()
     await original.save()
@@ -304,7 +283,7 @@ async def test_duplicate_many_with_different_counts_sanity(
     assert len(set(pks)) == num_duplicates
     assert original.pk not in pks
 
-    # Verify all exist in Redis
+    # Verify all existing in Redis
     for duplicate in duplicates:
         exists = await redis_client_fixture.exists(duplicate.key)
         assert exists == 1
@@ -312,21 +291,18 @@ async def test_duplicate_many_with_different_counts_sanity(
 
 
 @pytest.mark.asyncio
-async def test_duplicate_preserves_all_redis_types_sanity(redis_client_fixture):
+async def test_duplicate_preserves_all_redis_types_sanity():
     # Arrange
-    inner_model = InnerMostModel(
-        names=["test1", "test2"], scores={"test1": 100, "test2": 90}, counter=15
-    )
+    inner_model = InnerMostModel(lst=["test1", "test2"], counter=15)
     middle_model = MiddleModel(
         inner_model=inner_model,
         tags=["tag1", "tag2"],
         metadata={"key1": "value1", "key2": "value2"},
     )
-    original = TestRedisModel(
+    original = OuterModel(
         middle_model=middle_model,
         user_data={"user1": 50, "user2": 75},
         items=[10, 20, 30, 40],
-        description="comprehensive_test",
     )
     await original.save()
 
@@ -338,17 +314,12 @@ async def test_duplicate_preserves_all_redis_types_sanity(redis_client_fixture):
 
     # Check all list types
     assert (
-        duplicate.middle_model.inner_model.names
-        == original.middle_model.inner_model.names
+        duplicate.middle_model.inner_model.lst == original.middle_model.inner_model.lst
     )
     assert duplicate.middle_model.tags == original.middle_model.tags
     assert duplicate.items == original.items
 
     # Check all dict types
-    assert (
-        duplicate.middle_model.inner_model.scores
-        == original.middle_model.inner_model.scores
-    )
     assert duplicate.middle_model.metadata == original.middle_model.metadata
     assert duplicate.user_data == original.user_data
 
@@ -357,4 +328,3 @@ async def test_duplicate_preserves_all_redis_types_sanity(redis_client_fixture):
         duplicate.middle_model.inner_model.counter
         == original.middle_model.inner_model.counter
     )
-    assert duplicate.description == original.description

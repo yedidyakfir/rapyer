@@ -1,31 +1,37 @@
 import asyncio
 import contextlib
-import dataclasses
 import functools
 import uuid
-from typing import get_origin, Self, ClassVar, Any
+from typing import Self, ClassVar, Any, get_origin
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter, model_validator
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 
-from rapyer.config import RedisConfig, RedisFieldConfig
+from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
-from rapyer.types.any import AnyTypeRedis
-from rapyer.types.init import create_serializer
-from rapyer.types.base import GenericRedisType, RedisType
+from rapyer.types.base import (
+    RedisType,
+    RedisTypeTransformer,
+    REDIS_DUMP_FLAG_NAME,
+)
 from rapyer.utils import (
     acquire_lock,
-    get_public_instance_annotations,
-    get_actual_type,
-    safe_issubclass,
+    replace_to_redis_types_in_annotation,
+    find_first_type_in_annotation,
+    convert_field_factory_type,
+    get_all_annotations,
 )
 
 
 class AtomicRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
+    _base_model_link: Self | RedisType = PrivateAttr(default=None)
+
     Meta: ClassVar[RedisConfig] = RedisConfig()
-    field_config: ClassVar[RedisFieldConfig] = RedisFieldConfig()
-    _field_config_override: RedisFieldConfig = None
+    _field_name: str = PrivateAttr(default="")
+    model_config = ConfigDict(validate_assignment=True)
 
     @property
     def pk(self):
@@ -34,90 +40,95 @@ class AtomicRedisModel(BaseModel):
     @pk.setter
     def pk(self, value: str):
         self._pk = value
-        self._update_redis_field_parameters()
 
-    @functools.cached_property
-    def inst_field_conf(self) -> RedisFieldConfig:
-        class_conf = dataclasses.asdict(self.field_config)
-        inst_conf = (
-            dataclasses.asdict(self._field_config_override)
-            if self._field_config_override
-            else {}
-        )
-        inst_conf = {k: v for k, v in inst_conf.items() if v is not None}
-        conf = class_conf | inst_conf
-        return RedisFieldConfig(**conf)
+    @property
+    def field_name(self):
+        return self._field_name
+
+    @field_name.setter
+    def field_name(self, value: str):
+        self._field_name = value
+
+    @property
+    def field_path(self):
+        if not self._base_model_link:
+            return self.field_name
+        parent_field_path = self._base_model_link.field_path
+        if parent_field_path:
+            return f"{parent_field_path}{self.field_name}"
+        return self.field_name
+
+    @property
+    def json_path(self):
+        field_path = self.field_path
+        return f"${field_path}" if field_path else "$"
 
     @classmethod
     def class_key_initials(cls):
-        return cls.field_config.override_class_name or cls.__name__
+        return cls.__name__
 
     @property
     def key_initials(self):
-        return self.inst_field_conf.override_class_name or self.class_key_initials()
+        return self.class_key_initials()
 
     @property
     def key(self):
+        if self._base_model_link:
+            return self._base_model_link.key
         return f"{self.key_initials}:{self.pk}"
 
     def __init_subclass__(cls, **kwargs):
+        original_annotations = get_all_annotations(
+            cls, exclude_classes=[AtomicRedisModel]
+        )
+        new_annotations = {
+            field_name: replace_to_redis_types_in_annotation(
+                field_type, RedisTypeTransformer(f".{field_name}", cls.Meta)
+            )
+            for field_name, field_type in original_annotations.items()
+        }
+        cls.__annotations__.update(new_annotations)
         super().__init_subclass__(**kwargs)
 
-        # Store Redis field mappings for later use
-        cls._redis_field_mapping = {}
-        full_annotation = get_public_instance_annotations(cls)
-
-        # Replace field types with Redis types and create descriptors
-        for field_name, field_type in full_annotation.items():
-            actual_type = get_actual_type(field_type)
-            full_field_name = (
-                f"{cls.field_config.field_path}.{field_name}"
-                if cls.field_config.field_path
-                else field_name
-            )
-            resolved_inner_type = cls._resolve_redis_type(full_field_name, actual_type)
-            cls._redis_field_mapping[field_name] = resolved_inner_type
-
-    def __init__(
-        self, should_serialize: bool = False, _field_config_override=None, **data
-    ):
-        super().__init__(**data)
-        self._field_config_override = _field_config_override
-
-        # Initialize Redis fields after Pydantic initialization
-        for field_name, type_definitions in self._redis_field_mapping.items():
-            # Get the current value (from Pydantic initialization)
-            current_value = getattr(self, field_name, None)
-            if current_value is None:
+        for attr_name, attr_type in cls.__annotations__.items():
+            if original_annotations[attr_name] == attr_type:
+                continue
+            value = getattr(cls, attr_name, None)
+            if value is None:
                 continue
 
-            full_field_path = (
-                f"{self.inst_field_conf.field_path}.{field_name}"
-                if self.inst_field_conf.field_path
-                else field_name
-            )
-            redis_instance = self.create_redis_type(
-                redis_type=type_definitions[0],
-                value=current_value,
-                redis_key=self.key,
-                field_path=full_field_path,
-                redis=self.Meta.redis,
-                should_serialize=should_serialize,
-                **type_definitions[1],
-            )
+            real_type = find_first_type_in_annotation(attr_type)
 
-            # Set it directly on the instance
-            object.__setattr__(self, field_name, redis_instance)
+            if isinstance(value, real_type):
+                continue
+            redis_type = cls.__annotations__[attr_name]
+            redis_type: type[RedisType]
+            adapter = TypeAdapter(redis_type)
+
+            # Handle Field(default=...)
+            if isinstance(value, FieldInfo):
+                if value.default != PydanticUndefined:
+                    value.default = adapter.validate_python(value.default)
+                elif value.default_factory != PydanticUndefined and callable(
+                    value.default_factory
+                ):
+                    test_value = value.default_factory()
+                    if isinstance(test_value, real_type):
+                        continue
+                    original_factory = value.default_factory
+                    validate_from_adapter = functools.partial(
+                        convert_field_factory_type, original_factory, adapter
+                    )
+                    value.default_factory = validate_from_adapter
+            else:
+                setattr(cls, attr_name, adapter.validate_python(value))
 
     def is_inner_model(self):
-        return self.inst_field_conf.field_path is not None
+        return self.field_name
 
     async def save(self) -> Self:
-        if self.is_inner_model():
-            raise RuntimeError("Can only save from top level model")
-
-        model_dump = self.redis_dump()
-        await self.Meta.redis.json().set(self.key, "$", model_dump)
+        model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
+        await self.Meta.redis.json().set(self.key, self.json_path, model_dump)
         if self.Meta.ttl is not None:
             await self.Meta.redis.expire(self.key, self.Meta.ttl)
         return self
@@ -145,12 +156,21 @@ class AtomicRedisModel(BaseModel):
             raise KeyNotFound(f"{key} is missing in redis")
         model_dump = model_dump[0]
 
-        instance = cls(**model_dump, should_serialize=True)
-        # Extract pk from key format: "ClassName:pk"
+        instance = cls(**model_dump)
+        # Extract pk from the key format: "ClassName:pk"
         pk = key.split(":", 1)[1]
         instance._pk = pk
         # Update Redis field parameters to use the correct redis_key
-        instance._update_redis_field_parameters()
+        return instance
+
+    async def load(self) -> Self:
+        model_dump = await self.Meta.redis.json().get(self.key, self.json_path)
+        if not model_dump:
+            raise KeyNotFound(f"{self.key} is missing in redis")
+        model_dump = model_dump[0]
+        instance = self.__class__(**model_dump)
+        instance._pk = self._pk
+        instance._base_model_link = self._base_model_link
         return instance
 
     @classmethod
@@ -161,21 +181,6 @@ class AtomicRedisModel(BaseModel):
     async def delete(self):
         client = _context_var.get() or self.Meta.redis
         return await client.delete(self.key)
-
-    def redis_dump(self):
-        model_dump = self.model_dump(exclude=["_pk"])
-        # Override Redis field values with their serialized versions
-        for field_name in self.model_fields:
-            if hasattr(self, field_name):
-                redis_field = getattr(self, field_name)
-                if isinstance(redis_field, RedisType):
-                    model_dump[field_name] = redis_field.serialize_value(redis_field)
-        return model_dump
-
-    async def load(self):
-        await asyncio.gather(
-            *[getattr(self, field_name).load() for field_name in self.model_dump()]
-        )
 
     @classmethod
     @contextlib.asynccontextmanager
@@ -199,7 +204,7 @@ class AtomicRedisModel(BaseModel):
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.get(self.key)
-                self.model_copy(update=redis_model.model_dump())
+                self.__dict__.update(redis_model.model_dump(exclude_unset=True))
             except (TypeError, IndexError):
                 if ignore_if_deleted:
                     redis_model = self
@@ -213,102 +218,36 @@ class AtomicRedisModel(BaseModel):
             _context_xx_pipe.set(False)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if value is None:
+        if name not in self.__annotations__ or value is None:
             super().__setattr__(name, value)
             return
 
-        is_already_at_correct_type = isinstance(value, (RedisType, AtomicRedisModel))
-        has_redis_type = name in self._redis_field_mapping
-        if has_redis_type and not is_already_at_correct_type:
-            type_definitions = self._redis_field_mapping[name]
-            full_field_path = (
-                f"{self.inst_field_conf.field_path}.{name}"
-                if self.inst_field_conf.field_path
-                else name
-            )
+        field_annotation = self.__annotations__[name]
+        super().__setattr__(name, value)
+        if value is not None:
+            attr = getattr(self, name)
+            if isinstance(attr, RedisType):
+                attr._base_model_link = self
 
-            redis_instance = self.create_redis_type(
-                redis_type=type_definitions[0],
-                value=value,
-                redis_key=self.key,
-                field_path=full_field_path,
-                redis=self.Meta.redis,
-                **type_definitions[1],
-            )
-
-            # Set the converted Redis instance
-            super().__setattr__(name, redis_instance)
+    def __eq__(self, other):
+        if not isinstance(other, BaseModel):
+            return False
+        if self.__dict__ == other.__dict__:
+            return True
         else:
-            # Use the parent's __setattr__ for all other cases
-            super().__setattr__(name, value)
+            return super().__eq__(other)
 
-    def _update_redis_field_parameters(self):
+    @model_validator(mode="before")
+    @classmethod
+    def validate_sub_model(cls, values):
+        if isinstance(values, BaseModel) and not isinstance(values, cls):
+            return values.model_dump()
+        return values
+
+    @model_validator(mode="after")
+    def assign_fields_links(self):
         for field_name in self.model_fields:
-            value = getattr(self, field_name)
-            if isinstance(value, RedisType):
-                value.redis_key = self.key
-            elif isinstance(value, AtomicRedisModel):
-                value.pk = self.pk
-
-    @classmethod
-    def _resolve_redis_type(cls, field_name, type_):
-        # Handle generic types
-        origin_type = get_origin(type_) or type_
-
-        # Check if this type has a Redis equivalent
-        if origin_type in cls.Meta.redis_type:
-            redis_type_class = cls.Meta.redis_type[origin_type]
-
-            # If it's a GenericRedisType, create its serializer
-            if safe_issubclass(redis_type_class, GenericRedisType):
-                return [
-                    redis_type_class,
-                    {
-                        "serializer_creator": create_serializer,
-                        "full_type": type_,
-                        "inst_init": cls.create_redis_type,
-                        "type_creator": cls._resolve_redis_type,
-                    },
-                ]
-            else:
-                return [redis_type_class, {}]
-        elif safe_issubclass(type_, AtomicRedisModel):
-            field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.class_key_initials()
-            )
-            return [type_, {"_field_config_override": field_conf}]
-        elif safe_issubclass(type_, BaseModel):
-            field_conf = RedisFieldConfig(
-                field_path=field_name, override_class_name=cls.class_key_initials()
-            )
-            new_base_model_type = type(
-                f"Redis{type_.__name__}",
-                (type_, AtomicRedisModel),
-                dict(field_config=field_conf),
-            )
-            return [new_base_model_type, {}]
-        else:
-            return [AnyTypeRedis, {}]
-
-    @classmethod
-    def create_redis_type(
-        cls,
-        redis_type: type["AtomicRedisModel | RedisType"],
-        value: Any,
-        redis_key: str = None,
-        should_serialize: bool = False,
-        **saved_kwargs,
-    ):
-        # Handle nested models - convert user model to Redis model
-        if isinstance(value, BaseModel):
-            pk = redis_key.split(":", 1)[1]
-            model_data = value.model_dump()
-            instance = redis_type(**model_data, **saved_kwargs)
-            instance.pk = pk
-            return instance
-        else:
-            val = redis_type(value, redis_key=redis_key, **saved_kwargs)
-            if should_serialize:
-                value = val.deserialize_value(val)
-                val = redis_type(value, redis_key=redis_key, **saved_kwargs)
-            return val
+            attr = getattr(self, field_name)
+            if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
+                attr._base_model_link = self
+        return self

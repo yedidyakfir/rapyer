@@ -107,7 +107,8 @@ class GameSession(AtomicRedisModel):
 async def complete_level(session: GameSession, level_score: int, achievement: str):
     # All operations executed atomically as a single transaction
     async with session.pipeline() as pipelined_session:
-        await pipelined_session.score.set(session.score + level_score)
+        session.score += level_score
+        await pipelined_session.score.save()
         await pipelined_session.achievements.aappend(achievement)
         await pipelined_session.stats.aupdate(
             levels_completed=session.stats.get("levels_completed", 0) + 1,
@@ -163,7 +164,8 @@ async def add_multiple_items(cart: ShoppingCart, items_to_add: List[tuple]):
             
             # Update total price
             current_total = cart.total_price
-            await pipelined_cart.total_price.set(current_total + (price * quantity))
+            cart.total_price = current_total + (price * quantity)
+            await pipelined_cart.total_price.save()
     
     print(f"Added {len(items_to_add)} items to cart atomically")
 ```
@@ -176,7 +178,8 @@ async def atomic_user_update(user: User):
         async with user.pipeline() as pipelined_user:
             await pipelined_user.tags.aappend("verified")
             await pipelined_user.metadata.aupdate(status="active")
-            await pipelined_user.profile_views.set(0)  # Reset views
+            user.profile_views = 0  # Reset views
+            await pipelined_user.profile_views.save()
             
         print("All updates completed atomically")
         
@@ -221,7 +224,8 @@ async def process_next_task(queue_key: str):
             
             # Mark as completed atomically
             async with queue.pipeline() as pipelined_queue:
-                await pipelined_queue.processing_tasks.remove(task)
+                task_index = queue.processing_tasks.index(task)
+                await pipelined_queue.processing_tasks.apop(task_index)
                 await pipelined_queue.completed_tasks.aappend(task)
             
             return task
@@ -259,7 +263,8 @@ async def check_rate_limit(user_id: str) -> bool:
             
             if len(recent_requests) < locked_limiter.limit:
                 recent_requests.append(now)
-                await pipelined_limiter.requests.set(recent_requests)
+                locked_limiter.requests = recent_requests
+                await pipelined_limiter.requests.save()
                 return True  # Request allowed
             else:
                 return False  # Rate limit exceeded
@@ -287,7 +292,8 @@ async def check_rate_limit(user_id: str) -> bool:
 async with user.pipeline() as pipelined_user:
     await pipelined_user.tags.aappend("verified")
     await pipelined_user.metadata.aupdate(status="active")
-    await pipelined_user.last_login.set(datetime.now())
+    user.last_login = datetime.now()
+    await pipelined_user.last_login.save()
 ```
 
 **Use Locks when:**
@@ -342,8 +348,10 @@ async def complex_user_operation(user: User):
         if locked_user.status == "pending":
             # Batch the updates with pipeline for performance
             async with locked_user.pipeline() as pipelined_user:
-                await pipelined_user.status.set("active")
-                await pipelined_user.activated_at.set(datetime.now())
+                locked_user.status = "active"
+                await pipelined_user.status.save()
+                locked_user.activated_at = datetime.now()
+                await pipelined_user.activated_at.save()
                 await pipelined_user.notifications.aappend("Account activated")
 ```
 
@@ -355,7 +363,8 @@ async def safe_batch_operation(user: User):
         async with user.pipeline() as pipelined_user:
             await pipelined_user.tags.aextend(["tag1", "tag2", "tag3"])
             await pipelined_user.metadata.aupdate(batch_processed="true")
-            await pipelined_user.last_batch_time.set(datetime.now())
+            user.last_batch_time = datetime.now()
+            await pipelined_user.last_batch_time.save()
         
         print("Batch operation completed successfully")
     except Exception as e:
@@ -395,7 +404,8 @@ async def process_order_atomically(order_key: str, inventory_key: str):
             if can_fulfill:
                 # Process order and update inventory atomically
                 async with order.pipeline() as pipelined_order:
-                    await pipelined_order.status.set("processing")
+                    order.status = "processing"
+                    await pipelined_order.status.save()
                     await pipelined_order.payment_attempts.aappend(datetime.now())
                 
                 async with inventory.pipeline() as pipelined_inventory:
@@ -414,7 +424,8 @@ async def process_order_atomically(order_key: str, inventory_key: str):
                 
                 return "Order processed successfully"
             else:
-                await order.status.set("out_of_stock")
+                order.status = "out_of_stock"
+                await order.status.save()
                 return "Order failed - insufficient inventory"
 ```
 

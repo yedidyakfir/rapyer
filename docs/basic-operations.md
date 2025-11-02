@@ -270,7 +270,8 @@ async def blog_post_lifecycle():
     print(f"✅ Post retrieved: {retrieved_post.title}")
     
     # 3. Update fields
-    await retrieved_post.view_count.set(100)
+    retrieved_post.view_count = 100
+    await retrieved_post.view_count.save()
     await retrieved_post.tags.aappend("tutorial")
     print("✅ Post updated")
     

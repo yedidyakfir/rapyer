@@ -118,3 +118,4 @@ dmypy.json
 # Dynaconf secrets
 .secrets.*
 future-work
+.claude

@@ -1,162 +1,164 @@
 from typing import TypeVar, Generic, get_args, Any
 
-from rapyer.config import RedisFieldConfig
-from rapyer.types.base import GenericRedisType, RedisSerializer, RedisType
+from pydantic_core import core_schema
+
+from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.utils import update_keys_in_pipeline
 
 T = TypeVar("T")
 
+# Redis Lua script for atomic get-and-delete operation
+POP_SCRIPT = """
+local key = KEYS[1]
+local path = ARGV[1]
+local target_key = ARGV[2]
 
-class DictSerializer(RedisSerializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.inner_serializer = self._create_inner_serializer()
+-- Get the value from the JSON object
+local value = redis.call('JSON.GET', key, path .. '.' .. target_key)
 
-    def _create_inner_serializer(self):
-        args = get_args(self.full_type)
-        if len(args) >= 2:
-            value_type = args[1]
-            # dict[key_type, value_type] - we care about value_type
-            return self.serializer_creator(value_type)
-        return None
+if value and value ~= '[]' and value ~= 'null' then
+    -- Delete the key from the JSON object
+    redis.call('JSON.DEL', key, path .. '.' .. target_key)
 
-    def serialize_value(self, value):
-        if self.inner_serializer:
-            return {
-                k: self.inner_serializer.serialize_value(v) for k, v in value.items()
-            }
-        return dict(value)
+    -- Parse and return the actual value
+    local parsed = cjson.decode(value)
+    return parsed[1]  -- Return first element if it's an array
+else
+    return nil
+end
+"""
 
-    def deserialize_value(self, value):
-        if value is None:
-            return None
-        if self.inner_serializer:
-            return {
-                k: self.inner_serializer.deserialize_value(v) for k, v in value.items()
-            }
-        return dict(value)
+
+# Redis Lua script for atomic get-arbitrary-key-and-delete operation
+POPITEM_SCRIPT = """
+local key = KEYS[1]
+local path = ARGV[1]
+
+-- Get all the keys from the JSON object
+local keys = redis.call('JSON.OBJKEYS', key, path)
+
+-- Return nil if no keys exist
+if not keys or #keys == 0 then
+    return nil
+end
+
+-- Handle nested arrays - Redis sometimes wraps results
+if type(keys[1]) == 'table' then
+    keys = keys[1]
+end
+
+-- Check again after unwrapping
+if not keys or #keys == 0 then
+    return nil
+end
+
+local first_key = tostring(keys[1])
+
+-- Get the value for this key
+local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
+
+-- Return nil if value doesn't exist
+if not value then
+    return nil
+end
+
+-- Delete the key from the JSON object
+redis.call('JSON.DEL', key, path .. '.' .. first_key)
+
+-- Parse the JSON string
+local parsed_value = cjson.decode(value)
+
+-- If it's a table/object, return the first value
+if type(parsed_value) == 'table' then
+    for _, v in pairs(parsed_value) do
+        return {first_key, v}  -- Return first value found
+    end
+    -- If table is empty, return nil
+    return nil
+end
+
+-- Otherwise return the parsed value as-is
+return {first_key, parsed_value}
+"""
 
 
 class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
-    def __init__(self, value=None, *args, **kwargs):
-        # Extract value if passed as keyword argument
-        GenericRedisType.__init__(self, **kwargs)
-        super().__init__(value, *args)
+    original_type = dict
+
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+        GenericRedisType.__init__(self, *args, **kwargs)
 
     @classmethod
     def find_inner_type(cls, type_):
         args = get_args(type_)
-        return args[1] if args else Any
+        return args[1] if len(args) >= 2 else Any
 
-    async def load(self):
-        # Get all items from Redis dict
-        redis_items = await self.client.json().get(self.redis_key, self.field_path)
+    def validate_dict(self, dct: dict):
+        new_dct = self._adapter.validate_python(dct)
+        if new_dct:
+            for key, value in new_dct.items():
+                self.init_redis_field(f".{key}", value)
+        return new_dct
 
-        if redis_items is None:
-            redis_items = {}
-
-        # Deserialize items using serializer
-        deserialized_items = {}
-        for key, value in redis_items.items():
-            if self.serializer is not None:
-                # Use serializer to deserialize the value
-                deserialized_value = self.serializer.deserialize_value(value)
-                deserialized_items[key] = deserialized_value
-            else:
-                # No type conversion
-                deserialized_items[key] = value
-
-        # Clear local dict and populate with Redis data
-        super().clear()
-        super().update(deserialized_items)
-
-    async def aset_item(self, key, value):
-        super().__setitem__(key, value)
-
-        # Serialize the value for Redis storage
-        serialized_value = (
-            self.serializer.serialize_value(value) if self.serializer else value
-        )
-        return await self.client.json().set(
-            self.redis_key, self.json_field_path(key), serialized_value
-        )
-
-    def __ior__(self, other):
-        self.update(other)
-        return self
+    def update(self, m=None, /, **kwargs):
+        if self.pipeline:
+            m_redis_val = self._adapter.dump_python(
+                m, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            )
+            m_redis_val = m_redis_val or {}
+            kwargs_redis_val = self._adapter.dump_python(
+                kwargs, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            )
+            update_keys_in_pipeline(
+                self.pipeline, self.key, m_redis_val | kwargs_redis_val
+            )
+        m_new_val = self.validate_dict(m) if m else {}
+        kwargs_new_val = self.validate_dict(kwargs)
+        return super().update(m_new_val, **kwargs_new_val)
 
     def __setitem__(self, key, value):
-        redis_type, kwargs = self.inner_type
-        field_path = f"{self.field_path}.{key}"
-        new_val = self.inst_init(
-            redis_type,
-            value,
-            self.redis_key,
-            **kwargs,
-            redis=self.redis,
-            field_path=field_path,
-            _field_config_override=RedisFieldConfig(field_path=field_path),
+        if self.pipeline:
+            self.pipeline.json().set(self.key, self.json_field_path(key), value)
+        new_val = self.validate_dict({key: value})[key]
+        super().__setitem__(key, new_val)
+
+    async def aset_item(self, key, value):
+        self.__setitem__(key, value)
+
+        # Serialize the value for Redis storage using a type adapter
+        serialized_value = self._adapter.dump_python(
+            {key: value}, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
-        return super().__setitem__(key, new_val)
+        return await self.client.json().set(
+            self.key, self.json_field_path(key), serialized_value[key]
+        )
 
     async def adel_item(self, key):
         super().__delitem__(key)
-
-        return await self.client.json().delete(
-            self.redis_key, self.json_field_path(key)
-        )
-
-    def _parse_redis_json_value(self, result):
-        """Parse JSON-encoded value returned from Redis Lua scripts."""
-        if isinstance(result, bytes):
-            result = result.decode()
-        if result.startswith("[") and result.endswith("]"):
-            # Remove JSON array wrapping for single values
-            result = result[1:-1]
-            # Handle string values that were quoted
-            if result.startswith('"') and result.endswith('"'):
-                result = result[1:-1]
-        return result
+        return await self.client.json().delete(self.key, self.json_field_path(key))
 
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
-        redis_params = {
-            self.json_field_path(key): (
-                self.serializer.serialize_value(v) if self.serializer else v
-            )
-            for key, v in kwargs.items()
-        }
+
+        # Serialize values using type adapter
+        dumped_data = self._adapter.dump_python(
+            kwargs, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
+        redis_params = {self.json_field_path(key): v for key, v in dumped_data.items()}
+
+        # If I am in a pipeline, update keys in a pipeline, otherwise execute a pipeline
         if self.pipeline:
-            update_keys_in_pipeline(self.pipeline, self.redis_key, **redis_params)
+            update_keys_in_pipeline(self.pipeline, self.key, **redis_params)
             return
 
         async with self.redis.pipeline() as pipeline:
-            update_keys_in_pipeline(pipeline, self.redis_key, **redis_params)
+            update_keys_in_pipeline(pipeline, self.key, **redis_params)
             await pipeline.execute()
 
     async def apop(self, key, default=None):
-        # Redis Lua script for atomic get-and-delete operation
-        pop_script = """
-        local key = KEYS[1]
-        local path = ARGV[1]
-        local target_key = ARGV[2]
-        
-        -- Get the value from the JSON object
-        local value = redis.call('JSON.GET', key, path .. '.' .. target_key)
-        
-        if value and value ~= '[]' and value ~= 'null' then
-            -- Delete the key from the JSON object
-            redis.call('JSON.DEL', key, path .. '.' .. target_key)
-            return value
-        else
-            return nil
-        end
-        """
-
         # Execute the script atomically
-        result = await self.client.eval(
-            pop_script, 1, self.redis_key, self.json_path, key
-        )
+        result = await self.client.eval(POP_SCRIPT, 1, self.key, self.json_path, key)
         # Key exists in Redis, pop from local dict (it should exist there too)
         super().pop(key, None)
 
@@ -164,77 +166,61 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             # Key doesn't exist in Redis
             return default
 
-        # Deserialize the value using serializer
-        parsed_result = self._parse_redis_json_value(result)
-        if self.serializer is not None:
-            return self.serializer.deserialize_value(parsed_result)
-        return parsed_result
+        return self._adapter.validate_python(
+            {key: result}, context={REDIS_DUMP_FLAG_NAME: True}
+        )[key]
 
     async def apopitem(self):
-        # Redis Lua script for atomic get-arbitrary-key-and-delete operation
-        popitem_script = """
-        local key = KEYS[1]
-        local path = ARGV[1]
-        
-        -- Get all the keys from the JSON object
-        local keys_result = redis.call('JSON.OBJKEYS', key, path)
-        
-        if keys_result and type(keys_result) == 'table' and #keys_result > 0 then
-            -- Get the first key from the result
-            local keys = keys_result
-            if type(keys[1]) == 'table' then
-                keys = keys[1]  -- Sometimes Redis returns nested arrays
-            end
-            
-            if #keys > 0 then
-                local first_key = tostring(keys[1])
-                -- Get the value for this key
-                local value = redis.call('JSON.GET', key, path .. '.' .. first_key)
-                
-                if value then
-                    -- Delete the key from the JSON object
-                    redis.call('JSON.DEL', key, path .. '.' .. first_key)
-                    return {first_key, value}
-                end
-            end
-        end
-        
-        return nil
-        """
-
         # Execute the script atomically
-        result = await self.client.eval(
-            popitem_script, 1, self.redis_key, self.json_path
-        )
+        result = await self.client.eval(POPITEM_SCRIPT, 1, self.key, self.json_path)
 
         if result is not None:
             redis_key, redis_value = result
-            # Pop the same key from local dict
+            # Pop the same key from the local dict
             super().pop(
                 redis_key.decode() if isinstance(redis_key, bytes) else redis_key
             )
-            parsed_value = self._parse_redis_json_value(redis_value)
-            if self.serializer is not None:
-                parsed_value = self.serializer.deserialize_value(parsed_value)
-            return parsed_value
+            return self._adapter.validate_python(
+                {redis_key: redis_value}, context={REDIS_DUMP_FLAG_NAME: True}
+            )[redis_key]
         else:
-            # If Redis is empty but local dict has items, raise error for consistency
+            # If Redis is empty but local dict has items, raise an error for consistency
             raise KeyError("popitem(): dictionary is empty")
 
     async def aclear(self):
-        # Clear local dict
         super().clear()
-
         # Clear Redis dict
-        return await self.client.json().set(self.redis_key, self.json_path, {})
+        return await self.client.json().set(self.key, self.json_path, {})
 
     def clone(self):
         return {
             k: v.clone() if isinstance(v, RedisType) else v for k, v in self.items()
         }
 
-    def serialize_value(self, value):
-        return {k: self.serializer.serialize_value(v) for k, v in value.items()}
+    def iterate_items(self):
+        keys = [f".{k}" for k in self.keys()]
+        return zip(keys, self.values())
 
-    def deserialize_value(self, value):
-        return {k: self.serializer.deserialize_value(v) for k, v in value.items()}
+    @classmethod
+    def full_serializer(cls, value, info: core_schema.SerializationInfo):
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME)
+        return {
+            key: cls.serialize_unknown(item) if should_serialize_redis else item
+            for key, item in value.items()
+        }
+
+    @classmethod
+    def full_deserializer(cls, value, info: core_schema.ValidationInfo):
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME)
+        if isinstance(value, dict):
+            return {
+                key: cls.deserialize_unknown(item) if should_serialize_redis else item
+                for key, item in value.items()
+            }
+        return value
+
+    @classmethod
+    def schema_for_unknown(cls):
+        core_schema.dict_schema(core_schema.str_schema(), core_schema.str_schema())

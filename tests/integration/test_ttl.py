@@ -1,31 +1,6 @@
 import pytest
-import pytest_asyncio
 
-from rapyer.base import AtomicRedisModel, RedisConfig
-
-
-class UserModelWithTTL(AtomicRedisModel):
-    name: str = "test"
-    age: int = 25
-    active: bool = True
-    tags: list[str] = []
-    settings: dict[str, str] = {}
-
-    Meta = RedisConfig(ttl=300)
-
-
-class UserModelWithoutTTL(AtomicRedisModel):
-    name: str = "test"
-    age: int = 25
-
-
-@pytest_asyncio.fixture
-async def real_redis_client(redis_client):
-    UserModelWithTTL.Meta.redis = redis_client
-    UserModelWithoutTTL.Meta.redis = redis_client
-
-    yield redis_client
-    await redis_client.aclose()
+from tests.models.simple_types import UserModelWithTTL, UserModelWithoutTTL
 
 
 @pytest.mark.asyncio

@@ -13,7 +13,7 @@ homepage = "https://github.com/YedidyaHKfir/rapyer"
 repository = "https://github.com/YedidyaHKfir/rapyer"
 documentation = "https://github.com/YedidyaHKfir/rapyer"
 packages = [{include = "rapyer"}]
-keywords = ["redis", "pydantic", "orm", "database", "async"]
+keywords = ["redis", "pydantic", "orm", "database", "async", "nosql", "cache", "key-value", "data-modeling", "python", "backend", "storage", "serialization", "validation"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -36,4 +36,18 @@ black = "^25.9.0"
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.4.2"
 pytest-asyncio = "^0.25.0"
+pytest-cov = "^6.0.0"
+
+[tool.coverage.run]
+source = ["rapyer"]
+omit = ["*/tests/*", "*/test_*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
 

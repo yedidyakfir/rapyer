@@ -1,53 +1,44 @@
-import base64
-from rapyer.types.base import RedisType, RedisSerializer
+from pydantic_core.core_schema import ValidationInfo, SerializationInfo
 
-
-class ByteSerializer(RedisSerializer):
-    def serialize_value(self, value):
-        if isinstance(value, bytes):
-            return base64.b64encode(value).decode()
-        elif isinstance(value, str):
-            return base64.b64encode(value.encode()).decode()
-        else:
-            return base64.b64encode(str(value).encode()).decode()
-
-    def deserialize_value(self, value):
-        if isinstance(value, str):
-            try:
-                return base64.b64decode(value)
-            except Exception:
-                return value.encode()
-        elif isinstance(value, bytes):
-            return value
-        else:
-            return str(value).encode()
+from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
+from pydantic_core import core_schema
 
 
 class RedisBytes(bytes, RedisType):
-    serializer = ByteSerializer(bytes, None)
-
-    def __new__(cls, value=b"", **kwargs):
-        if value is None:
-            value = b""
-        return super().__new__(cls, value)
-
-    def __init__(self, value=b"", **kwargs):
-        RedisType.__init__(self, **kwargs)
-
-    async def load(self):
-        redis_value = await self.client.json().get(self.redis_key, self.field_path)
-        if redis_value is not None:
-            return self.serializer.deserialize_value(redis_value)
-        return b""
-
-    async def set(self, value: bytes):
-        if not isinstance(value, bytes):
-            raise TypeError("Value must be bytes")
-
-        serialized_value = self.serializer.serialize_value(value)
-        return await self.client.json().set(
-            self.redis_key, self.json_path, serialized_value
-        )
+    original_type = bytes
 
     def clone(self):
         return bytes(self)
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        return core_schema.no_info_after_validator_function(
+            cls,
+            core_schema.with_info_before_validator_function(
+                cls._validate_pickle, handler(cls.original_type)
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls._serialize_pickle,
+                return_schema=core_schema.str_schema(),
+                info_arg=True,
+            ),
+        )
+
+    @classmethod
+    def _validate_pickle(cls, value, info: ValidationInfo):
+        ctx = info.context or {}
+        is_redis_data = ctx.get(REDIS_DUMP_FLAG_NAME)
+
+        if isinstance(value, str) and is_redis_data:
+            return cls.deserialize_unknown(value)
+        return value
+
+    @classmethod
+    def _serialize_pickle(cls, value, info: SerializationInfo):
+        ctx = info.context or {}
+        is_redis_data = ctx.get(REDIS_DUMP_FLAG_NAME)
+
+        value = bytes(value)
+        if is_redis_data:
+            return cls.serialize_unknown(value)
+        return value

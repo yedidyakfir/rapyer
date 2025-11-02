@@ -272,12 +272,14 @@ async def process_order_with_items(order: Order, items_data: List[dict]):
             total += item.price * item.quantity
         
         # Update order totals and metadata
-        await pipelined_order.total_amount.set(total)
+        order.total_amount = total
+        await pipelined_order.total_amount.save()
         await pipelined_order.order_metadata.aupdate(
             processed_at=str(datetime.now()),
             item_count=str(len(items_data))
         )
-        await pipelined_order.status.set("confirmed")
+        order.status = "confirmed"
+        await pipelined_order.status.save()
     
     print(f"Order processed with {len(items_data)} items, total: ${total/100:.2f}")
 ```
@@ -379,13 +381,15 @@ await company.branch_offices.aappend(branch)
 # ✅ Efficient - batch nested operations
 async with user.pipeline() as pipelined_user:
     await pipelined_user.settings.notifications.aupdate(email=True, sms=False)
-    await pipelined_user.stats.login_count.set(user.stats.login_count + 1)
+    user.stats.login_count += 1
+    await pipelined_user.stats.login_count.save()
     await pipelined_user.tags.aappend("active_user")
 
 # ❌ Less efficient - multiple individual operations
 await user.settings.notifications.aupdate(email=True)
 await user.settings.notifications.aupdate(sms=False)
-await user.stats.login_count.set(user.stats.login_count + 1)
+user.stats.login_count += 1
+await user.stats.login_count.save()
 await user.tags.aappend("active_user")
 ```
 
@@ -428,7 +432,8 @@ async def create_complex_order(customer_id: str, order_data: dict):
             await pipelined_order.shipping_info.aupdate(**order_data["shipping"])
             
             # Set status
-            await pipelined_order.status.set("confirmed")
+            order.status = "confirmed"
+            await pipelined_order.status.save()
             
         print("Order created successfully")
         return order
@@ -466,9 +471,11 @@ class User(AtomicRedisModel):
 ```python
 # ✅ Good - batch related nested operations
 async with user.pipeline() as pipelined_user:
-    await pipelined_user.profile.bio.set("Updated bio")
+    user.profile.bio = "Updated bio"
+    await pipelined_user.profile.bio.save()
     await pipelined_user.profile.tags.aappend("updated")
-    await pipelined_user.settings.last_profile_update.set(datetime.now())
+    user.settings.last_profile_update = datetime.now()
+    await pipelined_user.settings.last_profile_update.save()
 ```
 
 ### 3. Lock at the Appropriate Level
@@ -478,7 +485,8 @@ async with user.pipeline() as pipelined_user:
 async with user.lock("profile_update") as locked_user:
     locked_user.profile.bio = "New bio"
     await locked_user.profile.tags.aappend("verified")
-    await locked_user.settings.last_update.set(datetime.now())
+    locked_user.settings.last_update = datetime.now()
+    await locked_user.settings.last_update.save()
 ```
 
 ## Complete Example: Social Media Platform
