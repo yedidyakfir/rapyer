@@ -32,6 +32,7 @@ nav:
   - Setup: setup.md
   - Basic Operations: basic-operations.md
   - Supported Types: supported-types.md
+  - Redis Types: redis-types.md
   - Atomic Actions: atomic-actions.md
   - Nested Models: nested-models.md
 

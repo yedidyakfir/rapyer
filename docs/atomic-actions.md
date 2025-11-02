@@ -125,8 +125,8 @@ async def complete_level(session: GameSession, level_score: int, achievement: st
 class User(AtomicRedisModel):
     username: str
     email: str
-    tags: List[str] = []
-    metadata: Dict[str, str] = {}
+    tags: List[str] = Field(default_factory=list)
+    metadata: Dict[str, str] = Field(default_factory=dict)
     created_at: datetime = None
 
 async def register_user(username: str, email: str):

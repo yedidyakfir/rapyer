@@ -53,6 +53,24 @@ if __name__ == "__main__":
 
 ## Core Concepts
 
+### Redis Types for Enhanced IDE Support
+Use specialized Redis type annotations for better IDE autocomplete and type safety:
+
+```python
+from rapyer.types.string import RedisStr
+from rapyer.types.lst import RedisList
+from rapyer.types.dct import RedisDict
+
+class User(AtomicRedisModel):
+    name: RedisStr = RedisStr("")                              # Enhanced string support
+    tags: RedisList[str] = Field(default_factory=list)        # Full list operation autocomplete
+    metadata: RedisDict[str, str] = Field(default_factory=dict) # Full dict operation autocomplete
+
+# IDE will show all Redis operations with full autocomplete
+await user.tags.aappend("python")    # ✓ Full IDE support
+await user.metadata.aupdate(role="developer")  # ✓ Type-safe operations
+```
+
 ### Atomic Operations
 Every operation in Rapyer is designed to be atomic and race-condition safe:
 
@@ -108,5 +126,6 @@ Ready to build race-condition-free Redis applications? Start with our [Setup Gui
 - **[Setup](setup.md)** - Installation and configuration
 - **[Basic Operations](basic-operations.md)** - Save, load, get, delete operations
 - **[Supported Types](supported-types.md)** - Complete type support and atomic actions
+- **[Redis Types](redis-types.md)** - Enhanced IDE support with RedisStr, RedisList, RedisDict, etc.
 - **[Atomic Actions](atomic-actions.md)** - Locks, pipelines, and concurrency safety
 - **[Nested Models](nested-models.md)** - Working with complex nested structures
