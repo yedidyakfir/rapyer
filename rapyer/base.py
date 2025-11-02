@@ -223,9 +223,6 @@ class AtomicRedisModel(BaseModel):
             return
 
         field_annotation = self.__annotations__[name]
-        origin = get_origin(field_annotation) or field_annotation
-        if issubclass(origin, RedisType):
-            value = field_annotation._adapter.validate_python(value)
         super().__setattr__(name, value)
         if value is not None:
             attr = getattr(self, name)
