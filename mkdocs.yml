@@ -35,6 +35,7 @@ nav:
   - Redis Types: redis-types.md
   - Atomic Actions: atomic-actions.md
   - Nested Models: nested-models.md
+  - Roadmap: roadmap.md
 
 markdown_extensions:
   - pymdownx.highlight:
