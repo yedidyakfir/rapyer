@@ -165,11 +165,11 @@ async def test_pipeline_list_aappend__check_atomicity_sanity():
     async with model.pipeline() as redis_model:
         await redis_model.tags.aappend("new_tag")
 
-        # Check if change is not applied yet (atomicity test)
+        # Check if the change is not applied yet (atomicity test)
         loaded_model = await ComprehensiveTestModel.get(model.key)
         assert loaded_model.tags == ["initial"]
 
-    # Assert - Check if change was applied after pipeline
+    # Assert - Check if a change was applied after a pipeline
     final_model = await ComprehensiveTestModel.get(model.key)
     assert final_model.tags == ["initial", "new_tag"]
 
