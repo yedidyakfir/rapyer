@@ -222,7 +222,6 @@ class AtomicRedisModel(BaseModel):
             super().__setattr__(name, value)
             return
 
-        field_annotation = self.__annotations__[name]
         super().__setattr__(name, value)
         if value is not None:
             attr = getattr(self, name)
