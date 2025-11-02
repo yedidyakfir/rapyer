@@ -21,7 +21,7 @@ from tests.models.redis_types import (
 @pytest.mark.parametrize("test_value", ["hello", "world", "", "test_string"])
 def test_direct_redis_str_model_creation_sanity(test_value):
     # Arrange & Act
-    model = DirectRedisStringModel(name=RedisStr(test_value))
+    model = DirectRedisStringModel(name=test_value)
 
     # Assert
     assert isinstance(model.name, RedisStr)
