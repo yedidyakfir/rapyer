@@ -15,10 +15,10 @@ from rapyer.types.dct import RedisDict
 
 class UserModel(AtomicRedisModel):
     # Instead of: name: str = ""
-    name: RedisStr = RedisStr("")
+    name: RedisStr = ""
     
     # Instead of: age: int = 0  
-    age: RedisInt = RedisInt(0)
+    age: RedisInt = 0
     
     # Instead of: tags: List[str] = []
     tags: RedisList[str] = Field(default_factory=list)
@@ -37,8 +37,8 @@ Provides enhanced IDE support for string operations.
 from rapyer.types.string import RedisStr
 
 class DocumentModel(AtomicRedisModel):
-    title: RedisStr = RedisStr("Untitled")
-    content: RedisStr = RedisStr("")
+    title: RedisStr = "Untitled"
+    content: RedisStr = ""
 
 # Usage
 doc = DocumentModel()
@@ -62,8 +62,8 @@ Provides enhanced IDE support for integer operations, including the atomic `incr
 from rapyer.types.integer import RedisInt
 
 class CounterModel(AtomicRedisModel):
-    views: RedisInt = RedisInt(0)
-    likes: RedisInt = RedisInt(0)
+    views: RedisInt = 0
+    likes: RedisInt = 0
 
 # Usage  
 counter = CounterModel()
@@ -169,8 +169,8 @@ Provides enhanced IDE support for bytes operations.
 from rapyer.types.byte import RedisBytes
 
 class FileModel(AtomicRedisModel):
-    file_data: RedisBytes = RedisBytes(b"")
-    thumbnail: RedisBytes = RedisBytes(b"")
+    file_data: RedisBytes = b""
+    thumbnail: RedisBytes = b""
 
 # Usage
 file_model = FileModel(file_data=b"binary content")
@@ -229,7 +229,7 @@ IDEs can detect incorrect usage at development time:
 
 ```python
 class UserModel(AtomicRedisModel):
-    name: RedisStr = RedisStr("")
+    name: RedisStr = ""
     tags: RedisList[str] = Field(default_factory=list)
 
 user = UserModel()
@@ -292,7 +292,7 @@ class MixedModel(AtomicRedisModel):
     # Use Redis Types where you need enhanced IDE support
     active_tasks: RedisList[str] = Field(default_factory=list)
     user_settings: RedisDict[str, str] = Field(default_factory=dict)
-    view_count: RedisInt = RedisInt(0)
+    view_count: RedisInt = 0
     
     # Use regular types for simple fields  
     created_at: datetime = Field(default_factory=datetime.now)
@@ -384,8 +384,8 @@ from rapyer.types.lst import RedisList
 from rapyer.types.dct import RedisDict
 
 class NewModel(AtomicRedisModel):
-    name: RedisStr = RedisStr("")
-    count: RedisInt = RedisInt(0)
+    name: RedisStr = ""
+    count: RedisInt = 0
     items: RedisList[str] = Field(default_factory=list)
     data: RedisDict[str, int] = Field(default_factory=dict)
 ```
@@ -439,8 +439,8 @@ Document your models clearly when using Redis Types:
 class UserModel(AtomicRedisModel):
     """User model with enhanced Redis Type support for better IDE experience."""
     
-    name: RedisStr = RedisStr("")                              # User's display name
-    login_count: RedisInt = RedisInt(0)                        # Number of logins (with atomic increment)
+    name: RedisStr = ""                              # User's display name
+    login_count: RedisInt = 0                        # Number of logins (with atomic increment)
     permissions: RedisList[str] = Field(default_factory=list) # User permissions (with Redis operations)
     preferences: RedisDict[str, str] = Field(default_factory=dict)  # User settings (with Redis operations)
 ```
