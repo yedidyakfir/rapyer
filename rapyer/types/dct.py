@@ -110,12 +110,19 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             kwargs_redis_val = self._adapter.dump_python(
                 kwargs, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
             )
-            update_keys_in_pipeline(
-                self.pipeline, self.key, m_redis_val | kwargs_redis_val
-            )
+            updated_values = m_redis_val | kwargs_redis_val
+            updated_values = {
+                self.json_field_path(key): v for key, v in updated_values.items()
+            }
+            update_keys_in_pipeline(self.pipeline, self.key, **updated_values)
         m_new_val = self.validate_dict(m) if m else {}
         kwargs_new_val = self.validate_dict(kwargs)
         return super().update(m_new_val, **kwargs_new_val)
+
+    def clear(self):
+        if self.pipeline:
+            self.pipeline.json().set(self.key, self.json_path, {})
+        return super().clear()
 
     def __setitem__(self, key, value):
         if self.pipeline:
@@ -147,14 +154,10 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         )
         redis_params = {self.json_field_path(key): v for key, v in dumped_data.items()}
 
-        # If I am in a pipeline, update keys in a pipeline, otherwise execute a pipeline
-        if self.pipeline:
-            update_keys_in_pipeline(self.pipeline, self.key, **redis_params)
-            return
-
-        async with self.redis.pipeline() as pipeline:
-            update_keys_in_pipeline(pipeline, self.key, **redis_params)
-            await pipeline.execute()
+        if not self.pipeline:
+            async with self.redis.pipeline() as pipeline:
+                update_keys_in_pipeline(pipeline, self.key, **redis_params)
+                await pipeline.execute()
 
     async def apop(self, key, default=None):
         # Execute the script atomically
@@ -188,7 +191,7 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
             raise KeyError("popitem(): dictionary is empty")
 
     async def aclear(self):
-        super().clear()
+        self.clear()
         # Clear Redis dict
         return await self.client.json().set(self.key, self.json_path, {})
 

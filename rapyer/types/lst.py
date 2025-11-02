@@ -60,39 +60,43 @@ class RedisList(list, GenericRedisType[T]):
         new_val = self.create_new_value(index, __object)
         return super().insert(index, new_val)
 
+    def clear(self):
+        if self.pipeline:
+            self.pipeline.json().set(self.key, self.json_path, [])
+        return super().clear()
+
     async def aappend(self, __object):
-        super().append(__object)
+        self.append(__object)
 
         # Serialize the object for Redis storage using a type adapter
-        serialized_object = self._adapter.dump_python(
-            [__object], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
-        )
-        return await self.client.json().arrappend(
-            self.key, self.json_path, *serialized_object
-        )
+        if not self.pipeline:
+            serialized_object = self._adapter.dump_python(
+                [__object], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            )
+            await self.redis.json().arrappend(
+                self.key, self.json_path, *serialized_object
+            )
 
     async def aextend(self, __iterable):
         items = list(__iterable)
         self.extend(items)
 
         # Convert iterable to list and serialize items using type adapter
-        if items:
+        if items and not self.pipeline:
             # normalized_items = self._adapter.validate_python(items)
             serialized_items = self._adapter.dump_python(
                 items, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
             )
-            return await self.client.json().arrappend(
+            await self.redis.json().arrappend(
                 self.key,
                 self.json_path,
                 *serialized_items,
             )
 
-        return await noop()
-
     async def apop(self, index=-1):
         if self:
-            super().pop(index)
-        arrpop = await self.client.json().arrpop(self.key, self.json_path, index)
+            self.pop(index)
+        arrpop = await self.redis.json().arrpop(self.key, self.json_path, index)
 
         # Handle empty list case
         if arrpop is None or (isinstance(arrpop, list) and len(arrpop) == 0):
@@ -109,20 +113,22 @@ class RedisList(list, GenericRedisType[T]):
     async def ainsert(self, index, __object):
         self.insert(index, __object)
 
-        # Serialize the object for Redis storage using a type adapter
-        serialized_object = self._adapter.dump_python(
-            [__object], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
-        )
-        return await self.client.json().arrinsert(
-            self.key, self.json_path, index, *serialized_object
-        )
+        if not self.pipeline:
+            # Serialize the object for Redis storage using a type adapter
+            serialized_object = self._adapter.dump_python(
+                [__object], mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            )
+            await self.redis.json().arrinsert(
+                self.key, self.json_path, index, *serialized_object
+            )
 
     async def aclear(self):
         # Clear local list
-        super().clear()
+        self.clear()
 
         # Clear Redis list
-        return await self.client.json().set(self.key, self.json_path, [])
+        if not self.pipeline:
+            await self.client.json().set(self.key, self.json_path, [])
 
     def clone(self):
         return [v.clone() if isinstance(v, RedisType) else v for v in self]
