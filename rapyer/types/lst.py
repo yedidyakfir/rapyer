@@ -5,8 +5,6 @@ from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, SerializationInfo
 
 from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
-from rapyer.types.utils import noop
-
 
 T = TypeVar("T")
 
