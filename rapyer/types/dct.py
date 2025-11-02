@@ -102,11 +102,24 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         return new_dct
 
     def update(self, m=None, /, **kwargs):
+        if self.pipeline:
+            m_redis_val = self._adapter.dump_python(
+                m, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            )
+            m_redis_val = m_redis_val or {}
+            kwargs_redis_val = self._adapter.dump_python(
+                kwargs, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+            )
+            update_keys_in_pipeline(
+                self.pipeline, self.key, m_redis_val | kwargs_redis_val
+            )
         m_new_val = self.validate_dict(m) if m else {}
         kwargs_new_val = self.validate_dict(kwargs)
         return super().update(m_new_val, **kwargs_new_val)
 
     def __setitem__(self, key, value):
+        if self.pipeline:
+            self.pipeline.json().set(self.key, self.json_field_path(key), value)
         new_val = self.validate_dict({key: value})[key]
         super().__setitem__(key, new_val)
 

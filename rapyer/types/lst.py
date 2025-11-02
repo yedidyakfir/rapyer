@@ -29,24 +29,34 @@ class RedisList(list, GenericRedisType[T]):
         return new_val
 
     def __setitem__(self, key, value):
+        if self.pipeline:
+            self.pipeline.json().set(self.key, self.json_field_path(key), value)
         new_val = self.create_new_value(key, value)
-        super().__setitem__(key, new_val)
+        return super().__setitem__(key, new_val)
 
     def __iadd__(self, other):
         self.extend(other)
+        if self.pipeline:
+            self.pipeline.json().arrappend(self.key, self.json_path, *other)
         return self
 
     def append(self, __object):
+        if self.pipeline:
+            self.pipeline.json().arrappend(self.key, self.json_path, __object)
         key = len(self)
         new_val = self.create_new_value(key, __object)
         return super().append(new_val)
 
     def extend(self, new_lst):
+        if self.pipeline:
+            self.pipeline.json().arrappend(self.key, self.json_path, *new_lst)
         new_keys = range(len(self), len(self) + len(new_lst))
         new_vals = self.create_new_values(list(new_keys), new_lst)
         return super().extend(new_vals)
 
     def insert(self, index, __object):
+        if self.pipeline:
+            self.pipeline.json().arrinsert(self.key, self.json_path, index, __object)
         new_val = self.create_new_value(index, __object)
         return super().insert(index, new_val)
 
