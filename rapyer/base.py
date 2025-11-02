@@ -204,7 +204,7 @@ class AtomicRedisModel(BaseModel):
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.get(self.key)
-                self.model_copy(update=redis_model.model_dump())
+                self.__dict__.update(redis_model.model_dump(exclude_unset=True))
             except (TypeError, IndexError):
                 if ignore_if_deleted:
                     redis_model = self
