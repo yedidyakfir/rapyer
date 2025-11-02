@@ -1,101 +1,115 @@
 # Rapyer Roadmap
 
-This document outlines the planned features and improvements for Rapyer, the Redis Atomic Pydantic Engine Reactor.
+This is the current roadmap for the rayper package, note that this is just a basic POC.
+You are welcome to add suggestions and contribute to our development.
 
-## Phase 1: Complete Pipeline Redis Synchronization
+## Enhanced Pipeline Support for All Types
 
-### 🎯 Current Priority: Pipeline Actions for All Types
+**Current**: Only list and dict operations sync with Redis in pipeline mode
+**Goal**: All Redis types support automatic pipeline synchronization
 
-**Problem**: Currently, only list and dict operations (like `.update()` and `.append()`) automatically sync with Redis when used in pipeline mode. Other Redis types like integers and strings require manual synchronization.
+### Tasks
+- [ ] **RedisInt**: Support `+=`, `-=`, `*=`, `/=` operators in pipeline
+- [ ] **RedisStr**: Support `+=` (concatenation) in pipeline  
+- [ ] **RedisBytes**: Support byte operations in a pipeline
+- [ ] **RedisDateTime**: Support datetime modifications in pipeline
+- [ ] **Testing**: Comprehensive tests for all pipeline operations
 
-**Goal**: Extend pipeline synchronization to all Redis types for complete atomic operations support.
+### Example Usage
+```python
+async with model.pipeline() as p:
+    p.score += 10        # RedisInt - syncs to Redis
+    p.name += " (Pro)"   # RedisStr - syncs to Redis  
+    p.tags.append("new") # RedisList - already works
+    # All changes applied atomically
+```
 
-#### Tasks:
-- [ ] **RedisInt Pipeline Support**
-  - Implement pipeline sync for `+=`, `-=`, `*=`, `/=` operators
-  - Add pipeline support for `increase()` method
-  - Ensure atomic increment/decrement operations in pipeline mode
+**Benefits**: Complete atomic operation coverage, consistent developer experience across all types
 
-- [ ] **RedisStr Pipeline Support**
-  - Implement pipeline sync for `+=` (string concatenation)
-  - Add pipeline support for string modification operations
-  - Ensure atomic string updates in pipeline mode
+## Bulk Operations Support
 
-- [ ] **RedisBytes Pipeline Support**
-  - Implement pipeline sync for byte operations
-  - Add atomic byte manipulation in pipeline mode
+**Goal**: Enable efficient bulk insert, update, and delete operations for multiple models
 
-- [ ] **RedisDateTime Pipeline Support**
-  - Implement pipeline sync for datetime modifications
-  - Ensure atomic datetime updates
+### Tasks
+- [ ] **Bulk Insert**: Create multiple models in a single Redis transaction
+- [ ] **Bulk Update**: Update multiple models efficiently  
+- [ ] **Bulk Delete**: Delete multiple models in one operation
+- [ ] **Batch Loading**: Load multiple models by keys efficiently
 
-- [ ] **Testing & Validation**
-  - Add comprehensive tests for all new pipeline operations
-  - Verify atomic behavior under concurrent access
-  - Performance benchmarking for pipeline operations
+### Example Usage
+```python
+# Bulk insert
+users = [User(name=f"user{i}") for i in range(100)]
+await User.bulk_insert(users)
 
-**Expected Benefits**:
-- Complete atomic operation coverage for all Redis types
-- Consistent developer experience across all data types
-- Enhanced race condition prevention
-- Better pipeline performance for mixed-type operations
+# Bulk delete
+await User.bulk_delete(["user:1", "user:2", "user:3"])
 
-## Phase 2: Enhanced Type System
+# Batch load
+users = await User.bulk_get(["user:1", "user:2", "user:3"])
+```
 
-### Advanced Type Support
-- [ ] **Set Operations**: Implement RedisSet with atomic add/remove operations
-- [ ] **Ordered Sets**: Redis sorted set integration with ranking operations
-- [ ] **Geospatial Types**: Location-based data with radius queries
-- [ ] **Stream Types**: Redis stream integration for event sourcing
+**Benefits**: Better performance for large datasets, reduced Redis round trips
 
-### Type Optimization
-- [ ] **Memory Optimization**: Reduce memory footprint for large collections
-- [ ] **Serialization Performance**: Optimize JSON serialization for complex types
-- [ ] **Custom Type Support**: Framework for user-defined Redis types
+## Complex Selection and Querying
 
-## Phase 3: Advanced Features
+**Goal**: Enable complex field-based queries using Python comparison operators
 
-### Enhanced Concurrency
-- [ ] **Distributed Locks**: Cross-process locking mechanisms
-- [ ] **Transaction Rollback**: Automatic rollback on pipeline failures
-- [ ] **Optimistic Locking**: Version-based conflict detection
+### Tasks
+- [ ] **Field Comparisons**: Support `>`, `<`, `>=`, `<=`, `==`, `!=` operators on model fields
+- [ ] **Logical Operators**: Support `&` (and), `|` (or), `~` (not) for complex queries
+- [ ] **Query Builder**: Build Redis search queries from Python expressions
+- [ ] **Index Management**: Automatic field indexing for query performance
 
-### Developer Experience
-- [ ] **CLI Tools**: Command-line utilities for Redis model inspection
-- [ ] **Debug Mode**: Enhanced debugging for Redis operations
-- [ ] **Migration Tools**: Schema migration support for model changes
+### Example Usage
+```python
+# Simple field comparisons
+adults = await User.find(User.age > 18).to_list()
+active_users = await User.find(User.status == "active").to_list()
 
-### Performance & Monitoring
-- [ ] **Metrics Collection**: Built-in performance monitoring
-- [ ] **Connection Pooling**: Advanced Redis connection management
-- [ ] **Async Batch Operations**: Efficient bulk operations
+# Complex queries with logical operators
+target_users = await User.find(
+    (User.age > 25) & (User.score >= 100) & (User.active == True)
+).to_list()
 
-## Phase 4: Ecosystem Integration
+# Single result queries
+admin = await User.find_one(User.role == "admin")
+```
 
-### Framework Integration
-- [ ] **FastAPI Plugin**: Seamless FastAPI integration
-- [ ] **Django Integration**: Django ORM-style interface
-- [ ] **SQLAlchemy Compatibility**: Migration path from SQL databases
+**Benefits**: Pythonic query syntax, improved developer experience, efficient Redis search
 
-### Deployment & Operations
-- [ ] **Docker Support**: Official Docker images and examples
-- [ ] **Kubernetes Operators**: Cloud-native deployment tools
-- [ ] **Health Checks**: Built-in health monitoring endpoints
+## Conditional Pipeline Actions
 
-## Contributing
+**Goal**: Enable complex conditional logic within pipeline operations
 
-We welcome contributions to any of these roadmap items! Please see our contributing guidelines and feel free to:
+### Tasks
+- [ ] **Conditional Execution**: Support `if_true()` and `else()` methods on field comparisons
+- [ ] **Loop Operations**: Support iteration over collections in pipelines
+- [ ] **Nested Conditions**: Allow chaining of conditional statements
+- [ ] **Pipeline Context**: Maintain pipeline context through conditional blocks
 
-- Pick up any unassigned task
-- Propose new features or improvements
-- Submit bug reports or performance issues
-- Improve documentation and examples
+### Example Usage
+```python
+async with user.pipeline() as p:
+    # Simple conditional
+    (p.age > 17).if_true(
+        lambda: p.status.set("adult")
+    ).else(
+        lambda: p.status.set("minor")
+    )
+    
+    # Complex conditional with multiple actions
+    (p.score >= 100).if_true([
+        lambda: p.level.set("premium"),
+        lambda: p.badges.append("high_scorer"),
+        lambda: p.notifications.update({"achievement": "unlocked"})
+    ])
+    
+    # Loop operations
+    for item in p.inventory:
+        (item.expired).if_true(
+            lambda: p.inventory.remove(item)
+        )
+```
 
-## Timeline
-
-- **Phase 1**: Q1 2025 - Complete pipeline synchronization
-- **Phase 2**: Q2 2025 - Enhanced type system
-- **Phase 3**: Q3-Q4 2025 - Advanced features
-- **Phase 4**: 2026 - Ecosystem integration
-
-*This roadmap is subject to change based on community feedback and project priorities.*
+**Benefits**: Advanced pipeline logic, reduced round trips, atomic conditional operations
