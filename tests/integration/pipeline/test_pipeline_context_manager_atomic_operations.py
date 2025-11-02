@@ -7,6 +7,13 @@ from tests.models.collection_types import PipelineTestModel, ComprehensiveTestMo
 async def test_pipeline_context_manager__dict_update_operations__check_atomic_batch_sanity():
     # Arrange
     original_metadata = {"original": "value"}
+    expected_metadata = {
+        "original": "value",
+        "key1": "value1",
+        "key2": "value2",
+        "key3": "value3",
+        "key4": "value4",
+    }
     model = PipelineTestModel(metadata=original_metadata)
     await model.save()
 
@@ -21,13 +28,6 @@ async def test_pipeline_context_manager__dict_update_operations__check_atomic_ba
 
     # Assert - All dict operations should be applied atomically
     final_model = await PipelineTestModel.get(model.key)
-    expected_metadata = {
-        "original": "value",
-        "key1": "value1",
-        "key2": "value2",
-        "key3": "value3",
-        "key4": "value4",
-    }
     assert final_model.metadata == expected_metadata
 
 
@@ -184,11 +184,11 @@ async def test_pipeline_list_aextend__check_atomicity_sanity():
     async with model.pipeline() as redis_model:
         await redis_model.tags.aextend(["tag1", "tag2"])
 
-        # Check if change is not applied yet (atomicity test)
+        # Check if the change is not applied yet (atomicity test)
         loaded_model = await ComprehensiveTestModel.get(model.key)
         assert loaded_model.tags == ["initial"]
 
-    # Assert - Check if change was applied after a pipeline
+    # Assert - Check if a change was applied after a pipeline
     final_model = await ComprehensiveTestModel.get(model.key)
     assert final_model.tags == ["initial", "tag1", "tag2"]
 
