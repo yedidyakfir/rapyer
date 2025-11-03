@@ -1,12 +1,23 @@
 import asyncio
+import base64
 import contextlib
 import functools
+import pickle
 import uuid
-from typing import Self, ClassVar, Any, get_origin, AsyncGenerator
+from typing import Self, ClassVar, Any, AsyncGenerator
 
-from pydantic import BaseModel, PrivateAttr, ConfigDict, TypeAdapter, model_validator
+from pydantic import (
+    BaseModel,
+    PrivateAttr,
+    ConfigDict,
+    TypeAdapter,
+    model_validator,
+    field_serializer,
+    field_validator,
+)
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
+from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
 
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
@@ -23,6 +34,30 @@ from rapyer.utils import (
     convert_field_factory_type,
     get_all_annotations,
 )
+
+
+def make_pickle_field_serializer(field: str):
+    @field_serializer(field, when_used="json-unless-none")
+    def pickle_field_serializer(v, info: FieldSerializationInfo):
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME, False)
+        if should_serialize_redis:
+            return base64.b64encode(pickle.dumps(v)).decode("utf-8")
+        return v
+
+    pickle_field_serializer.__name__ = f"__serialize_{field}"
+
+    @field_validator(field, mode="before")
+    def pickle_field_validator(v, info: ValidationInfo):
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME, False)
+        if should_serialize_redis:
+            return pickle.loads(base64.b64decode(v))
+        return v
+
+    pickle_field_validator.__name__ = f"__deserialize_{field}"
+
+    return pickle_field_serializer, pickle_field_validator
 
 
 class AtomicRedisModel(BaseModel):
@@ -92,6 +127,9 @@ class AtomicRedisModel(BaseModel):
 
         for attr_name, attr_type in cls.__annotations__.items():
             if original_annotations[attr_name] == attr_type:
+                serializer, validator = make_pickle_field_serializer(attr_name)
+                setattr(cls, serializer.__name__, serializer)
+                setattr(cls, validator.__name__, validator)
                 continue
             value = getattr(cls, attr_name, None)
             if value is None:
@@ -156,7 +194,7 @@ class AtomicRedisModel(BaseModel):
             raise KeyNotFound(f"{key} is missing in redis")
         model_dump = model_dump[0]
 
-        instance = cls(**model_dump)
+        instance = cls.model_validate(model_dump, context={REDIS_DUMP_FLAG_NAME: True})
         # Extract pk from the key format: "ClassName:pk"
         pk = key.split(":", 1)[1]
         instance._pk = pk
