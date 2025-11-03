@@ -113,3 +113,28 @@ async with user.pipeline() as p:
 ```
 
 **Benefits**: Advanced pipeline logic, reduced round trips, atomic conditional operations
+
+## Field Access and Extraction Support
+
+**Goal**: Enable extraction of specific fields from nested structures using dot notation
+
+### Tasks
+- [ ] **Nested Field Access**: Support `model.field_lst[0].field_int.get(redis_id)` syntax
+- [ ] **Dynamic Field Extraction**: Allow runtime field path resolution
+- [ ] **Type Safety**: Maintain type hints through nested access
+- [ ] **Performance Optimization**: Efficient Redis operations for nested field access
+
+### Example Usage
+```python
+# Extract specific nested field
+value = await model.field_lst[0].field_int.get(redis_id)
+
+# Multiple nested field extractions
+values = await model.extract_fields([
+    "field_lst[0].field_int",
+    "field_lst[1].field_str", 
+    "nested_dict.sub_field"
+], redis_id)
+```
+
+**Benefits**: Simplified nested data access, improved developer experience, efficient field-specific operations
