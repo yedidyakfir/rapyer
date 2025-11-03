@@ -164,6 +164,7 @@ Traditional Redis operations can lead to data inconsistency in concurrent enviro
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+Thanks for @\[Mizaro\] this would not have been possible without you. 
 
 ## License
 
