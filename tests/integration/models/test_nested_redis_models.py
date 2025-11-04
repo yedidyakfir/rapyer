@@ -153,7 +153,9 @@ async def test_nested_model_persistence_across_instances_sanity():
     # Create new instance with same pk
     outer2 = OuterModel()
     outer2.pk = outer1.pk
-    outer2.middle_model.inner_model.lst = await outer2.middle_model.inner_model.lst.load()
+    outer2.middle_model.inner_model.lst = (
+        await outer2.middle_model.inner_model.lst.load()
+    )
     outer2.middle_model.tags = await outer2.middle_model.tags.load()
 
     # Assert
@@ -409,7 +411,9 @@ async def test_nested_model_with_redis_inner_model_basic_operations_sanity():
     outer.container.inner_redis.metadata.clear()
     outer.outer_data.clear()
     outer.container.inner_redis.tags = await outer.container.inner_redis.tags.load()
-    outer.container.inner_redis.metadata = await outer.container.inner_redis.metadata.load()
+    outer.container.inner_redis.metadata = (
+        await outer.container.inner_redis.metadata.load()
+    )
     outer.outer_data = await outer.outer_data.load()
 
     assert outer.container.inner_redis.tags == ["redis_tag"]
@@ -450,7 +454,9 @@ async def test_nested_model_with_redis_inner_model_persistence_sanity():
     outer2 = OuterModelWithRedisNested()
     outer2.pk = outer1.pk
     outer2.container.inner_redis.tags = await outer2.container.inner_redis.tags.load()
-    outer2.container.inner_redis.metadata = await outer2.container.inner_redis.metadata.load()
+    outer2.container.inner_redis.metadata = (
+        await outer2.container.inner_redis.metadata.load()
+    )
     outer2.outer_data = await outer2.outer_data.load()
 
     # Assert
@@ -593,18 +599,22 @@ async def test_nested_model_with_redis_inner_model_with_initial_data_sanity():
 async def test_nested_model_create_inner_save_load_sanity():
     # Arrange
     outer = OuterModel()
-    
+
     # Act
     new_inner = InnerMostModel(lst=["item1", "item2"], counter=42)
-    new_middle = MiddleModel(inner_model=new_inner, tags=["tag1", "tag2"], metadata={"env": "test", "version": "1.0"})
+    new_middle = MiddleModel(
+        inner_model=new_inner,
+        tags=["tag1", "tag2"],
+        metadata={"env": "test", "version": "1.0"},
+    )
     outer.middle_model = new_middle
     outer.user_data = {"user1": 100, "user2": 200}
     outer.items = [10, 20, 30]
     await outer.save()
-    
+
     # Assert
     loaded_outer = await OuterModel.get(outer.key)
-    
+
     assert loaded_outer.middle_model.inner_model.lst == ["item1", "item2"]
     assert loaded_outer.middle_model.inner_model.counter == 42
     assert loaded_outer.middle_model.tags == ["tag1", "tag2"]
