@@ -22,18 +22,15 @@ from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
-from rapyer.types.base import (
-    RedisType,
-    RedisTypeTransformer,
-    REDIS_DUMP_FLAG_NAME,
-)
-from rapyer.utils import (
-    acquire_lock,
-    replace_to_redis_types_in_annotation,
+from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
+from rapyer.types.convert import RedisConverter
+from rapyer.utils.annotation import replace_to_redis_types_in_annotation
+from rapyer.utils.fields import (
+    get_all_annotations,
     find_first_type_in_annotation,
     convert_field_factory_type,
-    get_all_annotations,
 )
+from rapyer.utils.redis import acquire_lock
 
 
 def make_pickle_field_serializer(field: str):
@@ -118,7 +115,7 @@ class AtomicRedisModel(BaseModel):
         )
         new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type, RedisTypeTransformer(f".{field_name}", cls.Meta)
+                field_type, RedisConverter(cls.Meta.redis_type, f".{field_name}")
             )
             for field_name, field_type in original_annotations.items()
         }
