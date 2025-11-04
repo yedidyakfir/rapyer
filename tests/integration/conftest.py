@@ -67,6 +67,9 @@ from tests.models.specialized import UserModel
 # Pickle types
 from tests.models.pickle_types import ModelWithUnserializableFields
 
+# Inheritance types
+from tests.models.inheritance_types import BaseUserModel, AdminUserModel
+
 
 @pytest_asyncio.fixture
 async def redis_client():
@@ -129,6 +132,9 @@ async def real_redis_client(redis_client):
         UserModel,
         # Pickle types
         ModelWithUnserializableFields,
+        # Inheritance types
+        BaseUserModel,
+        AdminUserModel,
         # Complex types
         OuterModel,
         InnerRedisModel,
