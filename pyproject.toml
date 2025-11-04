@@ -13,17 +13,50 @@ homepage = "https://github.com/YedidyaHKfir/rapyer"
 repository = "https://github.com/YedidyaHKfir/rapyer"
 documentation = "https://github.com/YedidyaHKfir/rapyer"
 packages = [{include = "rapyer"}]
-keywords = ["redis", "pydantic", "orm", "database", "async", "nosql", "cache", "key-value", "data-modeling", "python", "backend", "storage", "serialization", "validation"]
+keywords = [
+    "redis",
+    "redis-json",
+    "pydantic",
+    "pydantic-v2",
+    "orm",
+    "database",
+    "async",
+    "nosql",
+    "cache",
+    "key-value",
+    "data-modeling",
+    "python",
+    "backend",
+    "storage",
+    "serialization",
+    "validation"
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2",
+    "Framework :: AsyncIO",
     "Topic :: Database",
+    "Topic :: Database :: Database Engines/Servers",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+    "Operating System :: OS Independent",
 ]
+
+[project.urls]
+Homepage = "https://yedidyakfir.github.io/rapyer/"
+Documentation = "https://yedidyakfir.github.io/rapyer/"
+Repository = "https://github.com/yedidyakfir/rapyer"
+"Source Code" = "https://github.com/yedidyakfir/rapyer"
+"Bug Tracker" = "https://github.com/yedidyakfir/rapyer/issues"
+"Changelog" = "https://github.com/yedidyakfir/rapyer/releases"
+
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
