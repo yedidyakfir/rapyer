@@ -112,6 +112,7 @@ class AtomicRedisModel(BaseModel):
         return f"{self.key_initials}:{self.pk}"
 
     def __init_subclass__(cls, **kwargs):
+        # Redefine annotations to use redis types
         original_annotations = get_all_annotations(
             cls, exclude_classes=[AtomicRedisModel]
         )
@@ -124,6 +125,7 @@ class AtomicRedisModel(BaseModel):
         cls.__annotations__.update(new_annotations)
         super().__init_subclass__(**kwargs)
 
+        # Set new default values if needed
         for attr_name, attr_type in cls.__annotations__.items():
             if original_annotations[attr_name] == attr_type:
                 serializer, validator = make_pickle_field_serializer(attr_name)
