@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2025-11-04
+
+### ✨ Added
+
+- **Non-Serializable Type Support**: Added support for non-serializable types (like `type` and other pickleable objects)
+- **Pickle Storage**: Non-serializable types are now stored in Redis as pickle data for proper serialization
+- **Optional Field Support**: Added support for optional fields in Redis types
+
 ## [1.0.0] - 2025-11-02
 
 ### 🚀 Major Changes - Native BaseModel Integration
