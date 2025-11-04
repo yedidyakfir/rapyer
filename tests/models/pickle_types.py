@@ -1,11 +1,12 @@
-from typing import Type, Any
-from pydantic import ConfigDict, Field
+from typing import Type, Any, Optional
+
+from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
 
 
 class ModelWithUnserializableFields(AtomicRedisModel):
-    model_type: Type[str] = Field(default=str)
-    callable_field: type = Field(default=type)
-    python_type: Type[Any] = Field(default=Any)
-    value: int = Field(default=42)
+    model_type: Optional[Type[str]] = Field(default=str)
+    callable_field: Optional[type] = Field(default=type)
+    python_type: Optional[Type[Any]] = Field(default=Any)
+    value: Optional[int] = Field(default=42)
