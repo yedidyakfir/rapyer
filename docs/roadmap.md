@@ -138,3 +138,33 @@ values = await model.extract_fields([
 ```
 
 **Benefits**: Simplified nested data access, improved developer experience, efficient field-specific operations
+
+## Selective Field Updates in BaseModel
+
+**Goal**: Enable direct field updates in Redis without loading the entire model, using an `aupdate()` method.
+This way fields that are not redis-supported will be able to perform atomic actions like we can do on list and dict items (with aset_item)
+
+### Tasks
+- [ ] **aupdate() Method**: Implement `model.aupdate(field1="value", field2=123)` for selective field updates
+- [ ] **Type Safety**: Maintain field type validation during updates
+- [ ] **Redis Optimization**: Use Redis JSON path operations for efficient field-only updates
+- [ ] **Class Field Access**: Support `model.aupdate(ModelClass.field1="value")` syntax for better IDE support
+- [ ] **Atomic Updates**: Ensure all field updates in single aupdate call are atomic
+- [ ] **Nested Field Updates**: Support updating nested model fields efficiently
+
+### Example Usage
+```python
+# Basic field updates
+await user.aupdate(name="John Doe", age=25)
+
+# Using class field references for better IDE support
+await user.aupdate(User.name="John Doe", User.age=25)
+
+# Mixed syntax
+await user.aupdate(name="John Doe", User.age=25)
+
+# Nested field updates
+await user.aupdate(profile__address__city="New York")
+```
+
+**Benefits**: Reduced Redis bandwidth, improved performance for partial updates, better developer experience for field-specific operations
