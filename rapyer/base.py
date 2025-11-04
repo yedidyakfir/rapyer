@@ -46,6 +46,8 @@ def make_pickle_field_serializer(field: str):
 
     @field_validator(field, mode="before")
     def pickle_field_validator(v, info: ValidationInfo):
+        if v is None:
+            return v
         ctx = info.context or {}
         should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME, False)
         if should_serialize_redis:
