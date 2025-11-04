@@ -64,5 +64,8 @@ def replace_to_redis_types_in_annotation(
             origin = type_converter.covert_generic_type(origin, new_args)
         if origin is UnionType:
             origin = Union[new_args]
+        else:
+            # If we don't support the origin, just use the original annotation
+            origin = annotation
         return origin
     return annotation
