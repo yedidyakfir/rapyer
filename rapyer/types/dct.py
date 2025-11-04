@@ -3,7 +3,7 @@ from typing import TypeVar, Generic, get_args, Any
 from pydantic_core import core_schema
 
 from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
-from rapyer.types.utils import update_keys_in_pipeline
+from rapyer.utils.redis import update_keys_in_pipeline
 
 T = TypeVar("T")
 

@@ -4,13 +4,11 @@ import pickle
 from abc import ABC
 from typing import get_args, Any, TypeVar, Generic, Self
 
-from pydantic import GetCoreSchemaHandler, TypeAdapter, BaseModel, PrivateAttr
+from pydantic import GetCoreSchemaHandler, TypeAdapter
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, CoreSchema, SerializationInfo
 
-from rapyer.config import RedisConfig
 from rapyer.context import _context_var
-from rapyer.utils import safe_issubclass
 
 REDIS_DUMP_FLAG_NAME = "__rapyer_dumped__"
 
@@ -162,65 +160,3 @@ class GenericRedisType(RedisType, Generic[T], ABC):
             return core_schema.no_info_after_validator_function(
                 cls, handler(cls.original_type)
             )
-
-
-class RedisTypeTransformer:
-    def __init__(self, field_name: str, redis_config: RedisConfig):
-        self.field_name = field_name
-        self.redis_config = redis_config
-
-    def __getitem__(self, item: type):
-        if isinstance(item, tuple):
-            origin, args = item
-        else:
-            origin, args = item, None
-        if origin is Any:
-            return origin
-
-        from rapyer.base import AtomicRedisModel
-
-        if safe_issubclass(origin, AtomicRedisModel):
-            return type(
-                origin.__name__,
-                (origin,),
-                dict(_field_name=PrivateAttr(default=self.field_name)),
-            )
-        if safe_issubclass(origin, BaseModel):
-            origin: type[BaseModel]
-            # TODO - check if switch order inheritance change something
-            return type(
-                f"Redis{origin.__name__}",
-                (AtomicRedisModel, origin),
-                dict(_field_name=PrivateAttr(default=self.field_name)),
-            )
-
-        if safe_issubclass(origin, RedisType):
-            redis_type = origin
-            original_type = origin.original_type
-        else:
-            redis_type = self.redis_config.redis_type[origin]
-            original_type = origin
-            if args:
-                original_type = original_type[args]
-
-        new_type = type(
-            redis_type.__name__,
-            (redis_type,),
-            dict(field_name=self.field_name, original_type=original_type),
-        )
-
-        if issubclass(redis_type, RedisType):
-            adapter_type = new_type
-            try:
-                adapter_type = adapter_type[args]
-            except TypeError:
-                pass
-            new_type._adapter = TypeAdapter(adapter_type)
-        return new_type
-
-    def __contains__(self, item: type):
-        if safe_issubclass(item, BaseModel):
-            return True
-        if safe_issubclass(item, RedisType):
-            return True
-        return item in self.redis_config.redis_type
