@@ -168,3 +168,32 @@ await user.aupdate(profile__address__city="New York")
 ```
 
 **Benefits**: Reduced Redis bandwidth, improved performance for partial updates, better developer experience for field-specific operations
+
+## TTL Postponement on Model Usage
+
+**Goal**: Allow postponing TTL expiration every time a model is accessed or used, preventing deletion while the model remains active
+
+### Tasks
+- [ ] **Usage-Based TTL**: Update TTL automatically when model is accessed or modified
+- [ ] **Configurable Behavior**: Option to enable/disable TTL postponement per model class
+- [ ] **TTL Refresh Strategy**: Define when and how TTL gets refreshed (read, write, or both)
+- [ ] **Performance Optimization**: Efficient TTL updates without impacting model operations
+- [ ] **Configuration Options**: Allow setting TTL refresh interval and grace periods
+
+### Example Usage
+```python
+class User(AtomicRedisModel):
+    name: str
+    email: str
+    
+    class Config:
+        ttl_postpone_on_access = True  # Refresh TTL on any access
+        ttl_postpone_on_write = True   # Refresh TTL on writes only
+
+# TTL gets postponed automatically
+user = await User.get("user:123")  # TTL refreshed to another 3600 seconds
+user.name = "Updated Name"          # TTL refreshed again
+await user.save()
+```
+
+**Benefits**: Prevents premature deletion of active models, better cache behavior for frequently accessed data, configurable per-model basis
