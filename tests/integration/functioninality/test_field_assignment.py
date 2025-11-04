@@ -122,7 +122,7 @@ async def test_constructor_list_field_converted_to_redis_type_sanity(
 ):
     # Arrange & Act (done in fixture)
 
-    # Assert - field initialized in constructor should be Redis type
+    # Assert - field initialized in the constructor should be Redis type
     assert isinstance(user_model_with_tags.tags, RedisList)
     assert list(user_model_with_tags.tags) == ["initial", "tags"]
 
