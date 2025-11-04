@@ -55,10 +55,7 @@ class RedisConverter(TypeConverter):
         return new_type
 
     def covert_generic_type(
-        self,
-        type_to_covert: type,
-        generic_values: list[type],
-        original_genric: tuple[type],
+        self, type_to_covert: type, generic_values: tuple[type]
     ) -> type:
         from rapyer.base import AtomicRedisModel
 
@@ -82,15 +79,15 @@ class RedisConverter(TypeConverter):
         else:
             redis_type = self.supported_types[type_to_covert]
             original_type = type_to_covert
-            original_type = original_type[original_genric]
+            original_type = original_type[generic_values]
 
         new_type = type(
             redis_type.__name__,
             (redis_type,),
             dict(field_name=self.field_name, original_type=original_type),
         )
-        adapter_type = new_type[*generic_values]
+        adapter_type = new_type[generic_values]
 
         if issubclass(redis_type, RedisType):
             new_type._adapter = TypeAdapter(adapter_type)
-        return new_type[*generic_values]
+        return new_type[generic_values]

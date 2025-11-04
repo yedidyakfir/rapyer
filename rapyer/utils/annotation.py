@@ -15,15 +15,14 @@ class TypeConverter(ABC):
 
     @abc.abstractmethod
     def covert_generic_type(
-        self,
-        type_to_covert: type,
-        generic_values: list[type],
-        original_genric: tuple[type],
+        self, type_to_covert: type, generic_values: tuple[type]
     ) -> type:
         pass
 
 
-def replace_to_redis_types_in_annotation(annotation: Any, type_converter: TypeConverter) -> Any:
+def replace_to_redis_types_in_annotation(
+    annotation: Any, type_converter: TypeConverter
+) -> Any:
     """
     Recursively traverse a type annotation and replace types according to the mapping.
     Handles Union, Optional, Annotated, and other generic types.
@@ -50,17 +49,20 @@ def replace_to_redis_types_in_annotation(annotation: Any, type_converter: TypeCo
         new_type = replace_to_redis_types_in_annotation(actual_type, type_converter)
 
         # Reconstruct Annotated with new type and original metadata
-        return Annotated[new_type, *metadata]
+        annotated_args = (new_type,) + metadata
+        return Annotated[annotated_args]
 
     # Handle Union, Optional, and other generic types
     if args:
         # Recursively replace types in all arguments
-        new_args = [replace_to_redis_types_in_annotation(arg, type_converter) for arg in args]
+        new_args = tuple(
+            [replace_to_redis_types_in_annotation(arg, type_converter) for arg in args]
+        )
 
         # Reconstruct the generic type with new arguments
         if type_converter.is_type_support(origin):
-            origin = type_converter.covert_generic_type(origin, new_args, args)
+            origin = type_converter.covert_generic_type(origin, new_args)
         if origin is UnionType:
-            origin = Union[*new_args]
+            origin = Union[new_args]
         return origin
     return annotation
