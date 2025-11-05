@@ -171,8 +171,8 @@ class AtomicRedisModel(BaseModel):
         # Update the redis model list for initialization
         REDIS_MODELS.append(cls)
 
-    def is_inner_model(self):
-        return self.field_name
+    def is_inner_model(self) -> bool:
+        return bool(self.field_name)
 
     async def save(self) -> Self:
         model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
@@ -227,6 +227,8 @@ class AtomicRedisModel(BaseModel):
         return await client.delete(key) == 1
 
     async def delete(self):
+        if not self.is_inner_model():
+            raise RuntimeError("Can only delete from inner model")
         client = _context_var.get() or self.Meta.redis
         return await client.delete(self.key)
 
