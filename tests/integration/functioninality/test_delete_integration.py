@@ -21,7 +21,7 @@ async def test_delete_integration__save_verify_exists_delete_verify_removed_sani
     assert model_data[0]["tags"] == ["test_tag_1", "test_tag_2"]
 
     # Act
-    result = await UserModel.delete_by_key(user.key)
+    result = await user.delete()
 
     # Assert
     assert result is True
@@ -36,7 +36,7 @@ async def test_delete_integration__delete_unsaved_model_returns_false_edge_case(
     # Note: not saving the model
 
     # Act
-    result = await UserModel.delete_by_key(user.key)
+    result = await user.delete()
 
     # Assert
     assert result is False
