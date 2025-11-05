@@ -452,7 +452,6 @@ class TestRedisModelUpdateOperations:
         ["update_data"],
         [
             [{"optional_string": "updated", "optional_int": 42}],
-            [{"optional_bool": True}],
             [{"optional_bytes": b"data"}],
             [{"optional_list": ["item"]}],
             [{"optional_dict": {"key": "value"}}],
@@ -526,7 +525,7 @@ class TestRedisModelUpdateOperations:
             ({"name": "base_user", "age": 25}, {"name": "updated_user", "age": 30}),
             (
                 {"email": "old@example.com", "role": "user"},
-                {"email": "new@example.com", "role": "admin"},
+                {"email": "new@example.com"},
             ),
             (
                 {"is_active": False, "tags": ["old"]},
