@@ -113,7 +113,7 @@ async def test_base_redis_model__try_delete_existing_key__check_returns_true_san
     await user.save()
 
     # Act
-    result = await UserModel.try_delete(user.key)
+    result = await UserModel.delete_by_key(user.key)
 
     # Assert
     assert result is True
@@ -127,7 +127,7 @@ async def test_base_redis_model__try_delete_nonexistent_key__check_returns_false
     mock_key = "UserModel:nonexistent_key"
 
     # Act
-    result = await UserModel.try_delete(mock_key)
+    result = await UserModel.delete_by_key(mock_key)
 
     # Assert
     assert result is False

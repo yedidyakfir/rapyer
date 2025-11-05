@@ -1,8 +1,8 @@
 import inspect
-from typing import get_origin, ClassVar, get_args, Any, Callable
+from typing import get_origin, get_args, Any, Callable
 
-from pydantic import TypeAdapter
-from pydantic.fields import ModelPrivateAttr
+from pydantic import TypeAdapter, BaseModel
+from pydantic.fields import FieldInfo
 
 
 def find_first_type_in_annotation(annotation: Any) -> type | None:
@@ -25,72 +25,52 @@ def convert_field_factory_type(original_factory: Callable, adapter: TypeAdapter)
 
 
 def _collect_annotations_recursive(
-    current_cls, exclude_classes, all_annotations, visited
-):
+    current_cls: type[BaseModel],
+    base_class: type[BaseModel],
+    visited: set[type[BaseModel]],
+) -> dict[str, FieldInfo]:
     """
     Helper functions to recursively collect annotations.
 
     Args:
         current_cls: Current class being processed
-        exclude_classes: Set of classes to exclude
-        all_annotations: Dictionary to store collected annotations
+        base_class: The base class, all class we can ignore all fields from a class who inherit from this class
         visited: Set of already visited classes
     """
+    all_annotations = {}
     # Avoid infinite loops
     if current_cls in visited:
-        return
+        return {}
     visited.add(current_cls)
-
-    # Stop if this is an excluded class
-    if current_cls in exclude_classes:
-        return
 
     # First, recursively process parent classes
     for base in current_cls.__bases__:
         # Skip object class
         if base is object:
             continue
-        _collect_annotations_recursive(base, exclude_classes, all_annotations, visited)
+        if not issubclass(base, BaseModel):
+            continue
+        # If this class already inherits from the base class, the fields are already collected
+        if issubclass(base, base_class):
+            continue
+        new_annotation = _collect_annotations_recursive(base, base_class, visited)
+        all_annotations.update(new_annotation)
 
-    # Then add current class annotations (overriding parents)
-    if hasattr(current_cls, "__annotations__"):
-        for name, annotation in current_cls.__annotations__.items():
-            # Skip private fields (starting with _)
-            if name.startswith("_"):
-                continue
-
-            # Skip ClassVar annotations
-            if get_origin(annotation) is ClassVar:
-                continue
-
-            # Skip fields with excluded types as default values
-            field_value = getattr(current_cls, name, None)
-            if isinstance(field_value, ModelPrivateAttr):
-                continue
-
-            all_annotations[name] = annotation
+    if not issubclass(current_cls, base_class):
+        all_annotations.update(current_cls.model_fields)
+    return all_annotations
 
 
-def get_all_annotations(cls, exclude_classes=None):
+def get_all_pydantic_annotation(
+    cls: type[BaseModel], exclude_classes: type[BaseModel] = None
+) -> dict[str, FieldInfo]:
     """
     Recursively get all annotations from a class and its parent classes.
     Excludes private fields (starting with _) and ClassVar annotations.
 
-    Args:
-        cls: The class to inspect
-        exclude_classes: Set/tuple of classes where recursion should stop
-
     Returns:
         dict: Merged annotations from the class hierarchy
     """
-    if exclude_classes is None:
-        exclude_classes = set()
-    elif not isinstance(exclude_classes, set):
-        exclude_classes = set(exclude_classes)
-
-    all_annotations = {}
     visited = set()
 
-    _collect_annotations_recursive(cls, exclude_classes, all_annotations, visited)
-
-    return all_annotations
+    return _collect_annotations_recursive(cls, exclude_classes, visited)

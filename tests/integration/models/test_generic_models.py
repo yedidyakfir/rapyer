@@ -166,7 +166,7 @@ async def test_generic_model__try_delete_existing__check_returns_true():
     await model.save()
 
     # Act
-    result = await GenericListModel.try_delete(model.key)
+    result = await GenericListModel.delete_by_key(model.key)
 
     # Assert
     assert result is True
@@ -178,7 +178,7 @@ async def test_generic_model__try_delete_nonexistent__check_returns_false():
     mock_key = "GenericListModel:nonexistent_key"
 
     # Act
-    result = await GenericListModel.try_delete(mock_key)
+    result = await GenericListModel.delete_by_key(mock_key)
 
     # Assert
     assert result is False

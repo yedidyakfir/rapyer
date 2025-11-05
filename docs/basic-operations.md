@@ -7,7 +7,7 @@ Learn the fundamental operations for working with Rapyer models: saving, loading
 First, define your model by inheriting from `AtomicRedisModel`:
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from typing import List, Dict
 from datetime import datetime
 
@@ -55,10 +55,10 @@ Configure automatic expiration:
 class Session(AtomicRedisModel):
     user_id: str
     token: str
-    
-    class Meta:
-        redis = redis_client
-        ttl = 3600  # Expire after 1 hour
+
+# Set Redis client and TTL after class declaration
+Session.Meta.redis = redis_client
+Session.Meta.ttl = 3600  # Expire after 1 hour
 
 async def save_session():
     session = Session(user_id="user123", token="abc123")
@@ -99,31 +99,17 @@ async def safe_get_user(user_key: str):
 
 Load specific fields or all fields from Redis without recreating the model.
 
-### Load All Fields
-
-```python
-async def load_user_data():
-    # Create user instance with known key
-    user = User(name="", age=0, email="", created_at=datetime.now())
-    user.pk = "550e8400-e29b-41d4-a716-446655440000"
-    
-    # Load all data from Redis
-    await user.load()
-    print(f"Loaded user: {user.name}")
-```
-
 ### Load Specific Fields
 
 ```python
 async def load_specific_fields():
     user = User(name="", age=0, email="", created_at=datetime.now())
-    user.pk = "550e8400-e29b-41d4-a716-446655440000"
     
     # Load only specific fields
-    await user.name.load()
-    await user.email.load()
+    real_name = await user.name.load()
+    real_email = await user.email.load()
     
-    print(f"Name: {user.name}, Email: {user.email}")
+    print(f"Name: {real_name}, Email: {real_email}")
     # age and other fields remain unloaded
 ```
 
@@ -147,10 +133,10 @@ async def delete_user():
 ```python
 async def delete_by_key():
     user_key = "User:550e8400-e29b-41d4-a716-446655440000"
-    
+
     # Try to delete - returns True if key existed and was deleted
-    was_deleted = await User.try_delete(user_key)
-    
+    was_deleted = await User.delete_by_key(user_key)
+
     if was_deleted:
         print("User deleted successfully")
     else:
@@ -220,11 +206,11 @@ async def key_examples():
 
 ```python
 async def key_only_operations():
-    # Delete without loading the model
+    # Delete it without loading the model
     user_key = "User:550e8400-e29b-41d4-a716-446655440000"
-    await User.try_delete(user_key)
-    
-    # Check if key exists (by trying to get it)
+    await User.delete_by_key(user_key)
+
+    # Check if the key exists (by trying to get it)
     try:
         await User.get(user_key)
         print("User exists")
@@ -239,7 +225,7 @@ Here's a complete example demonstrating all basic operations:
 ```python
 import asyncio
 from datetime import datetime
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from rapyer.errors.base import KeyNotFound
 
 class BlogPost(AtomicRedisModel):
@@ -249,9 +235,9 @@ class BlogPost(AtomicRedisModel):
     tags: List[str] = []
     view_count: int = 0
     published_at: datetime
-    
-    class Meta:
-        redis = redis_client  # Your Redis client
+
+# Set Redis client after class declaration
+BlogPost.Meta.redis = redis_client  # Your Redis client
 
 async def blog_post_lifecycle():
     # 1. Create and save

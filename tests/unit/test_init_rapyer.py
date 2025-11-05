@@ -1,0 +1,109 @@
+from unittest.mock import Mock, patch
+
+import pytest
+from redis.asyncio.client import Redis
+
+from rapyer.init import init_rapyer
+from tests.models.collection_types import IntListModel, ProductListModel, StrListModel
+from tests.models.simple_types import (
+    NoneTestModel,
+    TaskModel,
+    UserModelWithoutTTL,
+    UserModelWithTTL,
+)
+
+
+@pytest.fixture
+def mock_redis_client():
+    return Mock(spec=Redis)
+
+
+@pytest.fixture
+def redis_models():
+    yield [
+        ProductListModel,
+        IntListModel,
+        StrListModel,
+        UserModelWithTTL,
+        UserModelWithoutTTL,
+        TaskModel,
+        NoneTestModel,
+    ]
+
+
+def test_init_rapyer_with_redis_client_sanity(mock_redis_client, redis_models):
+    # Arrange
+    NoneTestModel.Meta.ttl = 30
+
+    # Act
+    init_rapyer(mock_redis_client)
+
+    # Assert
+    for model in redis_models:
+        assert model.Meta.redis is mock_redis_client
+    assert NoneTestModel.Meta.ttl == 30
+
+
+@patch("rapyer.init.redis_async.from_url")
+def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_models):
+    # Arrange
+    connection_string = "redis://localhost:6379"
+    mock_redis_client = Mock(spec=Redis)
+    mock_from_url.return_value = mock_redis_client
+
+    # Act
+    init_rapyer(connection_string)
+
+    # Assert
+    mock_from_url.assert_called_once_with(connection_string, decode_responses=True)
+    for model in redis_models:
+        assert model.Meta.redis is mock_redis_client
+
+
+def test_init_rapyer_with_ttl_sanity(mock_redis_client, redis_models):
+    # Arrange
+    ttl_value = 120
+
+    # Act
+    init_rapyer(mock_redis_client, ttl=ttl_value)
+
+    # Assert
+    for model in redis_models:
+        assert model.Meta.redis is mock_redis_client
+        assert model.Meta.ttl == ttl_value
+
+
+def test_init_rapyer_with_existing_redis_client_no_override_sanity(redis_models):
+    # Arrange
+    existing_redis_client = Mock(spec=Redis)
+    TaskModel.Meta.redis = existing_redis_client
+
+    # Act
+    init_rapyer(ttl=300)
+
+    # Assert
+    assert TaskModel.Meta.redis is existing_redis_client
+    assert TaskModel.Meta.ttl == 300
+
+
+def test_init_rapyer_override_existing_redis_and_ttl_sanity(
+    mock_redis_client, redis_models
+):
+    # Arrange
+    old_redis_client = Mock(spec=Redis)
+    old_ttl = 60
+    new_ttl = 240
+
+    UserModelWithTTL.Meta.redis = old_redis_client
+    UserModelWithTTL.Meta.ttl = old_ttl
+    TaskModel.Meta.redis = old_redis_client
+    TaskModel.Meta.ttl = old_ttl
+
+    # Act
+    init_rapyer(mock_redis_client, ttl=new_ttl)
+
+    # Assert
+    assert UserModelWithTTL.Meta.redis is mock_redis_client
+    assert UserModelWithTTL.Meta.ttl == new_ttl
+    assert TaskModel.Meta.redis is mock_redis_client
+    assert TaskModel.Meta.ttl == new_ttl

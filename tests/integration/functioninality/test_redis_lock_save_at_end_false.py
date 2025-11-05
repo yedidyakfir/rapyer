@@ -57,9 +57,7 @@ async def test_lock_model_deletion_persists_with_save_at_end_false_sanity():
     assert retrieved_model.name == "to_delete"
 
     # Act
-    async with LockTestModel.lock_from_key(
-        model_key, save_at_end=False
-    ) as locked_model:
+    async with LockTestModel.lock_from_key(model_key) as locked_model:
         await locked_model.delete()
 
     # Assert

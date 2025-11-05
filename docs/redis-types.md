@@ -7,11 +7,8 @@ Redis Types are specialized type annotations that provide enhanced IDE support a
 When you use Redis Types in your model annotations, your IDE will recognize all available Redis operations like `aappend()`, `aextend()`, `increase()`, etc., providing better development experience with full type safety.
 
 ```python
-from rapyer.base import AtomicRedisModel
-from rapyer.types.string import RedisStr
-from rapyer.types.integer import RedisInt
-from rapyer.types.lst import RedisList
-from rapyer.types.dct import RedisDict
+from rapyer import AtomicRedisModel
+from rapyer.types import RedisStr, RedisInt, RedisList, RedisDict
 
 class UserModel(AtomicRedisModel):
     # Instead of: name: str = ""
@@ -34,7 +31,7 @@ class UserModel(AtomicRedisModel):
 Provides enhanced IDE support for string operations.
 
 ```python
-from rapyer.types.string import RedisStr
+from rapyer.types import RedisStr
 
 class DocumentModel(AtomicRedisModel):
     title: RedisStr = "Untitled"
@@ -59,7 +56,7 @@ await doc.title.save()  # ✓ IDE autocomplete available
 Provides enhanced IDE support for integer operations, including the atomic `increase()` method.
 
 ```python
-from rapyer.types.integer import RedisInt
+from rapyer.types import RedisInt
 
 class CounterModel(AtomicRedisModel):
     views: RedisInt = 0
@@ -87,7 +84,7 @@ await counter.views.save()         # ✓ Direct assignment and save
 Provides enhanced IDE support for all Redis list operations with full type safety.
 
 ```python
-from rapyer.types.lst import RedisList
+from rapyer.types import RedisList
 from typing import List
 from pydantic import Field
 
@@ -125,7 +122,7 @@ task_model.tasks[0] = "Updated task"  # ✓ IDE knows this is str
 Provides enhanced IDE support for all Redis dictionary operations with full type safety.
 
 ```python
-from rapyer.types.dct import RedisDict
+from rapyer.types import RedisDict
 from typing import Dict
 from pydantic import Field
 
@@ -166,7 +163,7 @@ profile.scores["high_score"] = 9999        # ✓ IDE knows this is str -> int
 Provides enhanced IDE support for bytes operations.
 
 ```python
-from rapyer.types.byte import RedisBytes
+from rapyer.types import RedisBytes
 
 class FileModel(AtomicRedisModel):
     file_data: RedisBytes = b""
@@ -262,10 +259,7 @@ await model.metadata.aupdate(key="value")  # Works, but no autocomplete for 'aup
 ### Redis Type Annotations
 
 ```python
-from rapyer.types.string import RedisStr
-from rapyer.types.integer import RedisInt  
-from rapyer.types.lst import RedisList
-from rapyer.types.dct import RedisDict
+from rapyer.types import RedisStr, RedisInt, RedisList, RedisDict
 
 class RedisTypedModel(AtomicRedisModel):
     name: RedisStr = ""
@@ -378,10 +372,7 @@ class OldModel(AtomicRedisModel):
     data: Dict[str, int] = {}
 
 # After: Redis Types (optional conversion)
-from rapyer.types.string import RedisStr
-from rapyer.types.integer import RedisInt
-from rapyer.types.lst import RedisList
-from rapyer.types.dct import RedisDict
+from rapyer.types import RedisStr, RedisInt, RedisList, RedisDict
 
 class NewModel(AtomicRedisModel):
     name: RedisStr = ""
@@ -422,11 +413,8 @@ Keep Redis Type imports organized:
 
 ```python
 # Recommended import style
-from rapyer.base import AtomicRedisModel
-from rapyer.types.string import RedisStr
-from rapyer.types.integer import RedisInt
-from rapyer.types.lst import RedisList
-from rapyer.types.dct import RedisDict
+from rapyer import AtomicRedisModel
+from rapyer.types import RedisStr, RedisInt, RedisList, RedisDict
 from pydantic import Field
 from typing import List, Dict  # For regular types if needed
 ```

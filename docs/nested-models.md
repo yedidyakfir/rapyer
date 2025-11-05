@@ -9,7 +9,7 @@ Nested models in Rapyer maintain the same powerful Redis functionality at every 
 ### Basic Nested Structure
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from pydantic import BaseModel, Field
 from typing import List, Dict
 from datetime import datetime

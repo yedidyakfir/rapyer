@@ -24,7 +24,7 @@ Rapyer solves the critical problem of race conditions in Redis operations while 
 
 ```python
 import asyncio
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from typing import List, Dict
 
 class User(AtomicRedisModel):
@@ -52,24 +52,6 @@ if __name__ == "__main__":
 ```
 
 ## Core Concepts
-
-### Redis Types for Enhanced IDE Support
-Use specialized Redis type annotations for better IDE autocomplete and type safety:
-
-```python
-from rapyer.types.string import RedisStr
-from rapyer.types.lst import RedisList
-from rapyer.types.dct import RedisDict
-
-class User(AtomicRedisModel):
-    name: RedisStr = ""                                        # Enhanced string support
-    tags: RedisList[str] = Field(default_factory=list)        # Full list operation autocomplete
-    metadata: RedisDict[str, str] = Field(default_factory=dict) # Full dict operation autocomplete
-
-# IDE will show all Redis operations with full autocomplete
-await user.tags.aappend("python")    # ✓ Full IDE support
-await user.metadata.aupdate(role="developer")  # ✓ Type-safe operations
-```
 
 ### Atomic Operations
 Every operation in Rapyer is designed to be atomic and race-condition safe:
@@ -101,6 +83,25 @@ async with user.pipeline() as pipelined_user:
     await pipelined_user.metadata.aupdate(level="senior")
     # Executed as single atomic transaction
 ```
+
+
+### Redis Types for Enhanced IDE Support
+Use specialized Redis type annotations for better IDE autocomplete and type safety:
+
+```python
+from rapyer.types import RedisStr, RedisList, RedisDict
+
+class User(AtomicRedisModel):
+    name: RedisStr = ""                                        # Enhanced string support
+    tags: RedisList[str] = Field(default_factory=list)        # Full list operation autocomplete
+    metadata: RedisDict[str, str] = Field(default_factory=dict) # Full dict operation autocomplete
+
+# IDE will show all Redis operations with full autocomplete
+await user.tags.aappend("python")    # ✓ Full IDE support
+await user.metadata.aupdate(role="developer")  # ✓ Type-safe operations
+```
+
+RedisStr is an extended str, and you can use it in the same manner, this is true for all Redis types.
 
 ## Why Choose Rapyer?
 

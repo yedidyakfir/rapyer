@@ -3,7 +3,6 @@ import dataclasses
 import redis
 from redis.asyncio import Redis
 
-
 DEFAULT_CONNECTION = "redis://localhost:6379/0"
 
 
