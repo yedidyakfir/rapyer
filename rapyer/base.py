@@ -204,9 +204,18 @@ class AtomicRedisModel(BaseModel):
     async def aupdate(self, **kwargs):
         self.update(**kwargs)
 
+        # Only serialize the updated fields using the include parameters
+        serialized_fields = self.model_dump(
+            mode="json",
+            context={REDIS_DUMP_FLAG_NAME: True},
+            include=set(kwargs.keys()),
+        )
+        json_path_kwargs = {
+            f"$.{field_name}": serialized_fields[field_name]
+            for field_name in kwargs.keys()
+        }
+
         async with self.Meta.redis.pipeline() as pipe:
-            model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
-            json_path_kwargs = {f"$.{field_name}": model_dump[field_name] for field_name in kwargs.keys()}
             update_keys_in_pipeline(pipe, self.key, **json_path_kwargs)
             await pipe.execute()
 
