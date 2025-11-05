@@ -5,7 +5,7 @@ from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
-from .base import AtomicRedisModel
+from rapyer.base import AtomicRedisModel
 
 __version__ = "0.1.0"
 __all__ = [
