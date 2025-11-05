@@ -8,6 +8,7 @@ from tests.models.complex_types import (
     ContainerModel,
     OuterModelWithRedisNested,
 )
+from tests.models.inheritance_types import StrictMixedInheritanceModel
 
 
 @pytest.mark.asyncio
@@ -621,3 +622,38 @@ async def test_nested_model_create_inner_save_load_sanity():
     assert loaded_outer.middle_model.metadata == {"env": "test", "version": "1.0"}
     assert loaded_outer.user_data == {"user1": 100, "user2": 200}
     assert loaded_outer.items == [10, 20, 30]
+
+
+@pytest.mark.asyncio
+async def test_strict_mixed_inheritance_non_pydantic_fields_not_persisted_sanity(
+    real_redis_client,
+):
+    # Arrange
+    model = StrictMixedInheritanceModel(redis_data="custom_data", number=456)
+
+    # Act
+    await model.save()
+
+    # Assert
+    # Check that non-pydantic fields exist in memory
+    assert hasattr(model, "non_pydantic_field")
+    assert hasattr(model, "another_field")
+    assert hasattr(model, "temp_data")
+    assert model.non_pydantic_field == "should_not_persist"
+    assert model.another_field == 999
+    assert model.temp_data == {"key": "value"}
+
+    # Load directly from Redis using the client to check what's actually stored
+    redis_data = await real_redis_client.json().get(model.key, "$")
+    stored_data = redis_data[0]
+
+    # Assert pydantic fields ARE stored in Redis
+    assert "redis_data" in stored_data
+    assert "number" in stored_data
+    assert stored_data["redis_data"] == "custom_data"
+    assert stored_data["number"] == 456
+
+    # Assert non-pydantic fields are NOT stored in Redis (should not be present)
+    assert "non_pydantic_field" not in stored_data
+    assert "another_field" not in stored_data
+    assert "temp_data" not in stored_data

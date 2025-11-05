@@ -36,9 +36,6 @@ class AdminUserModel(BaseUserModel):
     access_codes: list[int] = Field(default_factory=lambda: [1001, 1002])
 
 
-# Models for testing inheritance scenarios
-
-
 class SimpleBaseModel(BaseModel):
     username: str = "test_user"
     score: int = 100
@@ -50,11 +47,6 @@ class HybridModel(AtomicRedisModel, SimpleBaseModel):
     count: int = 42
 
 
-class SimpleInheritanceBaseModel(BaseModel):
-    name: str = "default_name"
-    value: int = 10
-
-
 class NonPydanticClass:
     def __init__(self):
         self.non_pydantic_field = "should_not_persist"
@@ -62,23 +54,15 @@ class NonPydanticClass:
         self.temp_data = {"key": "value"}
 
 
-class MixedInheritanceModel(AtomicRedisModel, NonPydanticClass):
+class StrictMixedInheritanceModel(AtomicRedisModel):
     redis_data: str = "test_data"
     number: int = 123
 
-    model_config = {"extra": "allow"}
+    model_config = {"extra": "ignore"}
 
     def __init__(self, **data):
         AtomicRedisModel.__init__(self, **data)
-        NonPydanticClass.__init__(self)
-
-
-class HybridRedisModel(AtomicRedisModel, SimpleInheritanceBaseModel, NonPydanticClass):
-    additional_field: str = "extra_data"
-
-    model_config = {"extra": "allow"}
-
-    def __init__(self, **data):
-        AtomicRedisModel.__init__(self, **data)
-        SimpleInheritanceBaseModel.__init__(self, **data)
-        NonPydanticClass.__init__(self)
+        # Set non-pydantic fields after initialization
+        self.__dict__["non_pydantic_field"] = "should_not_persist"
+        self.__dict__["another_field"] = 999
+        self.__dict__["temp_data"] = {"key": "value"}
