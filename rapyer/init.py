@@ -6,7 +6,7 @@ from rapyer.base import REDIS_MODELS
 
 def init_rapyer(redis: str | Redis = None, ttl: int = None):
     if isinstance(redis, str):
-        redis = redis_async.from_url(redis)
+        redis = redis_async.from_url(redis, decode_responses=True)
 
     for model in REDIS_MODELS:
         if redis is not None:
