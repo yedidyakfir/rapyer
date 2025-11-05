@@ -206,11 +206,11 @@ async def key_examples():
 
 ```python
 async def key_only_operations():
-    # Delete without loading the model
+    # Delete it without loading the model
     user_key = "User:550e8400-e29b-41d4-a716-446655440000"
     await User.delete_by_key(user_key)
 
-    # Check if key exists (by trying to get it)
+    # Check if the key exists (by trying to get it)
     try:
         await User.get(user_key)
         print("User exists")
