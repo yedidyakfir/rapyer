@@ -168,6 +168,9 @@ class AtomicRedisModel(BaseModel):
             else:
                 setattr(cls, attr_name, adapter.validate_python(value))
 
+        # Update the redis model list for initialization
+        REDIS_MODELS.append(cls)
+
     def is_inner_model(self):
         return self.field_name
 
@@ -299,3 +302,6 @@ class AtomicRedisModel(BaseModel):
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = self
         return self
+
+
+REDIS_MODELS: list[type[AtomicRedisModel]] = []
