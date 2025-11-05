@@ -5,6 +5,10 @@
 ### ✨ Added
 
 - **Inheritance Model Support**: Added support for inheritance models - models that inherit from a Redis model still create a Redis model with full functionality
+- **Global Configuration**: Added `init_rapyer()` function to set Redis client and TTL for all models at once
+  - Accepts Redis client instance or connection string (e.g., `"redis://localhost:6379"`)
+  - Allows setting global TTL for all Redis models
+  - Example: `init_rapyer(redis="redis://localhost:6379", ttl=3600)`
 
 ## [1.0.1] - 2025-11-04
 
