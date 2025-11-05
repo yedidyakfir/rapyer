@@ -1,6 +1,8 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
-from rapyer import RedisBytes, AtomicRedisModel
+from rapyer import AtomicRedisModel
 from rapyer.types.base import RedisType
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
@@ -10,7 +12,6 @@ from tests.models.collection_types import (
     SimpleListModel,
     SimpleIntListModel,
     SimpleDictModel,
-    DictModel,
 )
 from tests.models.complex_types import MiddleModel, InnerMostModel
 from tests.models.simple_types import NoneTestModel
@@ -388,6 +389,56 @@ class TestRedisModelComplexOperations:
         assert_redis_list_item_correct(
             model2.int_list, 0, "10", model2.key, ".int_list[0]", RedisInt
         )
+
+
+class TestRedisModelAupdateOperations:
+    @pytest.mark.parametrize(
+        ["update_data"],
+        [
+            [{"str_field": "updated_string", "int_field": 42}],
+            [{"str_field": "new_value"}],
+            [{"int_field": 100, "bool_field": False}],
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_aupdate_redis_types_mocks_pipeline_correctly_sanity(
+        self, update_data
+    ):
+        # Arrange
+        model = OperationsTestModel(str_field="original", int_field=10, bool_field=True)
+
+        mock_pipeline = MagicMock()
+        mock_json = MagicMock()
+        mock_pipeline.json.return_value = mock_json
+        mock_pipeline.execute = AsyncMock()
+
+        mock_redis = MagicMock()
+        mock_redis.pipeline.return_value.__aenter__.return_value = mock_pipeline
+        mock_redis.pipeline.return_value.__aexit__.return_value = AsyncMock()
+
+        # Mock the model's Meta.redis
+        model.Meta.redis = mock_redis
+
+        # Act
+        await model.aupdate(**update_data)
+
+        # Assert
+        mock_redis.pipeline.assert_called_once()
+        mock_pipeline.json.assert_called()
+
+        # Verify pipeline.json().set was called for each updated field with correct paths
+        assert mock_json.set.call_count == len(update_data)
+
+        call_args_list = [call[0] for call in mock_json.set.call_args_list]
+        expected_field_paths = [f"$.{field_name}" for field_name in update_data.keys()]
+
+        # Check that all calls use the correct key and field paths
+        for call_args in call_args_list:
+            redis_key, json_path, value = call_args
+            assert redis_key == model.key
+            assert json_path in expected_field_paths
+
+        mock_pipeline.execute.assert_called_once()
 
 
 class TestRedisModelUpdateOperations:
