@@ -9,6 +9,17 @@
   - Accepts Redis client instance or connection string (e.g., `"redis://localhost:6379"`)
   - Allows setting global TTL for all Redis models
   - Example: `init_rapyer(redis="redis://localhost:6379", ttl=3600)`
+- **Atomic Updates**: Added `aupdate()` method to AtomicRedisModel for selective field updates without loading the entire model
+  - Enables direct field updates in Redis: `await model.aupdate(field1="value", field2=123)`
+  - Maintains type safety and validation during updates
+  - Uses Redis JSON path operations for efficient field-only updates
+  - All field updates in single aupdate call are atomic
+
+### ⚠️ Compatibility Notice
+
+- **Pydantic Version Constraint**: This version supports Pydantic up to 2.12.0 due to internal logic changes in newer versions
+- A future release will include support for multiple Pydantic versions
+- All previous versions also have the same Pydantic 2.12.0 limitation
 
 ## [1.0.1] - 2025-11-04
 
