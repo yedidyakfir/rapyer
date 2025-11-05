@@ -229,7 +229,7 @@ class AtomicRedisModel(BaseModel):
     async def delete(self):
         if self.is_inner_model():
             raise RuntimeError("Can only delete from inner model")
-        return self.delete_by_key(self.key)
+        return await self.delete_by_key(self.key)
 
     @classmethod
     @contextlib.asynccontextmanager
