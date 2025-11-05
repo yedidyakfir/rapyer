@@ -26,7 +26,7 @@ from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
 from rapyer.utils.annotation import replace_to_redis_types_in_annotation
 from rapyer.utils.fields import (
-    get_all_annotations,
+    get_all_pydantic_annotation,
     find_first_type_in_annotation,
     convert_field_factory_type,
 )
@@ -113,16 +113,22 @@ class AtomicRedisModel(BaseModel):
 
     def __init_subclass__(cls, **kwargs):
         # Redefine annotations to use redis types
-        original_annotations = get_all_annotations(
-            cls, exclude_classes=[AtomicRedisModel]
-        )
+        pydantic_annotation = get_all_pydantic_annotation(cls, AtomicRedisModel)
+        new_annotation = {
+            field_name: field.annotation
+            for field_name, field in pydantic_annotation.items()
+        }
+        original_annotations = cls.__annotations__.copy()
+        original_annotations.update(new_annotation)
         new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type, RedisConverter(cls.Meta.redis_type, f".{field_name}")
+                annotation, RedisConverter(cls.Meta.redis_type, f".{field_name}")
             )
-            for field_name, field_type in original_annotations.items()
+            for field_name, annotation in original_annotations.items()
         }
         cls.__annotations__.update(new_annotations)
+        for field_name, field in pydantic_annotation.items():
+            setattr(cls, field_name, field)
         super().__init_subclass__(**kwargs)
 
         # Set new default values if needed
