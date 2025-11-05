@@ -30,7 +30,7 @@ from rapyer.utils.fields import (
     find_first_type_in_annotation,
     convert_field_factory_type,
 )
-from rapyer.utils.redis import acquire_lock
+from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
 
 
 def make_pickle_field_serializer(field: str):
@@ -196,6 +196,16 @@ class AtomicRedisModel(BaseModel):
         duplicated_models = [self.__class__(**self.model_dump()) for _ in range(num)]
         await asyncio.gather(*[model.save() for model in duplicated_models])
         return duplicated_models
+
+    def update(self, **kwargs):
+        for field_name, value in kwargs.items():
+            setattr(self, field_name, value)
+
+    async def aupdate(self, **kwargs):
+        self.update(**kwargs)
+
+        async with self.Meta.redis.pipeline() as pipe:
+            update_keys_in_pipeline(pipe, self.key, **kwargs)
 
     @classmethod
     async def get(cls, key: str) -> Self:
