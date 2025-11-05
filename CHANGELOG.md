@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2025-11-05
+
+### ✨ Added
+
+- **Inheritance Model Support**: Added support for inheritance models - models that inherit from a Redis model still create a Redis model with full functionality
+
 ## [1.0.1] - 2025-11-04
 
 ### ✨ Added
