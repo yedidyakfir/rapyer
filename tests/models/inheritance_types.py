@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 from enum import Enum
 
-from pydantic import Field
+from pydantic import Field, BaseModel
 from rapyer.base import AtomicRedisModel
 
 
@@ -34,3 +34,51 @@ class AdminUserModel(BaseUserModel):
     admin_notes: str = "No notes"
     backup_email: str | None = None
     access_codes: list[int] = Field(default_factory=lambda: [1001, 1002])
+
+
+# Models for testing inheritance scenarios
+
+
+class SimpleBaseModel(BaseModel):
+    username: str = "test_user"
+    score: int = 100
+    active: bool = True
+
+
+class HybridModel(AtomicRedisModel, SimpleBaseModel):
+    redis_field: str = "redis_value"
+    count: int = 42
+
+
+class SimpleInheritanceBaseModel(BaseModel):
+    name: str = "default_name"
+    value: int = 10
+
+
+class NonPydanticClass:
+    def __init__(self):
+        self.non_pydantic_field = "should_not_persist"
+        self.another_field = 999
+        self.temp_data = {"key": "value"}
+
+
+class MixedInheritanceModel(AtomicRedisModel, NonPydanticClass):
+    redis_data: str = "test_data"
+    number: int = 123
+
+    model_config = {"extra": "allow"}
+
+    def __init__(self, **data):
+        AtomicRedisModel.__init__(self, **data)
+        NonPydanticClass.__init__(self)
+
+
+class HybridRedisModel(AtomicRedisModel, SimpleInheritanceBaseModel, NonPydanticClass):
+    additional_field: str = "extra_data"
+
+    model_config = {"extra": "allow"}
+
+    def __init__(self, **data):
+        AtomicRedisModel.__init__(self, **data)
+        SimpleInheritanceBaseModel.__init__(self, **data)
+        NonPydanticClass.__init__(self)
