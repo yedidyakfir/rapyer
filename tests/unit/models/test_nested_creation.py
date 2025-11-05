@@ -1,8 +1,8 @@
 import pytest
 
 from rapyer.base import AtomicRedisModel
-from rapyer.types.string import RedisStr
 from rapyer.types.integer import RedisInt
+from rapyer.types.string import RedisStr
 from tests.models.common import Person
 from tests.models.inheritance_types import HybridModel
 

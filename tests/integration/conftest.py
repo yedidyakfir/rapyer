@@ -46,6 +46,12 @@ from tests.models.functionality_types import (
     AllTypesModel,
 )
 
+# Inheritance types
+from tests.models.inheritance_types import BaseUserModel, AdminUserModel
+
+# Pickle types
+from tests.models.pickle_types import ModelWithUnserializableFields
+
 # Simple types
 from tests.models.simple_types import (
     IntModel,
@@ -63,12 +69,6 @@ from tests.models.simple_types import (
 
 # Specialized types
 from tests.models.specialized import UserModel
-
-# Pickle types
-from tests.models.pickle_types import ModelWithUnserializableFields
-
-# Inheritance types
-from tests.models.inheritance_types import BaseUserModel, AdminUserModel
 
 
 @pytest_asyncio.fixture
