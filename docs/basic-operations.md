@@ -133,10 +133,10 @@ async def delete_user():
 ```python
 async def delete_by_key():
     user_key = "User:550e8400-e29b-41d4-a716-446655440000"
-    
+
     # Try to delete - returns True if key existed and was deleted
-    was_deleted = await User.try_delete(user_key)
-    
+    was_deleted = await User.delete_by_key(user_key)
+
     if was_deleted:
         print("User deleted successfully")
     else:
@@ -208,8 +208,8 @@ async def key_examples():
 async def key_only_operations():
     # Delete without loading the model
     user_key = "User:550e8400-e29b-41d4-a716-446655440000"
-    await User.try_delete(user_key)
-    
+    await User.delete_by_key(user_key)
+
     # Check if key exists (by trying to get it)
     try:
         await User.get(user_key)

@@ -222,15 +222,14 @@ class AtomicRedisModel(BaseModel):
         return instance
 
     @classmethod
-    async def try_delete(cls, key: str) -> bool:
+    async def delete_by_key(cls, key: str) -> bool:
         client = _context_var.get() or cls.Meta.redis
         return await client.delete(key) == 1
 
     async def delete(self):
-        if not self.is_inner_model():
+        if self.is_inner_model():
             raise RuntimeError("Can only delete from inner model")
-        client = _context_var.get() or self.Meta.redis
-        return await client.delete(self.key)
+        return self.delete_by_key(self.key)
 
     @classmethod
     @contextlib.asynccontextmanager
