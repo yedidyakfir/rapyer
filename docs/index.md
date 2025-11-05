@@ -57,9 +57,7 @@ if __name__ == "__main__":
 Use specialized Redis type annotations for better IDE autocomplete and type safety:
 
 ```python
-from rapyer.types.string import RedisStr
-from rapyer.types.lst import RedisList
-from rapyer.types.dct import RedisDict
+from rapyer.types import RedisStr, RedisList, RedisDict
 
 class User(AtomicRedisModel):
     name: RedisStr = ""                                        # Enhanced string support
