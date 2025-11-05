@@ -385,53 +385,60 @@ class TestRedisModelComplexOperations:
             model2.int_list, 0, "10", model2.key, ".int_list[0]", RedisInt
         )
 
+
+class TestRedisModelUpdateOperations:
     @pytest.mark.parametrize(
-        ["model1_setup", "model2_setup", "operation_type"],
+        ["initial_data", "update_data"],
         [
-            (
-                {"data": {"inner": "value1"}},
-                {"data": {"other": "value2"}},
-                "dict_update",
-            ),
-            ({"data": {"key1": "value1"}}, {"data": {"key2": "value2"}}, "dict_update"),
+            ({"name": "old_name", "count": 5}, {"name": "new_name", "count": 10}),
+            ({"name": "test", "count": 0}, {"name": "updated", "count": 100}),
+            ({"name": "", "count": 1}, {"name": "fresh", "count": 50}),
         ],
     )
-    def test_nested_dict_operations_between_models_edge_cases(
-        self, model1_setup, model2_setup, operation_type
-    ):
+    def test_update_redis_types_sanity(self, initial_data, update_data):
         # Arrange
-        model1 = DictModel(**model1_setup)
-        model2 = DictModel(**model2_setup)
+        from tests.models.redis_types import MixedDirectRedisTypesModel
 
-        field_name = list(model1_setup.keys())[0]
+        model = MixedDirectRedisTypesModel(**initial_data)
 
         # Act
-        if operation_type == "dict_update":
-            getattr(model1, field_name).update(getattr(model2, field_name))
+        model.update(**update_data)
 
         # Assert
-        model1_field = getattr(model1, field_name)
-        model2_field = getattr(model2, field_name)
+        assert isinstance(model.name, RedisStr)
+        assert isinstance(model.count, RedisInt)
 
-        assert isinstance(model1_field, RedisDict)
-        assert isinstance(model2_field, RedisDict)
+        assert model.name == update_data["name"]
+        assert model.count == update_data["count"]
 
-        for key in model1_field:
-            assert_redis_dict_item_correct(
-                model1_field,
-                key,
-                str(model1_field[key]),
-                model1.key,
-                f".{field_name}.{key}",
-                RedisStr,
-            )
+        assert model.name.key == model.key
+        assert model.name.json_path == "$.name"
 
-        for key in model2_field:
-            assert_redis_dict_item_correct(
-                model2_field,
-                key,
-                str(model2_field[key]),
-                model2.key,
-                f".{field_name}.{key}",
-                RedisStr,
-            )
+        assert model.count.key == model.key
+        assert model.count.json_path == "$.count"
+
+    @pytest.mark.parametrize(
+        ["initial_data", "update_data"],
+        [
+            ({"name": "old_name", "score": 5}, {"name": "new_name", "score": 10}),
+            ({"name": "test", "score": 0}, {"name": "updated", "score": 100}),
+            ({"name": "", "score": 1}, {"name": "fresh", "score": 50}),
+        ],
+    )
+    def test_update_non_redis_types_sanity(self, initial_data, update_data):
+        # Arrange
+        from tests.models.simple_types import StrModel, IntModel
+
+        str_model = StrModel(name=initial_data["name"])
+        int_model = IntModel(score=initial_data["score"])
+
+        # Act
+        str_model.update(name=update_data["name"])
+        int_model.update(score=update_data["score"])
+
+        # Assert
+        assert isinstance(str_model.name, str)
+        assert isinstance(int_model.score, int)
+
+        assert str_model.name == update_data["name"]
+        assert int_model.score == update_data["score"]
