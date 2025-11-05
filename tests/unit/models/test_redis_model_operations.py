@@ -1,5 +1,7 @@
 import pytest
 
+from rapyer import RedisBytes, AtomicRedisModel
+from rapyer.types.base import RedisType
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
@@ -10,6 +12,8 @@ from tests.models.collection_types import (
     SimpleDictModel,
     DictModel,
 )
+from tests.models.complex_types import MiddleModel, InnerMostModel
+from tests.models.simple_types import NoneTestModel
 from tests.models.unit_types import (
     SimpleIntDictModel,
     MixedCollectionModel,
@@ -416,6 +420,136 @@ class TestRedisModelUpdateOperations:
 
         assert model.count.key == model.key
         assert model.count.json_path == "$.count"
+
+    @pytest.mark.parametrize(
+        ["field_name", "initial_value", "update_value"],
+        [
+            ("value", 10, 20),
+            ("value", 5, 15),
+            ("value", 1, 99),
+        ],
+    )
+    def test_update_unsupported_types_sanity(
+        self, field_name, initial_value, update_value
+    ):
+        # Arrange
+        from tests.models.pickle_types import ModelWithUnserializableFields
+
+        model = ModelWithUnserializableFields(**{field_name: initial_value})
+
+        # Act
+        model.update(**{field_name: update_value})
+
+        # Assert
+        assert isinstance(getattr(model, field_name), int)
+        assert getattr(model, field_name) == update_value
+
+        # Verify unsupported types remain as their original types
+        assert isinstance(model.model_type, type) or model.model_type is None
+        assert isinstance(model.callable_field, type) or model.callable_field is None
+
+    @pytest.mark.parametrize(
+        ["update_data"],
+        [
+            [{"optional_string": "updated", "optional_int": 42}],
+            [{"optional_bool": True}],
+            [{"optional_bytes": b"data"}],
+            [{"optional_list": ["item"]}],
+            [{"optional_dict": {"key": "value"}}],
+        ],
+    )
+    def test_update_none_default_values_sanity(self, update_data):
+        # Arrange
+        model = NoneTestModel()
+
+        # Act
+        model.update(**update_data)
+
+        # Assert
+        for field_name, expected_value in update_data.items():
+            actual_value = getattr(model, field_name)
+            assert actual_value == expected_value
+
+            # Check types - some become Redis types, others remain normal Python types
+            assert isinstance(actual_value, RedisType)
+            assert actual_value.key == model.key
+            assert actual_value.json_path == f"$.{field_name}"
+
+    @pytest.mark.parametrize(
+        ["update_data"],
+        [[{"optional_bytes": b"data"}]],
+    )
+    def test_update_none_values_with_non_redis_field(self, update_data):
+        # Arrange
+        model = NoneTestModel()
+
+        # Act
+        model.update(**update_data)
+
+        # Assert
+        for field_name, expected_value in update_data.items():
+            actual_value = getattr(model, field_name)
+            assert actual_value == expected_value
+
+    @pytest.mark.parametrize(
+        ["updated_middle"],
+        [
+            [{"tags": ["new_item"], "inner_model": {"lst": ["1"]}}],
+            [MiddleModel(tags=["new_item"], inner_model=InnerMostModel(lst=["1"]))],
+        ],
+    )
+    def test_update_nested_model_sanity(self, updated_middle):
+        # Arrange
+        from tests.models.complex_types import OuterModel
+
+        model = OuterModel()
+
+        # Act
+        model.update(middle_model=updated_middle)
+
+        # Assert
+        # Check field update
+        assert model.middle_model.tags == ["new_item"]
+        assert model.middle_model.inner_model.lst == ["1"]
+
+        assert (
+            model.middle_model.inner_model.lst.json_path
+            == "$.middle_model.inner_model.lst"
+        )
+        assert model.middle_model.tags.json_path == "$.middle_model.tags"
+        assert isinstance(model.middle_model.inner_model, AtomicRedisModel)
+        assert isinstance(model.middle_model, AtomicRedisModel)
+
+    @pytest.mark.parametrize(
+        ["base_data", "update_data"],
+        [
+            ({"name": "base_user", "age": 25}, {"name": "updated_user", "age": 30}),
+            (
+                {"email": "old@example.com", "role": "user"},
+                {"email": "new@example.com", "role": "admin"},
+            ),
+            (
+                {"is_active": False, "tags": ["old"]},
+                {"tags": ["new", "updated"]},
+            ),
+        ],
+    )
+    def test_update_inheritance_parent_fields_sanity(self, base_data, update_data):
+        # Arrange
+        from tests.models.inheritance_types import AdminUserModel
+
+        model = AdminUserModel(**base_data)
+
+        # Act
+        model.update(**update_data)
+
+        # Assert
+        for field_name, expected_value in update_data.items():
+            actual_value = getattr(model, field_name)
+            assert actual_value == expected_value
+            assert isinstance(actual_value, RedisType)
+            assert actual_value.key == model.key
+            assert actual_value.json_path == f"$.{field_name}"
 
     @pytest.mark.parametrize(
         ["initial_data", "update_data"],
