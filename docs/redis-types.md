@@ -7,7 +7,7 @@ Redis Types are specialized type annotations that provide enhanced IDE support a
 When you use Redis Types in your model annotations, your IDE will recognize all available Redis operations like `aappend()`, `aextend()`, `increase()`, etc., providing better development experience with full type safety.
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from rapyer.types.string import RedisStr
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
@@ -422,7 +422,7 @@ Keep Redis Type imports organized:
 
 ```python
 # Recommended import style
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from rapyer.types.string import RedisStr
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList

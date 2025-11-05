@@ -62,7 +62,7 @@ Set up your Redis connection in your application:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # Configure Redis connection
 redis_client = redis.Redis(
@@ -87,7 +87,7 @@ For production environments, use connection URLs:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # From URL (supports redis://, rediss://, unix://)
 redis_client = redis.from_url(
@@ -109,7 +109,7 @@ For different environments, use environment variables:
 ```python
 import os
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 redis_client = redis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379/0"),
@@ -129,7 +129,7 @@ class User(AtomicRedisModel):
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # Custom connection pool
 pool = redis.ConnectionPool.from_url(
@@ -152,7 +152,7 @@ class User(AtomicRedisModel):
 Set automatic expiration for your models:
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 class Session(AtomicRedisModel):
     user_id: str
@@ -170,7 +170,7 @@ Test your setup with this simple script:
 ```python
 import asyncio
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # Setup Redis client
 redis_client = redis.Redis(

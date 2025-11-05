@@ -24,7 +24,7 @@ Rapyer solves the critical problem of race conditions in Redis operations while 
 
 ```python
 import asyncio
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from typing import List, Dict
 
 class User(AtomicRedisModel):

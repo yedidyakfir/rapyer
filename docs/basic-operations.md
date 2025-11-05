@@ -7,7 +7,7 @@ Learn the fundamental operations for working with Rapyer models: saving, loading
 First, define your model by inheriting from `AtomicRedisModel`:
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from typing import List, Dict
 from datetime import datetime
 
@@ -239,7 +239,7 @@ Here's a complete example demonstrating all basic operations:
 ```python
 import asyncio
 from datetime import datetime
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 from rapyer.errors.base import KeyNotFound
 
 class BlogPost(AtomicRedisModel):

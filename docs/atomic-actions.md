@@ -24,7 +24,7 @@ The lock context manager ensures exclusive access to a model during complex oper
 ### Basic Locking
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 class BankAccount(AtomicRedisModel):
     balance: int = 0
