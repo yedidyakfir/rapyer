@@ -55,7 +55,7 @@ def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_models):
     init_rapyer(connection_string)
 
     # Assert
-    mock_from_url.assert_called_once_with(connection_string)
+    mock_from_url.assert_called_once_with(connection_string, decode_responses=True)
     for model in redis_models:
         assert model.Meta.redis is mock_redis_client
 
@@ -86,12 +86,14 @@ def test_init_rapyer_with_existing_redis_client_no_override_sanity(redis_models)
     assert TaskModel.Meta.ttl == 300
 
 
-def test_init_rapyer_override_existing_redis_and_ttl_sanity(mock_redis_client, redis_models):
+def test_init_rapyer_override_existing_redis_and_ttl_sanity(
+    mock_redis_client, redis_models
+):
     # Arrange
     old_redis_client = Mock(spec=Redis)
     old_ttl = 60
     new_ttl = 240
-    
+
     UserModelWithTTL.Meta.redis = old_redis_client
     UserModelWithTTL.Meta.ttl = old_ttl
     TaskModel.Meta.redis = old_redis_client
