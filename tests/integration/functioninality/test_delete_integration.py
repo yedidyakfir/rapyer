@@ -1,6 +1,7 @@
 import pytest
 
 from tests.models.specialized import UserModel
+from tests.models.complex_types import OuterModelWithRedisNested
 
 
 @pytest.mark.asyncio
@@ -20,7 +21,7 @@ async def test_delete_integration__save_verify_exists_delete_verify_removed_sani
     assert model_data[0]["tags"] == ["test_tag_1", "test_tag_2"]
 
     # Act
-    result = await user.delete()
+    result = await UserModel.delete_by_key(user.key)
 
     # Assert
     assert result is True
@@ -32,9 +33,10 @@ async def test_delete_integration__save_verify_exists_delete_verify_removed_sani
 async def test_delete_integration__delete_unsaved_model_returns_false_edge_case():
     # Arrange
     user = UserModel(tags=["test_tag_1", "test_tag_2"])
+    # Note: not saving the model
 
     # Act
-    result = await user.delete()
+    result = await UserModel.delete_by_key(user.key)
 
     # Assert
     assert result is False
@@ -75,3 +77,20 @@ async def test_delete_integration__try_delete_same_key_twice_first_true_second_f
 
     # Assert second deletion
     assert second_result is False
+
+
+@pytest.mark.asyncio
+async def test_delete_integration__call_delete_on_inner_model_raises_runtime_error_edge_case(
+    real_redis_client,
+):
+    # Arrange
+    outer_model = OuterModelWithRedisNested()
+    await outer_model.save()
+
+    # Access the inner redis model which should have field_name set
+    inner_redis_model = outer_model.container.inner_redis
+    assert inner_redis_model.is_inner_model() is True
+
+    # Act & Assert
+    with pytest.raises(RuntimeError, match="Can only delete from inner model"):
+        res = await inner_redis_model.delete()
