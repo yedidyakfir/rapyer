@@ -205,7 +205,10 @@ class AtomicRedisModel(BaseModel):
         self.update(**kwargs)
 
         async with self.Meta.redis.pipeline() as pipe:
-            update_keys_in_pipeline(pipe, self.key, **kwargs)
+            model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
+            json_path_kwargs = {f"$.{field_name}": model_dump[field_name] for field_name in kwargs.keys()}
+            update_keys_in_pipeline(pipe, self.key, **json_path_kwargs)
+            await pipe.execute()
 
     @classmethod
     async def get(cls, key: str) -> Self:
