@@ -13,7 +13,7 @@
   - Enables direct field updates in Redis: `await model.aupdate(field1="value", field2=123)`
   - Maintains type safety and validation during updates
   - Uses Redis JSON path operations for efficient field-only updates
-  - All field updates in single aupdate call are atomic
+  - All field updates in a single aupdate call are atomic
 
 ### ⚠️ Compatibility Notice
 
