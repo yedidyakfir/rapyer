@@ -139,3 +139,24 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
+  test-results:
+    runs-on: ubuntu-22.04
+    needs: [test]
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" ]]; then
+            echo "Lint job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "Test job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.coverage.result }}" != "success" ]]; then
+            echo "Coverage job failed"
+            exit 1
+          fi
+          echo "All tests passed successfully!"
+
