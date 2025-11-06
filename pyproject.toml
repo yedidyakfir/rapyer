@@ -9,7 +9,7 @@ description = "Pydantic models with Redis as the backend"
 authors = [{name = "YedidyaHKfir", email = "yedidyakfir@gmail.com"}]
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.11,<4.0"
 keywords = [
     "redis",
     "redis-json",
