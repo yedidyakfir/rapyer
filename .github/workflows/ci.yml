@@ -74,7 +74,7 @@ jobs:
     needs: redis
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
         pydantic-version: ["2.11"]
     
     steps:
