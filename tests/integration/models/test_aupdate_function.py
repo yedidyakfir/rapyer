@@ -3,6 +3,11 @@ import pytest
 from rapyer import RedisStr
 from tests.models.inheritance_types import AdminUserModel
 from tests.models.pickle_types import ModelWithUnserializableFields
+from tests.models.complex_types import (
+    OuterModelWithRedisNested,
+    ContainerModel,
+    InnerRedisModel,
+)
 
 
 @pytest.mark.asyncio
@@ -137,3 +142,38 @@ async def test_aupdate_function__update_non_redis_supported_types__values_serial
     # Check updated field - sets and types should be preserved through serialization
     assert loaded_instance.model_type == RedisStr
     assert loaded_instance.python_type == int
+
+
+@pytest.mark.asyncio
+async def test_aupdate_function__update_nested_model__nested_values_updated_and_other_fields_unchanged_sanity():
+    # Arrange
+    inner_redis = InnerRedisModel(
+        tags=["tag1", "tag2"], metadata={"key1": "value1"}, counter=5
+    )
+    container = ContainerModel(inner_redis=inner_redis, description="test container")
+    instance = OuterModelWithRedisNested(container=container, outer_data=[1, 2, 3])
+    await instance.save()
+    original_data = instance.model_dump()
+
+    # Act
+    await instance.container.inner_redis.aupdate(
+        tags=["updated1", "updated2"], counter=15
+    )
+
+    # Assert
+    loaded_instance = await OuterModelWithRedisNested.get(instance.key)
+    # Check the updated inner redis model fields
+    assert loaded_instance.container.inner_redis.tags == ["updated1", "updated2"]
+    assert loaded_instance.container.inner_redis.counter == 15
+    # Check unchanged inner redis model fields
+    original_instance = OuterModelWithRedisNested(**original_data)
+    assert (
+        loaded_instance.container.inner_redis.metadata
+        == original_instance.container.inner_redis.metadata
+    )
+    # Check unchanged container fields
+    assert (
+        loaded_instance.container.description == original_instance.container.description
+    )
+    # Check unchanged outer model fields
+    assert loaded_instance.outer_data == original_instance.outer_data
