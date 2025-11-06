@@ -1,7 +1,7 @@
 """Redis Pydantic - Pydantic models with Redis as the backend."""
 
 from rapyer.base import AtomicRedisModel
-from rapyer.init import init_rapyer
+from rapyer.init import init_rapyer, teardown_rapyer
 from rapyer.types.byte import RedisBytes
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
@@ -17,4 +17,5 @@ __all__ = [
     "RedisList",
     "RedisDict",
     "init_rapyer",
+    "teardown_rapyer",
 ]
