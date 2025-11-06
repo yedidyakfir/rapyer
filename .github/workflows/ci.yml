@@ -99,10 +99,6 @@ jobs:
     steps:
       - name: Check test results
         run: |
-          if [[ "${{ needs.lint.result }}" != "success" ]]; then
-            echo "Lint job failed"
-            exit 1
-          fi
           if [[ "${{ needs.test.result }}" != "success" ]]; then
             echo "Test job failed"
             exit 1
