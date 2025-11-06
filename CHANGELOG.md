@@ -15,6 +15,10 @@
   - Uses Redis JSON path operations for efficient field-only updates
   - All field updates in a single aupdate call are atomic
 
+### 🐛 Fixed
+
+- **Redis Type Override Bug**: Fixed a bug that overrode the Redis type in lock and pipeline operations
+
 ### ⚠️ Compatibility Notice
 
 - **Pydantic Version Constraint**: This version supports Pydantic up to 2.12.0 due to internal logic changes in newer versions
