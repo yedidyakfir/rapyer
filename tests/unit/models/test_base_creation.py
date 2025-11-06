@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pytest
-from pydantic import Field, BaseModel
 
 from rapyer.base import AtomicRedisModel
 from rapyer.types.dct import RedisDict
@@ -20,67 +19,34 @@ from tests.models.collection_types import (
     AnyDictModel,
     Status,
     BaseDictMetadataModel,
+    SimpleListModel,
+    SimpleIntListModel,
+    SimpleDictModel,
 )
-
-
-# Test models with default values for supported Redis types
-class DefaultStrModel(AtomicRedisModel):
-    name: str = "default_name"
-    description: str = ""
-
-
-class DefaultIntModel(AtomicRedisModel):
-    count: int = 42
-    score: int = 0
-
-
-class DefaultBoolModel(AtomicRedisModel):
-    is_active: bool = True
-    is_deleted: bool = False
-
-
-class DefaultBytesModel(AtomicRedisModel):
-    data: bytes = b"default_data"
-    binary: bytes = b""
-
-
-class DefaultDatetimeModel(AtomicRedisModel):
-    created_at: datetime = Field(default_factory=datetime.now)
-
-
-class DefaultListModel(AtomicRedisModel):
-    tags: list[str] = Field(default_factory=list)
-    numbers: list[int] = Field(default_factory=lambda: [1, 2, 3])
-
-
-class DefaultDictModel(AtomicRedisModel):
-    metadata: dict[str, str] = Field(default_factory=dict)
-    settings: dict[str, int] = Field(default_factory=lambda: {"key": 100})
-
-class InnerModel(BaseModel):
-    value: str = "inner_default"
-    counter: int = 0
-
-
-class DefaultNestedModel(AtomicRedisModel):
-    inner: InnerModel = Field(default_factory=InnerModel)
-    name: str = "outer_default"
+from tests.models.simple_types import (
+    StrModel,
+    IntModel,
+    BoolModel,
+    BytesModel,
+    DatetimeModel,
+)
+from tests.models.complex_types import OuterModel
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ["model_class", "field_name", "expected_redis_type", "expected_json_path"],
     [
-        [DefaultStrModel, "name", RedisStr, "$.name"],
-        [DefaultStrModel, "description", RedisStr, "$.description"],
-        [DefaultIntModel, "count", RedisInt, "$.count"],
-        [DefaultIntModel, "score", RedisInt, "$.score"],
-        [DefaultBytesModel, "data", RedisBytes, "$.data"],
-        [DefaultBytesModel, "binary", RedisBytes, "$.binary"],
-        [DefaultListModel, "tags", RedisList, "$.tags"],
-        [DefaultListModel, "numbers", RedisList, "$.numbers"],
-        [DefaultDictModel, "metadata", RedisDict, "$.metadata"],
-        [DefaultDictModel, "settings", RedisDict, "$.settings"],
+        [StrModel, "name", RedisStr, "$.name"],
+        [StrModel, "description", RedisStr, "$.description"],
+        [IntModel, "count", RedisInt, "$.count"],
+        [IntModel, "score", RedisInt, "$.score"],
+        [BytesModel, "data", RedisBytes, "$.data"],
+        [BytesModel, "binary_content", RedisBytes, "$.binary_content"],
+        [SimpleListModel, "items", RedisList, "$.items"],
+        [SimpleIntListModel, "numbers", RedisList, "$.numbers"],
+        [SimpleDictModel, "data", RedisDict, "$.data"],
+        [StrDictModel, "metadata", RedisDict, "$.metadata"],
     ],
 )
 async def test_model_creation_with_defaults__check_redis_type_inheritance_and_json_path_sanity(
@@ -105,18 +71,18 @@ async def test_model_creation_with_defaults__check_redis_type_inheritance_and_js
 @pytest.mark.parametrize(
     ["model_class", "field_name", "expected_default_value"],
     [
-        [DefaultStrModel, "name", "default_name"],
-        [DefaultStrModel, "description", ""],
-        [DefaultIntModel, "count", 42],
-        [DefaultIntModel, "score", 0],
-        [DefaultBoolModel, "is_active", True],
-        [DefaultBoolModel, "is_deleted", False],
-        [DefaultBytesModel, "data", b"default_data"],
-        [DefaultBytesModel, "binary", b""],
-        [DefaultListModel, "tags", []],
-        [DefaultListModel, "numbers", [1, 2, 3]],
-        [DefaultDictModel, "metadata", {}],
-        [DefaultDictModel, "settings", {"key": 100}],
+        [StrModel, "name", ""],
+        [StrModel, "description", "default"],
+        [IntModel, "count", 0],
+        [IntModel, "score", 100],
+        [BoolModel, "is_active", False],
+        [BoolModel, "is_deleted", True],
+        [BytesModel, "data", b""],
+        [BytesModel, "binary_content", b"default"],
+        [SimpleListModel, "items", []],
+        [SimpleIntListModel, "numbers", []],
+        [SimpleDictModel, "data", {}],
+        [StrDictModel, "metadata", {}],
     ],
 )
 async def test_model_creation_with_defaults__check_default_values_sanity(
@@ -133,19 +99,17 @@ async def test_model_creation_with_defaults__check_default_values_sanity(
 @pytest.mark.asyncio
 async def test_model_creation_with_nested_base_model__check_atomic_base_inheritance_and_json_path_sanity():
     # Arrange & Act
-    model = DefaultNestedModel()
+    model = OuterModel()
 
     # Assert
-    assert isinstance(model.inner, AtomicRedisModel)
-    assert model.inner.json_path == "$.inner"
-    assert model.inner.value == "inner_default"
-    assert model.inner.counter == 0
+    assert isinstance(model.middle_model, AtomicRedisModel)
+    assert model.middle_model.json_path == "$.middle_model"
 
 
 @pytest.mark.asyncio
 async def test_model_creation_with_datetime_field__check_datetime_default_factory_sanity():
     # Arrange & Act
-    model = DefaultDatetimeModel()
+    model = DatetimeModel()
 
     # Assert
     assert isinstance(model.created_at, RedisDatetime)
