@@ -168,3 +168,41 @@ await user.save()
 ```
 
 **Benefits**: Prevents premature deletion of active models, better cache behavior for frequently accessed data, configurable per-model basis
+
+## Unique Data Structure Support
+
+**Goal**: Add support for specialized data structures like priority queues, counters, bloom filters, and other advanced Redis-backed collections
+
+### Tasks
+- [ ] **Priority Queue**: Implement Redis-backed priority queue using sorted sets with customizable priority logic
+- [ ] **Counter**: Thread-safe counter with atomic increment/decrement operations  
+- [ ] **Bloom Filter**: Probabilistic data structure for membership testing
+- [ ] **Rate Limiter**: Token bucket or sliding window rate limiting
+- [ ] **Circular Buffer**: Fixed-size buffer with automatic overwrite behavior
+- [ ] **Type Registry**: System to register and discover custom data structure types
+- [ ] **Serialization Strategy**: Pluggable serialization for complex priority/value types
+
+### Example Usage
+```python
+class TaskQueue(AtomicRedisModel):
+    pending_tasks: RedisPriorityQueue[Task, int]  # Task objects with int priority
+    request_counter: RedisCounter
+    user_filter: RedisBloomFilter[str]  # String membership testing
+    
+    class Config:
+        priority_queue_order = "min"  # or "max" for max-heap behavior
+
+# Priority queue operations
+await queue.pending_tasks.push(task, priority=5)
+high_priority_task = await queue.pending_tasks.pop()  # Returns highest priority
+
+# Counter operations  
+await queue.request_counter.increment(5)
+current_count = await queue.request_counter.get()
+
+# Bloom filter operations
+await queue.user_filter.add("user123")
+exists = await queue.user_filter.contains("user123")  # True/False with probability
+```
+
+**Benefits**: Support for advanced use cases, better performance for specialized operations, extensible type system for custom data structures
