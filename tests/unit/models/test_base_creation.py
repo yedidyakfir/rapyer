@@ -3,13 +3,13 @@ from datetime import datetime
 import pytest
 
 from rapyer.base import AtomicRedisModel
-from rapyer.types.dct import RedisDict
-from rapyer.types.lst import RedisList
-from rapyer.types.string import RedisStr
-from rapyer.types.integer import RedisInt
+from rapyer.types.base import RedisType
 from rapyer.types.byte import RedisBytes
 from rapyer.types.datetime import RedisDatetime
-from rapyer.types.base import RedisType
+from rapyer.types.dct import RedisDict
+from rapyer.types.integer import RedisInt
+from rapyer.types.lst import RedisList
+from rapyer.types.string import RedisStr
 from tests.models.collection_types import (
     IntDictModel,
     StrDictModel,
@@ -23,6 +23,7 @@ from tests.models.collection_types import (
     SimpleIntListModel,
     SimpleDictModel,
 )
+from tests.models.complex_types import OuterModel
 from tests.models.simple_types import (
     StrModel,
     IntModel,
@@ -30,7 +31,6 @@ from tests.models.simple_types import (
     BytesModel,
     DatetimeModel,
 )
-from tests.models.complex_types import OuterModel
 
 
 @pytest.mark.asyncio

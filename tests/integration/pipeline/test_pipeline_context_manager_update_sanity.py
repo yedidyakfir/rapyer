@@ -21,15 +21,21 @@ async def test_pipeline_context_manager_updates_model_with_new_data_sanity():
     async with original_model.pipeline() as pipelined_model:
         assert isinstance(original_model.name, RedisStr)
         assert isinstance(pipelined_model.name, RedisStr)
-        assert pipelined_model.name.json_path == original_model.name.json_path == "$.name"
+        assert (
+            pipelined_model.name.json_path == original_model.name.json_path == "$.name"
+        )
         assert pipelined_model.name == "updated_name" == original_model.name
         assert isinstance(original_model.value, RedisInt)
         assert isinstance(pipelined_model.value, RedisInt)
         assert (
-            pipelined_model.value.json_path == original_model.value.json_path == "$.value"
+            pipelined_model.value.json_path
+            == original_model.value.json_path
+            == "$.value"
         )
         assert pipelined_model.value == 100 == original_model.value
         assert isinstance(original_model.tags, RedisList)
         assert isinstance(pipelined_model.tags, RedisList)
-        assert pipelined_model.tags.json_path == original_model.tags.json_path == "$.tags"
+        assert (
+            pipelined_model.tags.json_path == original_model.tags.json_path == "$.tags"
+        )
         assert pipelined_model.tags == ["tag1", "tag2"] == original_model.tags

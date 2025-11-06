@@ -1,13 +1,13 @@
 import pytest
 
 from rapyer import RedisStr
-from tests.models.inheritance_types import AdminUserModel
-from tests.models.pickle_types import ModelWithUnserializableFields
 from tests.models.complex_types import (
     OuterModelWithRedisNested,
     ContainerModel,
     InnerRedisModel,
 )
+from tests.models.inheritance_types import AdminUserModel
+from tests.models.pickle_types import ModelWithUnserializableFields
 
 
 @pytest.mark.asyncio
