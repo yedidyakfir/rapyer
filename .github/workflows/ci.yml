@@ -41,37 +41,21 @@ jobs:
     - name: Check code formatting with black
       run: poetry run black --check --diff .
 
+
   test:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+        pydantic-version: ["2.11"]
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
-    
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-    
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-    
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-    
-    - name: Install project
-      run: poetry install --no-interaction
+        python-version: ${{ matrix.python-version }}
     
     - name: Start Redis
       run: |
@@ -84,26 +68,40 @@ jobs:
         for i in {1..30}; do
           if docker exec $(docker ps -q --filter "name=redis") redis-cli ping > /dev/null 2>&1; then
             echo "Redis is ready!"
-            break
+            exit 0
           fi
           echo "Waiting for Redis... ($i/30)"
           sleep 2
         done
-        
-        # Verify Redis is responsive
-        docker exec $(docker ps -q --filter "name=redis") redis-cli ping
+        exit 1
     
-    - name: Run tests with coverage
+    - name: Install tox and tox-gh-actions
       run: |
-        poetry run pytest --cov=rapyer --cov-report=xml --cov-report=html --cov-report=term
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        python -m pip install --upgrade pip
+        pip install tox tox-gh-actions
+    
+    - name: Run tests with tox
+      env:
+        REDIS_DB: ${{ strategy.job-index }}
+      run: tox
     
     - name: Stop Redis
       if: always()
       run: |
         cd tests/integration
         docker compose -f docker-compose.redis.yml down
+
+
+  test-results:
+    runs-on: ubuntu-22.04
+    needs: [test]
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "Test job failed"
+            exit 1
+          fi
+          echo "All tests passed successfully!"
+

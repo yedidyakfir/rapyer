@@ -30,7 +30,7 @@ from rapyer.utils.fields import (
     find_first_type_in_annotation,
     convert_field_factory_type,
 )
-from rapyer.utils.redis import acquire_lock
+from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
 
 
 def make_pickle_field_serializer(field: str):
@@ -197,6 +197,28 @@ class AtomicRedisModel(BaseModel):
         await asyncio.gather(*[model.save() for model in duplicated_models])
         return duplicated_models
 
+    def update(self, **kwargs):
+        for field_name, value in kwargs.items():
+            setattr(self, field_name, value)
+
+    async def aupdate(self, **kwargs):
+        self.update(**kwargs)
+
+        # Only serialize the updated fields using the include parameters
+        serialized_fields = self.model_dump(
+            mode="json",
+            context={REDIS_DUMP_FLAG_NAME: True},
+            include=set(kwargs.keys()),
+        )
+        json_path_kwargs = {
+            f"{self.json_path}.{field_name}": serialized_fields[field_name]
+            for field_name in kwargs.keys()
+        }
+
+        async with self.Meta.redis.pipeline() as pipe:
+            update_keys_in_pipeline(pipe, self.key, **json_path_kwargs)
+            await pipe.execute()
+
     @classmethod
     async def get(cls, key: str) -> Self:
         model_dump = await cls.Meta.redis.json().get(key, "$")
@@ -247,7 +269,10 @@ class AtomicRedisModel(BaseModel):
         self, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with self.lock_from_key(self.key, action, save_at_end) as redis_model:
-            self.__dict__.update(redis_model.model_dump(exclude_unset=True))
+            unset_fields = {
+                k: redis_model.__dict__[k] for k in redis_model.model_fields_set
+            }
+            self.__dict__.update(unset_fields)
             yield redis_model
 
     @contextlib.asynccontextmanager
@@ -257,7 +282,10 @@ class AtomicRedisModel(BaseModel):
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.get(self.key)
-                self.__dict__.update(redis_model.model_dump(exclude_unset=True))
+                unset_fields = {
+                    k: redis_model.__dict__[k] for k in redis_model.model_fields_set
+                }
+                self.__dict__.update(unset_fields)
             except (TypeError, IndexError):
                 if ignore_if_deleted:
                     redis_model = self

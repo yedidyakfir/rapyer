@@ -1,7 +1,7 @@
 import pytest
 
-from tests.models.specialized import UserModel
 from tests.models.complex_types import OuterModelWithRedisNested
+from tests.models.specialized import UserModel
 
 
 @pytest.mark.asyncio

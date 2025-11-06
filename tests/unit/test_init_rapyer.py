@@ -55,7 +55,9 @@ def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_models):
     init_rapyer(connection_string)
 
     # Assert
-    mock_from_url.assert_called_once_with(connection_string, decode_responses=True)
+    mock_from_url.assert_called_once_with(
+        connection_string, decode_responses=True, max_connection=20
+    )
     for model in redis_models:
         assert model.Meta.redis is mock_redis_client
 

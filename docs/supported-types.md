@@ -312,6 +312,53 @@ app.config = CustomConfig(debug=False, timeout=120)
 await app.config.save()
 ```
 
+### BaseModel (Nested Models)
+
+**Operations:**
+- `save()` - Save to Redis
+- `load()` - Load from Redis
+- `aupdate(**kwargs)` - Atomically update multiple fields
+- `update(**kwargs)` - Update multiple fields (non-atomic)
+- `duplicate()` - Create a copy
+- `delete()` - Delete from Redis
+
+```python
+class UserProfile(AtomicRedisModel):
+    first_name: str
+    last_name: str
+    email: str
+
+class User(AtomicRedisModel):
+    username: str
+    profile: UserProfile
+    is_active: bool = True
+
+user = User(
+    username="johndoe",
+    profile=UserProfile(
+        first_name="John",
+        last_name="Doe", 
+        email="john@example.com"
+    )
+)
+await user.save()
+
+# Update nested model fields atomically
+await user.profile.aupdate(
+    first_name="Jonathan",
+    email="jonathan@example.com"
+)
+
+# Update entire nested model
+new_profile = UserProfile(
+    first_name="Jane",
+    last_name="Smith",
+    email="jane@example.com"
+)
+user.profile = new_profile
+await user.profile.save()
+```
+
 ## Generic Types with Type Parameters
 
 Rapyer fully supports generic types with proper type checking:
@@ -403,6 +450,7 @@ await user.load()  # Syncs all fields from Redis
 | `datetime` | Native | `save()`, `load()` | Direct | - |
 | `List[T]` | Native | All list atomic ops | Index assignment | `aappend()`, `aextend()`, etc. |
 | `Dict[K,V]` | Native | All dict atomic ops | Key assignment | `aupdate()`, `aset_item()`, etc. |
+| `BaseModel` | Native | `save()`, `load()`, `aupdate()`, `update()` | Direct | `aupdate()` |
 | Custom Types | Serialized | `save()`, `load()` | Direct | - |
 
 ## Performance Considerations

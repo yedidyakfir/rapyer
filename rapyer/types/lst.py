@@ -34,7 +34,7 @@ class RedisList(list, GenericRedisType[T]):
 
     def __iadd__(self, other):
         self.extend(other)
-        if self.pipeline:
+        if self.pipeline and other:
             self.pipeline.json().arrappend(self.key, self.json_path, *other)
         return self
 
@@ -46,7 +46,7 @@ class RedisList(list, GenericRedisType[T]):
         return super().append(new_val)
 
     def extend(self, new_lst):
-        if self.pipeline:
+        if self.pipeline and new_lst:
             self.pipeline.json().arrappend(self.key, self.json_path, *new_lst)
         new_keys = range(len(self), len(self) + len(new_lst))
         new_vals = self.create_new_values(list(new_keys), new_lst)
