@@ -211,7 +211,7 @@ class AtomicRedisModel(BaseModel):
             include=set(kwargs.keys()),
         )
         json_path_kwargs = {
-            f"$.{field_name}": serialized_fields[field_name]
+            f"{self.json_path}.{field_name}": serialized_fields[field_name]
             for field_name in kwargs.keys()
         }
 
