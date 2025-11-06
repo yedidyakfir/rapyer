@@ -18,6 +18,7 @@
 ### 🐛 Fixed
 
 - **Redis Type Override Bug**: Fixed a bug that overrode the Redis type in lock and pipeline operations
+- **Redis List Bug**: Fixed a bug for extending an empty list
 
 ### ⚠️ Compatibility Notice
 
