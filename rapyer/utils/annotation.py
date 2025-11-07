@@ -6,6 +6,10 @@ from typing import get_origin, Union, get_args, Any, Annotated
 
 class TypeConverter(ABC):
     @abc.abstractmethod
+    def is_annotation_support(self, type_to_check: type) -> bool:
+        pass
+
+    @abc.abstractmethod
     def is_type_support(self, type_to_check: type) -> bool:
         pass
 

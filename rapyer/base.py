@@ -1,8 +1,5 @@
 import asyncio
-import base64
 import contextlib
-import functools
-import pickle
 import uuid
 from typing import Self, ClassVar, Any, AsyncGenerator
 
@@ -10,56 +7,21 @@ from pydantic import (
     BaseModel,
     PrivateAttr,
     ConfigDict,
-    TypeAdapter,
     model_validator,
-    field_serializer,
-    field_validator,
 )
-from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined
-from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
 
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
+from rapyer.meta import RapyerMeta
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
-from rapyer.types.convert import RedisConverter
-from rapyer.utils.annotation import replace_to_redis_types_in_annotation
 from rapyer.utils.fields import (
     get_all_pydantic_annotation,
-    find_first_type_in_annotation,
-    convert_field_factory_type,
 )
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
 
 
-def make_pickle_field_serializer(field: str):
-    @field_serializer(field, when_used="json-unless-none")
-    def pickle_field_serializer(v, info: FieldSerializationInfo):
-        ctx = info.context or {}
-        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME, False)
-        if should_serialize_redis:
-            return base64.b64encode(pickle.dumps(v)).decode("utf-8")
-        return v
-
-    pickle_field_serializer.__name__ = f"__serialize_{field}"
-
-    @field_validator(field, mode="before")
-    def pickle_field_validator(v, info: ValidationInfo):
-        if v is None:
-            return v
-        ctx = info.context or {}
-        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME, False)
-        if should_serialize_redis:
-            return pickle.loads(base64.b64decode(v))
-        return v
-
-    pickle_field_validator.__name__ = f"__deserialize_{field}"
-
-    return pickle_field_serializer, pickle_field_validator
-
-
-class AtomicRedisModel(BaseModel):
+class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     _base_model_link: Self | RedisType = PrivateAttr(default=None)
 
@@ -112,61 +74,7 @@ class AtomicRedisModel(BaseModel):
         return f"{self.key_initials}:{self.pk}"
 
     def __init_subclass__(cls, **kwargs):
-        # Redefine annotations to use redis types
-        pydantic_annotation = get_all_pydantic_annotation(cls, AtomicRedisModel)
-        new_annotation = {
-            field_name: field.annotation
-            for field_name, field in pydantic_annotation.items()
-        }
-        original_annotations = cls.__annotations__.copy()
-        original_annotations.update(new_annotation)
-        new_annotations = {
-            field_name: replace_to_redis_types_in_annotation(
-                annotation, RedisConverter(cls.Meta.redis_type, f".{field_name}")
-            )
-            for field_name, annotation in original_annotations.items()
-        }
-        cls.__annotations__.update(new_annotations)
-        for field_name, field in pydantic_annotation.items():
-            setattr(cls, field_name, field)
         super().__init_subclass__(**kwargs)
-
-        # Set new default values if needed
-        for attr_name, attr_type in cls.__annotations__.items():
-            if original_annotations[attr_name] == attr_type:
-                serializer, validator = make_pickle_field_serializer(attr_name)
-                setattr(cls, serializer.__name__, serializer)
-                setattr(cls, validator.__name__, validator)
-                continue
-            value = getattr(cls, attr_name, None)
-            if value is None:
-                continue
-
-            real_type = find_first_type_in_annotation(attr_type)
-
-            if isinstance(value, real_type):
-                continue
-            redis_type = cls.__annotations__[attr_name]
-            redis_type: type[RedisType]
-            adapter = TypeAdapter(redis_type)
-
-            # Handle Field(default=...)
-            if isinstance(value, FieldInfo):
-                if value.default != PydanticUndefined:
-                    value.default = adapter.validate_python(value.default)
-                elif value.default_factory != PydanticUndefined and callable(
-                    value.default_factory
-                ):
-                    test_value = value.default_factory()
-                    if isinstance(test_value, real_type):
-                        continue
-                    original_factory = value.default_factory
-                    validate_from_adapter = functools.partial(
-                        convert_field_factory_type, original_factory, adapter
-                    )
-                    value.default_factory = validate_from_adapter
-            else:
-                setattr(cls, attr_name, adapter.validate_python(value))
 
         # Update the redis model list for initialization
         REDIS_MODELS.append(cls)
