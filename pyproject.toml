@@ -46,7 +46,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "redis[async]>=6.4.0, <6.5.0",
+    "redis[async]>=6.0.0, <7.1.0",
     "pydantic>=2.11.0, <2.12.0",
 ]
 
@@ -60,8 +60,6 @@ Repository = "https://github.com/yedidyakfir/rapyer"
 
 [tool.poetry]
 packages = [{include = "rapyer"}]
-
-
 
 
 [tool.poetry.group.dev.dependencies]
