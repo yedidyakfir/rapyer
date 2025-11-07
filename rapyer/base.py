@@ -15,9 +15,6 @@ from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
 from rapyer.meta import RapyerMeta
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
-from rapyer.utils.fields import (
-    get_all_pydantic_annotation,
-)
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
 
 
@@ -27,7 +24,7 @@ class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
 
     Meta: ClassVar[RedisConfig] = RedisConfig()
     _field_name: str = PrivateAttr(default="")
-    model_config = ConfigDict(validate_assignment=True)
+    model_config = ConfigDict(validate_assignment=True, validate_default=True)
 
     @property
     def pk(self):
