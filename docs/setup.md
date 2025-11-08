@@ -62,7 +62,7 @@ Set up your Redis connection in your application:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # Configure Redis connection
 redis_client = redis.Redis(
@@ -72,13 +72,13 @@ redis_client = redis.Redis(
     decode_responses=True  # IMPORTANT: Set to True to prevent typing errors
 )
 
-# Set the global Redis client for your models
+# Define your model
 class User(AtomicRedisModel):
     name: str
     age: int
-    
-    class Meta:
-        redis = redis_client
+
+# Set the Redis client for your model after class declaration
+User.Meta.redis = redis_client
 ```
 
 ### Using Redis URL
@@ -87,7 +87,7 @@ For production environments, use connection URLs:
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # From URL (supports redis://, rediss://, unix://)
 redis_client = redis.from_url(
@@ -97,9 +97,9 @@ redis_client = redis.from_url(
 
 class User(AtomicRedisModel):
     name: str
-    
-    class Meta:
-        redis = redis_client  # This is the default option with no user initialization
+
+# Set the Redis client after class declaration
+User.Meta.redis = redis_client
 ```
 
 ### Environment Variables
@@ -109,7 +109,7 @@ For different environments, use environment variables:
 ```python
 import os
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 redis_client = redis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379/0"),
@@ -118,9 +118,48 @@ redis_client = redis.from_url(
 
 class User(AtomicRedisModel):
     name: str
-    
-    class Meta:
-        redis = redis_client
+
+# Set the Redis client after class declaration
+User.Meta.redis = redis_client
+```
+
+### Using init_rapyer for Global Configuration
+
+For applications with multiple models, use `init_rapyer` to configure all models at once:
+
+```python
+import redis.asyncio as redis
+from rapyer import AtomicRedisModel, init_rapyer
+
+# Define your models first
+class User(AtomicRedisModel):
+    name: str
+    age: int
+
+class Session(AtomicRedisModel):
+    user_id: str
+    data: dict = {}
+
+class Product(AtomicRedisModel):
+    name: str
+    price: float
+
+# Initialize all models with a Redis client and optional TTL
+redis_client = redis.Redis(
+    host='localhost',
+    port=6379,
+    db=0,
+    decode_responses=True  # IMPORTANT: Set to True to prevent typing errors
+)
+
+# This will set a Redis client for ALL AtomicRedisModel classes
+init_rapyer(redis=redis_client)
+
+# Or use a Redis URL string
+init_rapyer(redis="redis://localhost:6379/0")
+
+# Or set both Redis client and TTL for all models
+init_rapyer(redis=redis_client, ttl=3600)  # 1 hour TTL for all models
 ```
 
 ### Advanced Configuration
@@ -129,7 +168,7 @@ class User(AtomicRedisModel):
 
 ```python
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # Custom connection pool
 pool = redis.ConnectionPool.from_url(
@@ -142,9 +181,9 @@ redis_client = redis.Redis(connection_pool=pool)
 
 class User(AtomicRedisModel):
     name: str
-    
-    class Meta:
-        redis = redis_client
+
+# Set the Redis client after class declaration
+User.Meta.redis = redis_client
 ```
 
 #### TTL (Time To Live)
@@ -152,15 +191,15 @@ class User(AtomicRedisModel):
 Set automatic expiration for your models:
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 class Session(AtomicRedisModel):
     user_id: str
     data: dict = {}
-    
-    class Meta:
-        redis = redis_client
-        ttl = 3600  # Expire after 1 hour
+
+# Set Redis client and TTL after class declaration
+Session.Meta.redis = redis_client
+Session.Meta.ttl = 3600  # Expire after 1 hour
 ```
 
 ## Verification
@@ -170,7 +209,7 @@ Test your setup with this simple script:
 ```python
 import asyncio
 import redis.asyncio as redis
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 # Setup Redis client
 redis_client = redis.Redis(
@@ -182,9 +221,9 @@ redis_client = redis.Redis(
 
 class TestModel(AtomicRedisModel):
     message: str
-    
-    class Meta:
-        redis = redis_client
+
+# Set Redis client after class declaration
+TestModel.Meta.redis = redis_client
 
 async def test_setup():
     try:

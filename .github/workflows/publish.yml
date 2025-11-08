@@ -25,8 +25,119 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
 
-  publish:
+  coverage:
     needs: check-tests
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Start Redis
+      run: |
+        cd tests/integration
+        docker compose -f docker-compose.redis.yml up -d
+    
+    - name: Wait for Redis to be ready
+      run: |
+        echo "Waiting for Redis to be ready..."
+        for i in {1..30}; do
+          if docker exec $(docker ps -q --filter "name=redis") redis-cli ping > /dev/null 2>&1; then
+            echo "Redis is ready!"
+            exit 0
+          fi
+          echo "Waiting for Redis... ($i/30)"
+          sleep 2
+        done
+        exit 1
+    
+    - name: Install tox
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
+    
+    - name: Run coverage
+      run: tox -e coverage
+    
+    - name: Stop Redis
+      if: always()
+      run: |
+        cd tests/integration
+        docker compose -f docker-compose.redis.yml down
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  create-github-release:
+    needs: coverage
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write  # Required for creating releases
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Extract version from pyproject.toml
+      id: version
+      run: |
+        VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        TAG=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION from pyproject.toml"
+        echo "Git tag: $TAG"
+    
+    - name: Extract release notes
+      id: release_notes
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        
+        # Check if changelog exists
+        if [ ! -f "CHANGELOG.md" ]; then
+          echo "Error: CHANGELOG.md not found"
+          exit 1
+        fi
+        
+        # Extract release notes for this version
+        RELEASE_NOTES=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+        
+        # Check if release notes were found
+        if [ -z "$RELEASE_NOTES" ]; then
+          echo "Error: No release notes found for version $VERSION in CHANGELOG.md"
+          echo "Please add release notes for version $VERSION before creating a release"
+          exit 1
+        fi
+        
+        # Save release notes to file and output
+        echo "$RELEASE_NOTES" > release_notes.md
+        echo "Release notes extracted for version $VERSION"
+        
+        # Create multiline output
+        {
+          echo 'notes<<EOF'
+          echo "$RELEASE_NOTES"
+          echo EOF
+        } >> $GITHUB_OUTPUT
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        release_name: ${{ steps.version.outputs.version }} - $(date +%Y-%m-%d)
+        body: ${{ steps.release_notes.outputs.notes }}
+        draft: false
+        prerelease: false
+
+  publish:
+    needs: create-github-release
     runs-on: ubuntu-22.04
     permissions:
       id-token: write  # Required for trusted publishing

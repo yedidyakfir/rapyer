@@ -139,35 +139,6 @@ values = await model.extract_fields([
 
 **Benefits**: Simplified nested data access, improved developer experience, efficient field-specific operations
 
-## Selective Field Updates in BaseModel
-
-**Goal**: Enable direct field updates in Redis without loading the entire model, using an `aupdate()` method.
-This way fields that are not redis-supported will be able to perform atomic actions like we can do on list and dict items (with aset_item)
-
-### Tasks
-- [ ] **aupdate() Method**: Implement `model.aupdate(field1="value", field2=123)` for selective field updates
-- [ ] **Type Safety**: Maintain field type validation during updates
-- [ ] **Redis Optimization**: Use Redis JSON path operations for efficient field-only updates
-- [ ] **Class Field Access**: Support `model.aupdate(ModelClass.field1="value")` syntax for better IDE support
-- [ ] **Atomic Updates**: Ensure all field updates in single aupdate call are atomic
-- [ ] **Nested Field Updates**: Support updating nested model fields efficiently
-
-### Example Usage
-```python
-# Basic field updates
-await user.aupdate(name="John Doe", age=25)
-
-# Using class field references for better IDE support
-await user.aupdate(User.name="John Doe", User.age=25)
-
-# Mixed syntax
-await user.aupdate(name="John Doe", User.age=25)
-
-# Nested field updates
-await user.aupdate(profile__address__city="New York")
-```
-
-**Benefits**: Reduced Redis bandwidth, improved performance for partial updates, better developer experience for field-specific operations
 
 ## TTL Postponement on Model Usage
 
@@ -197,3 +168,41 @@ await user.save()
 ```
 
 **Benefits**: Prevents premature deletion of active models, better cache behavior for frequently accessed data, configurable per-model basis
+
+## Unique Data Structure Support
+
+**Goal**: Add support for specialized data structures like priority queues, counters, bloom filters, and other advanced Redis-backed collections
+
+### Tasks
+- [ ] **Priority Queue**: Implement Redis-backed priority queue using sorted sets with customizable priority logic
+- [ ] **Counter**: Thread-safe counter with atomic increment/decrement operations  
+- [ ] **Bloom Filter**: Probabilistic data structure for membership testing
+- [ ] **Rate Limiter**: Token bucket or sliding window rate limiting
+- [ ] **Circular Buffer**: Fixed-size buffer with automatic overwrite behavior
+- [ ] **Type Registry**: System to register and discover custom data structure types
+- [ ] **Serialization Strategy**: Pluggable serialization for complex priority/value types
+
+### Example Usage
+```python
+class TaskQueue(AtomicRedisModel):
+    pending_tasks: RedisPriorityQueue[Task, int]  # Task objects with int priority
+    request_counter: RedisCounter
+    user_filter: RedisBloomFilter[str]  # String membership testing
+    
+    class Config:
+        priority_queue_order = "min"  # or "max" for max-heap behavior
+
+# Priority queue operations
+await queue.pending_tasks.push(task, priority=5)
+high_priority_task = await queue.pending_tasks.pop()  # Returns highest priority
+
+# Counter operations  
+await queue.request_counter.increment(5)
+current_count = await queue.request_counter.get()
+
+# Bloom filter operations
+await queue.user_filter.add("user123")
+exists = await queue.user_filter.contains("user123")  # True/False with probability
+```
+
+**Benefits**: Support for advanced use cases, better performance for specialized operations, extensible type system for custom data structures

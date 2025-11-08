@@ -26,11 +26,11 @@ from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
 from rapyer.utils.annotation import replace_to_redis_types_in_annotation
 from rapyer.utils.fields import (
-    get_all_annotations,
+    get_all_pydantic_annotation,
     find_first_type_in_annotation,
     convert_field_factory_type,
 )
-from rapyer.utils.redis import acquire_lock
+from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
 
 
 def make_pickle_field_serializer(field: str):
@@ -112,18 +112,26 @@ class AtomicRedisModel(BaseModel):
         return f"{self.key_initials}:{self.pk}"
 
     def __init_subclass__(cls, **kwargs):
-        original_annotations = get_all_annotations(
-            cls, exclude_classes=[AtomicRedisModel]
-        )
+        # Redefine annotations to use redis types
+        pydantic_annotation = get_all_pydantic_annotation(cls, AtomicRedisModel)
+        new_annotation = {
+            field_name: field.annotation
+            for field_name, field in pydantic_annotation.items()
+        }
+        original_annotations = cls.__annotations__.copy()
+        original_annotations.update(new_annotation)
         new_annotations = {
             field_name: replace_to_redis_types_in_annotation(
-                field_type, RedisConverter(cls.Meta.redis_type, f".{field_name}")
+                annotation, RedisConverter(cls.Meta.redis_type, f".{field_name}")
             )
-            for field_name, field_type in original_annotations.items()
+            for field_name, annotation in original_annotations.items()
         }
         cls.__annotations__.update(new_annotations)
+        for field_name, field in pydantic_annotation.items():
+            setattr(cls, field_name, field)
         super().__init_subclass__(**kwargs)
 
+        # Set new default values if needed
         for attr_name, attr_type in cls.__annotations__.items():
             if original_annotations[attr_name] == attr_type:
                 serializer, validator = make_pickle_field_serializer(attr_name)
@@ -160,8 +168,11 @@ class AtomicRedisModel(BaseModel):
             else:
                 setattr(cls, attr_name, adapter.validate_python(value))
 
-    def is_inner_model(self):
-        return self.field_name
+        # Update the redis model list for initialization
+        REDIS_MODELS.append(cls)
+
+    def is_inner_model(self) -> bool:
+        return bool(self.field_name)
 
     async def save(self) -> Self:
         model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
@@ -185,6 +196,28 @@ class AtomicRedisModel(BaseModel):
         duplicated_models = [self.__class__(**self.model_dump()) for _ in range(num)]
         await asyncio.gather(*[model.save() for model in duplicated_models])
         return duplicated_models
+
+    def update(self, **kwargs):
+        for field_name, value in kwargs.items():
+            setattr(self, field_name, value)
+
+    async def aupdate(self, **kwargs):
+        self.update(**kwargs)
+
+        # Only serialize the updated fields using the include parameters
+        serialized_fields = self.model_dump(
+            mode="json",
+            context={REDIS_DUMP_FLAG_NAME: True},
+            include=set(kwargs.keys()),
+        )
+        json_path_kwargs = {
+            f"{self.json_path}.{field_name}": serialized_fields[field_name]
+            for field_name in kwargs.keys()
+        }
+
+        async with self.Meta.redis.pipeline() as pipe:
+            update_keys_in_pipeline(pipe, self.key, **json_path_kwargs)
+            await pipe.execute()
 
     @classmethod
     async def get(cls, key: str) -> Self:
@@ -211,13 +244,14 @@ class AtomicRedisModel(BaseModel):
         return instance
 
     @classmethod
-    async def try_delete(cls, key: str) -> bool:
+    async def delete_by_key(cls, key: str) -> bool:
         client = _context_var.get() or cls.Meta.redis
         return await client.delete(key) == 1
 
     async def delete(self):
-        client = _context_var.get() or self.Meta.redis
-        return await client.delete(self.key)
+        if self.is_inner_model():
+            raise RuntimeError("Can only delete from inner model")
+        return await self.delete_by_key(self.key)
 
     @classmethod
     @contextlib.asynccontextmanager
@@ -235,7 +269,10 @@ class AtomicRedisModel(BaseModel):
         self, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with self.lock_from_key(self.key, action, save_at_end) as redis_model:
-            self.__dict__.update(redis_model.model_dump(exclude_unset=True))
+            unset_fields = {
+                k: redis_model.__dict__[k] for k in redis_model.model_fields_set
+            }
+            self.__dict__.update(unset_fields)
             yield redis_model
 
     @contextlib.asynccontextmanager
@@ -245,7 +282,10 @@ class AtomicRedisModel(BaseModel):
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.get(self.key)
-                self.__dict__.update(redis_model.model_dump(exclude_unset=True))
+                unset_fields = {
+                    k: redis_model.__dict__[k] for k in redis_model.model_fields_set
+                }
+                self.__dict__.update(unset_fields)
             except (TypeError, IndexError):
                 if ignore_if_deleted:
                     redis_model = self
@@ -291,3 +331,6 @@ class AtomicRedisModel(BaseModel):
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = self
         return self
+
+
+REDIS_MODELS: list[type[AtomicRedisModel]] = []

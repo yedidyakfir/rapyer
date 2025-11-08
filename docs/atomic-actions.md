@@ -24,7 +24,7 @@ The lock context manager ensures exclusive access to a model during complex oper
 ### Basic Locking
 
 ```python
-from rapyer.base import AtomicRedisModel
+from rapyer import AtomicRedisModel
 
 class BankAccount(AtomicRedisModel):
     balance: int = 0
@@ -200,6 +200,181 @@ async def safe_pipeline_update(user: User):
         await pipelined_user.metadata.aset_item("last_update", str(datetime.now()))
     
     # If ignore_if_deleted=False (default), would raise exception if user deleted
+```
+
+## Atomic Model Updates with `aupdate()`
+
+The `aupdate()` method provides atomic updates for multiple fields of a BaseModel in a single Redis operation, making it ideal for concurrent environments where partial updates could cause inconsistencies.
+
+### Basic Usage
+
+```python
+from rapyer import AtomicRedisModel
+
+class UserProfile(AtomicRedisModel):
+    first_name: str
+    last_name: str
+    email: str
+    age: int = 0
+    is_verified: bool = False
+
+# Update multiple fields atomically
+user = UserProfile(
+    first_name="John",
+    last_name="Doe", 
+    email="john@example.com",
+    age=25
+)
+await user.save()
+
+# Atomic update of multiple fields
+await user.aupdate(
+    first_name="Jonathan",
+    email="jonathan@example.com",
+    is_verified=True
+)
+```
+
+### Concurrency Safety
+
+`aupdate()` ensures that all field updates happen atomically, preventing race conditions:
+
+```python
+# ❌ Race condition prone (non-atomic approach)
+user.first_name = "Jonathan"
+await user.first_name.save()
+# Another process could modify the model here
+user.email = "jonathan@example.com"
+await user.email.save()
+
+# ✅ Atomic approach (race condition safe)
+await user.aupdate(
+    first_name="Jonathan",
+    email="jonathan@example.com"
+)
+# All changes happen atomically in a single Redis operation
+```
+
+### Performance Benefits
+
+`aupdate()` uses Redis JSON path operations to update only the specified fields, providing excellent performance:
+
+```python
+class GameCharacter(AtomicRedisModel):
+    name: str
+    level: int = 1
+    experience: int = 0
+    health: int = 100
+    mana: int = 50
+    inventory: Dict[str, int] = {}
+    stats: Dict[str, int] = {}
+
+character = GameCharacter(name="Warrior")
+await character.save()
+
+# Efficiently update only the fields that changed
+await character.aupdate(
+    level=15,
+    experience=8750,
+    health=150
+)
+# Only these 3 fields are updated in Redis, not the entire model
+```
+
+### Type Safety and Validation
+
+`aupdate()` maintains full Pydantic validation and type safety:
+
+```python
+class User(AtomicRedisModel):
+    username: str
+    age: int
+    email: str
+
+user = User(username="john", age=25, email="john@example.com")
+await user.save()
+
+# ✅ Valid update
+await user.aupdate(age=26, email="john.doe@example.com")
+
+# ❌ Type validation error - age must be int
+# await user.aupdate(age="twenty-six")  # Pydantic validation error
+
+# ❌ Unknown field error
+# await user.aupdate(invalid_field="value")  # Pydantic validation error
+```
+
+### Complex Field Updates
+
+`aupdate()` handles all supported Redis types, including complex serialized objects:
+
+```python
+from typing import Dict, List, Set
+from datetime import datetime
+
+class UserData(AtomicRedisModel):
+    preferences: Dict[str, str] = {}
+    tags: List[str] = []
+    metadata: Dict[str, any] = {}  # Complex serialized data
+    last_login: datetime = None
+
+user_data = UserData()
+await user_data.save()
+
+# Update complex fields atomically
+await user_data.aupdate(
+    preferences={"theme": "dark", "language": "en"},
+    tags=["premium", "verified"],
+    metadata={
+        "custom_set": {1, 2, 3},  # Set objects are serialized
+        "nested_data": {"key": [1, 2, 3]},
+        "custom_type": type(str)  # Type objects are serialized
+    },
+    last_login=datetime.now()
+)
+```
+
+### Nested Model Updates
+
+`aupdate()` works with nested AtomicRedisModel instances:
+
+```python
+class Address(AtomicRedisModel):
+    street: str
+    city: str
+    country: str = "USA"
+
+class User(AtomicRedisModel):
+    name: str
+    address: Address
+
+user = User(
+    name="John",
+    address=Address(street="123 Main St", city="Boston")
+)
+await user.save()
+
+# Update nested model fields atomically
+await user.address.aupdate(
+    street="456 Oak Avenue",
+    city="Cambridge"
+)
+# Only the address fields are updated, user.name remains unchanged
+```
+
+### Error Handling
+
+`aupdate()` operations are atomic - either all updates succeed or none are applied:
+
+```python
+try:
+    await user.aupdate(
+        valid_field="valid_value",
+        invalid_field="invalid_value"  # This field doesn't exist
+    )
+except ValidationError as e:
+    print("Validation failed - no fields were updated")
+    # The model state remains unchanged in Redis
 ```
 
 ## Advanced Concurrency Examples

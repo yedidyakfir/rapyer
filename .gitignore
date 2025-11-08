@@ -119,3 +119,5 @@ dmypy.json
 .secrets.*
 future-work
 .claude
+git-flow-plus.config
+CLAUDE.md

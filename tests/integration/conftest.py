@@ -1,3 +1,5 @@
+import os
+
 import pytest_asyncio
 
 import rapyer
@@ -46,6 +48,12 @@ from tests.models.functionality_types import (
     AllTypesModel,
 )
 
+# Inheritance types
+from tests.models.inheritance_types import BaseUserModel, AdminUserModel
+
+# Pickle types
+from tests.models.pickle_types import ModelWithUnserializableFields
+
 # Simple types
 from tests.models.simple_types import (
     IntModel,
@@ -64,14 +72,14 @@ from tests.models.simple_types import (
 # Specialized types
 from tests.models.specialized import UserModel
 
-# Pickle types
-from tests.models.pickle_types import ModelWithUnserializableFields
-
 
 @pytest_asyncio.fixture
 async def redis_client():
     meta_redis = rapyer.AtomicRedisModel.Meta.redis
-    redis = meta_redis.from_url("redis://localhost:6370/0", decode_responses=True)
+    db_num = os.getenv("REDIS_DB", "0")
+    redis = meta_redis.from_url(
+        f"redis://localhost:6370/{db_num}", decode_responses=True
+    )
     await redis.flushdb()
     yield redis
     await redis.flushdb()
@@ -129,6 +137,9 @@ async def real_redis_client(redis_client):
         UserModel,
         # Pickle types
         ModelWithUnserializableFields,
+        # Inheritance types
+        BaseUserModel,
+        AdminUserModel,
         # Complex types
         OuterModel,
         InnerRedisModel,

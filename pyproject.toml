@@ -2,33 +2,67 @@
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry]
+[project]
 name = "rapyer"
-version = "1.0.1"
+version = "1.0.2"
 description = "Pydantic models with Redis as the backend"
-authors = ["YedidyaHKfir <your.email@example.com>"]
+authors = [{name = "YedidyaHKfir", email = "yedidyakfir@gmail.com"}]
 readme = "README.md"
-license = "MIT"
-homepage = "https://github.com/YedidyaHKfir/rapyer"
-repository = "https://github.com/YedidyaHKfir/rapyer"
-documentation = "https://github.com/YedidyaHKfir/rapyer"
-packages = [{include = "rapyer"}]
-keywords = ["redis", "pydantic", "orm", "database", "async", "nosql", "cache", "key-value", "data-modeling", "python", "backend", "storage", "serialization", "validation"]
+license = {text = "MIT"}
+requires-python = ">=3.11,<4.0"
+keywords = [
+    "redis",
+    "redis-json",
+    "pydantic",
+    "pydantic-v2",
+    "orm",
+    "database",
+    "async",
+    "nosql",
+    "cache",
+    "key-value",
+    "data-modeling",
+    "python",
+    "backend",
+    "storage",
+    "serialization",
+    "validation"
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2",
+    "Framework :: AsyncIO",
     "Topic :: Database",
+    "Topic :: Database :: Database Engines/Servers",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "redis[async]>=6.4.0, <6.5.0",
+    "pydantic>=2.11.0, <2.12.0",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-redis = { version = ">=6.4.0", extras = ["async"] }
-pydantic = ">=2.11.9"
+[project.urls]
+Homepage = "https://yedidyakfir.github.io/rapyer/"
+Documentation = "https://yedidyakfir.github.io/rapyer/"
+Repository = "https://github.com/yedidyakfir/rapyer"
+"Source Code" = "https://github.com/yedidyakfir/rapyer"
+"Bug Tracker" = "https://github.com/yedidyakfir/rapyer/issues"
+"Changelog" = "https://github.com/yedidyakfir/rapyer/releases"
+
+[tool.poetry]
+packages = [{include = "rapyer"}]
+
+
+
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.9.0"
@@ -50,4 +84,3 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
 ]
-

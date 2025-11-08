@@ -37,7 +37,7 @@ async def test_redis_model_lock_with_concurrent_access_functionality():
     exit_mock = Mock()
 
     async def lock_and_modify(model_key: str, delay_seconds: int):
-        # Get fresh model instance
+        # Get a fresh model instance
         fresh_model = await RichModel.get(model_key)
 
         async with fresh_model.lock(save_at_end=True) as locked_model:
@@ -67,7 +67,7 @@ async def test_redis_model_lock_with_concurrent_access_functionality():
     second_model_dump = enter_calls[1][0][1]
     second_model_dump = RichModel.model_validate(second_model_dump)
 
-    # The second enter should be after the first exit (sequential execution due to lock)
+    # The second entering should be after the first exit (sequential execution due to lock)
     assert second_enter_time > first_exit_time
     assert second_model_dump.date1 != "initial_date"
 
@@ -149,7 +149,7 @@ async def test_redis_model_lock_from_key_with_concurrent_access_functionality():
     second_model_dump = enter_calls[1][0][1]
     second_model_dump = RichModel.model_validate(second_model_dump)
 
-    # The second enter should be after the first exit (sequential execution due to lock)
+    # The second entering should be after the first exit (sequential execution due to lock)
     assert second_enter_time > first_exit_time
     assert second_model_dump.date1 != "initial_date"
 
