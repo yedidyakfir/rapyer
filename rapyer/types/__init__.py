@@ -4,7 +4,6 @@ from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
 from rapyer.types.string import RedisStr
 
-__version__ = "0.1.0"
 __all__ = [
     "RedisStr",
     "RedisInt",
