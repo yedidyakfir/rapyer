@@ -9,11 +9,11 @@ jobs:
   check-tests:
     runs-on: ubuntu-22.04
     steps:
-      - name: Wait for CI workflow to complete
+      - name: Wait for test matrix to complete
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.ref }}
-          check-name: 'CI / test-results'
+          check-regexp: 'test \(.*\)'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
 
@@ -21,7 +21,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.ref }}
-          check-name: 'CI / lint'
+          check-name: 'lint'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
 
