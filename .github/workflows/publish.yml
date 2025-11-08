@@ -16,7 +16,7 @@ jobs:
           check-name: 'CI / test-results'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
-      
+
       - name: Wait for lint to complete
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
