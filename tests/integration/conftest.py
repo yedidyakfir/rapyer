@@ -73,7 +73,7 @@ from tests.models.simple_types import (
 from tests.models.specialized import UserModel
 
 # Common types with key annotations
-from tests.models.common import UserWithKeyModel, ProductWithKeyModel
+from tests.models.common import UserWithKeyModel
 
 
 @pytest_asyncio.fixture
@@ -150,7 +150,6 @@ async def real_redis_client(redis_client):
         TestRedisModel,
         # Common types with key annotations
         UserWithKeyModel,
-        ProductWithKeyModel,
     ]
 
     # Configure Redis client for all models
