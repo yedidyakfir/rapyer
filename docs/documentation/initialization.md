@@ -75,27 +75,8 @@ await init_rapyer(redis=redis_client, ttl=3600)
 
 ## Special Field Initialization
 
-**Important:** `init_rapyer` is crucial for initializing special fields like indexed fields and other advanced features:
-
-```python
-from rapyer import AtomicRedisModel, init_rapyer
-from rapyer.fields import IndexedField  # Example special field
-
-class User(AtomicRedisModel):
-    name: str
-    email: IndexedField[str]  # Special indexed field
-    age: int
-
-# init_rapyer initializes special fields properly
-await init_rapyer(redis="redis://localhost:6379/0")
-
-# Now indexed fields and other special features work correctly
-user = User(name="Alice", email="alice@example.com", age=25)
-await user.save()
-
-# Special field operations are available
-results = await User.find_by_email("alice@example.com")  # Index-based search
-```
+**Important:** `init_rapyer` is crucial for initializing special fields like indexed fields and other advanced features.
+For simple usage, it is possible to simply set the redis client yourself.
 
 ## teardown_rapyer Function
 
