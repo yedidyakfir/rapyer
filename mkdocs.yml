@@ -46,6 +46,7 @@ nav:
   - Installation: installation.md
   - Documentation:
     - Defining a Model: documentation/defining-models.md
+    - CRUD Operations: documentation/crud-operations.md
     - Initialization: documentation/initialization.md
     - Redis Types: documentation/redis-types.md
   - Roadmap: roadmap.md
