@@ -1,4 +1,5 @@
 from datetime import datetime
+
 import pytest
 
 from tests.models.common import UserWithKeyModel, EventWithDatetimeKeyModel
@@ -29,7 +30,7 @@ async def test_store_and_load_event_with_datetime_key_annotation_sanity():
         created_at=created_at,
         event_name="Christmas Meeting",
         description="Annual holiday planning meeting",
-        duration_minutes=90
+        duration_minutes=90,
     )
 
     # Act

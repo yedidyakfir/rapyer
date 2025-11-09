@@ -32,6 +32,9 @@ from tests.models.collection_types import (
     BaseDictMetadataModel,
 )
 
+# Common types with key annotations
+from tests.models.common import UserWithKeyModel, EventWithDatetimeKeyModel
+
 # Complex types
 from tests.models.complex_types import (
     OuterModel,
@@ -71,9 +74,6 @@ from tests.models.simple_types import (
 
 # Specialized types
 from tests.models.specialized import UserModel
-
-# Common types with key annotations
-from tests.models.common import UserWithKeyModel, EventWithDatetimeKeyModel
 
 
 @pytest_asyncio.fixture
