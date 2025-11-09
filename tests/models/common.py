@@ -1,4 +1,6 @@
+from datetime import datetime
 from enum import Enum
+from typing import Annotated
 
 from pydantic import Field, BaseModel
 
@@ -76,3 +78,10 @@ class UserWithKeyModel(AtomicRedisModel):
     name: str
     email: str
     age: int = 25
+
+
+class EventWithDatetimeKeyModel(AtomicRedisModel):
+    created_at: Annotated[datetime, Key()]
+    event_name: str
+    description: str
+    duration_minutes: int = 60
