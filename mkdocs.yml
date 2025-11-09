@@ -22,20 +22,15 @@ theme:
   features:
     - navigation.tabs
     - navigation.sections
+    - navigation.expand
     - navigation.top
+    - navigation.tracking
     - search.highlight
     - search.share
     - content.code.copy
 
 nav:
-  - Home: index.md
-  - Setup: setup.md
-  - Basic Operations: basic-operations.md
-  - Supported Types: supported-types.md
-  - Redis Types: redis-types.md
-  - Atomic Actions: atomic-actions.md
-  - Nested Models: nested-models.md
-  - Roadmap: roadmap.md
+  - Overview: index.md
 
 markdown_extensions:
   - pymdownx.highlight:
