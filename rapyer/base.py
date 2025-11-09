@@ -4,7 +4,7 @@ import contextlib
 import functools
 import pickle
 import uuid
-from typing import Self, ClassVar, Any, AsyncGenerator
+from typing import Self, ClassVar, Any, AsyncGenerator, get_origin, get_args, Annotated
 
 from pydantic import (
     BaseModel,
@@ -22,9 +22,10 @@ from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
+from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
-from rapyer.utils.annotation import replace_to_redis_types_in_annotation
+from rapyer.utils.annotation import replace_to_redis_types_in_annotation, has_annotation
 from rapyer.utils.fields import (
     get_all_pydantic_annotation,
     find_first_type_in_annotation,
@@ -64,11 +65,14 @@ class AtomicRedisModel(BaseModel):
     _base_model_link: Self | RedisType = PrivateAttr(default=None)
 
     Meta: ClassVar[RedisConfig] = RedisConfig()
+    _key_field_name: ClassVar[str | None] = None
     _field_name: str = PrivateAttr(default="")
     model_config = ConfigDict(validate_assignment=True)
 
     @property
     def pk(self):
+        if self._key_field_name:
+            return self.model_dump(include={self._key_field_name})[self._key_field_name]
         return self._pk
 
     @pk.setter
@@ -112,6 +116,12 @@ class AtomicRedisModel(BaseModel):
         return f"{self.key_initials}:{self.pk}"
 
     def __init_subclass__(cls, **kwargs):
+        # Find a field with KeyAnnotation and save its name
+        for field_name, annotation in cls.__annotations__.items():
+            if has_annotation(annotation, KeyAnnotation):
+                cls._key_field_name = field_name
+                break
+
         # Redefine annotations to use redis types
         pydantic_annotation = get_all_pydantic_annotation(cls, AtomicRedisModel)
         new_annotation = {

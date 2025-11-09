@@ -2,6 +2,9 @@ from enum import Enum
 
 from pydantic import Field, BaseModel
 
+from rapyer.base import AtomicRedisModel
+from rapyer.fields.key import Key
+
 
 class Status(str, Enum):
     ACTIVE = "active"
@@ -66,3 +69,10 @@ class Address(BaseModel):
 class Settings(BaseModel):
     preferences: dict[str, str] = Field(default_factory=dict)
     features: list[str] = Field(default_factory=list)
+
+
+class UserWithKeyModel(AtomicRedisModel):
+    user_id: Key(str)
+    name: str
+    email: str
+    age: int = 25
