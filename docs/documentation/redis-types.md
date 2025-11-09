@@ -238,28 +238,24 @@ class User(AtomicRedisModel):
 
 ### Available Operations on Nested Models
 
-All nested BaseModel instances gain full AtomicRedisModel functionality:
+Nested BaseModel instances support these atomic Redis operations:
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.address.save()` | Save nested model to Redis |
+| **save** | `await user.address.save()` | Save only this nested model to Redis (other parent fields unchanged) |
 | **load** | `await user.address.load()` | Load nested model from Redis (returns value, doesn't update model) |
-| **delete** | `await user.address.delete()` | Delete nested model from Redis |
-| **lock** | `async with user.address.lock():` | Lock nested model for transactions |
-| **pipeline** | `async with user.address.pipeline():` | Batch operations on nested model |
+| **aupdate** | `await user.address.aupdate(street="New St")` | Atomically update specific fields in the nested model |
 
-Additionally, all fields within nested models support their respective Redis operations:
+!!! warning "Scoped Save Operation"
+    When you call `await user.address.save()`, **only the `address` nested model is saved to Redis**. Other fields in the parent `user` model remain unchanged in Redis, even if they were modified locally.
 
 ```python
-# Atomic operations on nested model fields
-await user.profile.preferences.aupdate(theme="dark", lang="en")
-await user.address.save()  # Save entire nested model
+# Atomic operations on nested models
+await user.address.aupdate(street="123 New St", city="Boston")  # Update specific fields
+await user.address.save()  # Save entire address model only
 
-# Transaction support
-async with user.profile.lock("update_bio"):
-    user.profile.bio = "New bio"
-    await user.profile.preferences.aupdate(updated=True)
-    # All changes saved atomically when context exits
+# All fields within nested models support their respective Redis operations
+await user.profile.preferences.aupdate(theme="dark", lang="en")  # Dict operations available
 ```
 
 ---
@@ -287,7 +283,7 @@ class MyModel(AtomicRedisModel):
 ```
 
 !!! warning "Limited Operations"
-    Custom types only support basic **save()** and **load()** operations. They cannot perform atomic Redis operations like lists or dicts.
+    Custom types cannot perform atomic Redis operations like lists or dicts.
 
 ---
 
