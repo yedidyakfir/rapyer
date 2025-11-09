@@ -72,7 +72,3 @@ if __name__ == "__main__":
 ```
 
 This example demonstrates Rapyer's core philosophy: combine Redis performance with Pydantic safety, all while maintaining atomic operations that prevent data corruption in concurrent applications.
-
-## Why Choose Rapyer?
-
---8<-- "_includes/comparison.md"
