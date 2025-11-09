@@ -130,4 +130,5 @@ Ready to build race-condition-free Redis applications? Start with our [Setup Gui
 - **[Redis Types](redis-types.md)** - Enhanced IDE support with RedisStr, RedisList, RedisDict, etc.
 - **[Atomic Actions](atomic-actions.md)** - Locks, pipelines, and concurrency safety
 - **[Nested Models](nested-models.md)** - Working with complex nested structures
+- **[Advanced Usage](advanced-usage.md)** - Custom primary keys and advanced patterns
 - **[Roadmap](roadmap.md)** - Future features and development plans

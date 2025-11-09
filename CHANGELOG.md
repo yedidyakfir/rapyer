@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3]
+
+### ✨ Added
+
+- **Custom Primary Keys**: Added `Key` annotation to specify custom fields as primary keys instead of auto-generated ones
+
 ## [1.0.2] - 2025-11-05
 
 ### ✨ Added
