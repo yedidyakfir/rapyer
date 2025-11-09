@@ -47,6 +47,7 @@ nav:
     - CRUD Operations: documentation/crud-operations.md
     - Initialization: documentation/initialization.md
     - Redis Types: documentation/redis-types.md
+    - Atomic Actions: documentation/atomic-actions.md
   - Roadmap: roadmap.md
 
 markdown_extensions:
