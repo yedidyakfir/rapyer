@@ -6,6 +6,7 @@ repo_name: yedidyakfir/rapyer
 
 theme:
   name: material
+  logo: icon.png
   palette:
     - scheme: default
       primary: red
