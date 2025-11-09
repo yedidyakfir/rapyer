@@ -48,6 +48,7 @@ nav:
     - Initialization: documentation/initialization.md
     - Redis Types: documentation/redis-types.md
     - Atomic Actions: documentation/atomic-actions.md
+    - Special Fields: documentation/special-fields.md
   - Roadmap: roadmap.md
 
 markdown_extensions:
