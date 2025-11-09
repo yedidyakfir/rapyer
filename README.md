@@ -143,6 +143,7 @@ await user.scores.aappend(95)               # Native Redis operation
 
 ## Why Choose Rapyer?
 
+<!-- comparison-start -->
 ### Comparison with Other Redis ORMs
 
 | Feature | Rapyer | Redis OM | pydantic-redis | orredis |
@@ -160,6 +161,7 @@ await user.scores.aappend(95)               # Native Redis operation
 | **🔧 Nested Model Support** | ✅ Full Redis functionality preserved | ⚠️ Limited nesting | ✅ Advanced relationships | ⚠️ Basic support |
 | **🎛️ Custom Primary Keys** | ✅ Field annotations | ❌ ULIDs only | ✅ Custom fields | ✅ Custom fields |
 | **🔍 Query/Search Support** | ⚠️ Basic (roadmap item) | ✅ RediSearch integration | ❌ No search | ❌ No search |
+<!-- comparison-end -->
 
 ### 🏆 What Makes Rapyer Unique
 
@@ -215,27 +217,6 @@ async with user.pipeline() as pipelined_user:
 
 # Others - No built-in pipeline abstraction for ORM operations
 ```
-
-### When to Choose Each
-
-- **Choose Rapyer** if you need:
-  - Built-in race condition prevention
-  - True atomic operations without manual transaction management
-  - Support for any Python type with consistent API
-  - Automatic lock management for complex updates
-
-- **Choose Redis OM** if you need:
-  - Official Redis support and ecosystem
-  - Advanced search/indexing with RediSearch
-  - Established community and long-term support
-
-- **Choose pydantic-redis** if you need:
-  - Advanced relationship modeling between objects
-  - Simple use cases without complex concurrency requirements
-
-- **Choose orredis** if you need:
-  - Maximum performance for high-throughput applications
-  - Rust-level optimization for Redis operations
 
 ## Learn More
 
