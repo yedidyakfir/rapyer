@@ -20,17 +20,28 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.tabs
+    - navigation.instant
+    - navigation.instant.prefetch
     - navigation.sections
     - navigation.expand
+    - navigation.path
+    - navigation.prune
+    - navigation.indexes
     - navigation.top
     - navigation.tracking
     - search.highlight
+    - search.suggest
     - search.share
     - content.code.copy
+    - content.code.annotate
+    - content.tooltips
+  font:
+    text: Inter
+    code: JetBrains Mono
 
 nav:
   - Overview: index.md
+  - Installation: installation.md
 
 markdown_extensions:
   - pymdownx.highlight:
