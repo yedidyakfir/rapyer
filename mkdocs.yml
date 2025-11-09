@@ -48,6 +48,7 @@ nav:
     - Defining a Model: documentation/defining-models.md
     - Initialization: documentation/initialization.md
     - Redis Types: documentation/redis-types.md
+  - Roadmap: roadmap.md
 
 markdown_extensions:
   - pymdownx.highlight:
