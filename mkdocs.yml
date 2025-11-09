@@ -26,10 +26,10 @@ theme:
     - navigation.sections
     - navigation.expand
     - navigation.path
-    - navigation.prune
     - navigation.indexes
     - navigation.top
     - navigation.tracking
+    - navigation.footer
     - search.highlight
     - search.suggest
     - search.share
@@ -43,6 +43,8 @@ theme:
 nav:
   - Overview: index.md
   - Installation: installation.md
+  - Documentation:
+    - Redis Types: documentation/redis-types.md
 
 markdown_extensions:
   - pymdownx.highlight:
