@@ -16,9 +16,9 @@ class User(AtomicRedisModel):
     preferences: Dict[str, str] = {}
 ```
 
-## Using Your Model
+## Redis Field Operations
 
-Once defined, your model supports both standard Pydantic operations and atomic Redis operations:
+Once defined, your model's fields support atomic Redis operations. Here's how to work with different field types:
 
 ```python
 import asyncio
@@ -33,20 +33,24 @@ async def main():
         preferences={"theme": "dark", "language": "en"}
     )
     
-    # Save to Redis
-    await user.save()
-    print(f"Saved user with key: {user.key}")
+    # Atomic list operations
+    await user.tags.aappend("redis")           # Add single item
+    await user.tags.aextend(["async", "web"])  # Add multiple items
+    await user.tags.aremove("developer")       # Remove specific item
     
-    # Perform atomic Redis operations
-    await user.tags.aappend("redis")  # Atomic list append
-    await user.preferences.aupdate(timezone="UTC")  # Atomic dict update
+    # Atomic dictionary operations
+    await user.preferences.aupdate(timezone="UTC")                    # Update/add key-value
+    await user.preferences.aupdate({"theme": "light", "lang": "es"}) # Update multiple
+    current_theme = await user.preferences.aget("theme")             # Get specific value
+    await user.preferences.apop("language")                          # Remove and return value
     
-    # Load user from Redis
-    loaded_user = await User.get(user.key)
-    print(f"Loaded: {loaded_user.name}, Tags: {loaded_user.tags}")
+    # Atomic string/numeric operations
+    user.age += 1
+    await user.age.asave()  # Save updated age atomically
     
-    # Delete from Redis
-    await user.delete()
+    print(f"Updated user: {user.name}, Age: {user.age}")
+    print(f"Tags: {user.tags}")
+    print(f"Current theme: {current_theme}")
 
 if __name__ == "__main__":
     asyncio.run(main())
