@@ -50,6 +50,7 @@ nav:
     - Atomic Actions: documentation/atomic-actions.md
     - Special Fields: documentation/special-fields.md
   - Roadmap: roadmap.md
+  - Changelog: ../CHANGELOG.md
 
 markdown_extensions:
   - pymdownx.highlight:
