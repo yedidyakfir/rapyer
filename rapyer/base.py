@@ -338,7 +338,7 @@ class AtomicRedisModel(BaseModel):
 
     @model_validator(mode="after")
     def assign_fields_links(self):
-        for field_name in self.model_fields:
+        for field_name in self.__class__.model_fields:
             attr = getattr(self, field_name)
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = self
