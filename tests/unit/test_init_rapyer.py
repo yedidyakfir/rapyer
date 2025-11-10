@@ -31,12 +31,13 @@ def redis_models():
     ]
 
 
-def test_init_rapyer_with_redis_client_sanity(mock_redis_client, redis_models):
+@pytest.mark.asyncio
+async def test_init_rapyer_with_redis_client_sanity(mock_redis_client, redis_models):
     # Arrange
     NoneTestModel.Meta.ttl = 30
 
     # Act
-    init_rapyer(mock_redis_client)
+    await init_rapyer(mock_redis_client)
 
     # Assert
     for model in redis_models:
@@ -45,14 +46,15 @@ def test_init_rapyer_with_redis_client_sanity(mock_redis_client, redis_models):
 
 
 @patch("rapyer.init.redis_async.from_url")
-def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_models):
+@pytest.mark.asyncio
+async def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_models):
     # Arrange
     connection_string = "redis://localhost:6379"
     mock_redis_client = Mock(spec=Redis)
     mock_from_url.return_value = mock_redis_client
 
     # Act
-    init_rapyer(connection_string)
+    await init_rapyer(connection_string)
 
     # Assert
     mock_from_url.assert_called_once_with(
@@ -62,12 +64,13 @@ def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_models):
         assert model.Meta.redis is mock_redis_client
 
 
-def test_init_rapyer_with_ttl_sanity(mock_redis_client, redis_models):
+@pytest.mark.asyncio
+async def test_init_rapyer_with_ttl_sanity(mock_redis_client, redis_models):
     # Arrange
     ttl_value = 120
 
     # Act
-    init_rapyer(mock_redis_client, ttl=ttl_value)
+    await init_rapyer(mock_redis_client, ttl=ttl_value)
 
     # Assert
     for model in redis_models:
@@ -75,20 +78,22 @@ def test_init_rapyer_with_ttl_sanity(mock_redis_client, redis_models):
         assert model.Meta.ttl == ttl_value
 
 
-def test_init_rapyer_with_existing_redis_client_no_override_sanity(redis_models):
+@pytest.mark.asyncio
+async def test_init_rapyer_with_existing_redis_client_no_override_sanity(redis_models):
     # Arrange
     existing_redis_client = Mock(spec=Redis)
     TaskModel.Meta.redis = existing_redis_client
 
     # Act
-    init_rapyer(ttl=300)
+    await init_rapyer(ttl=300)
 
     # Assert
     assert TaskModel.Meta.redis is existing_redis_client
     assert TaskModel.Meta.ttl == 300
 
 
-def test_init_rapyer_override_existing_redis_and_ttl_sanity(
+@pytest.mark.asyncio
+async def test_init_rapyer_override_existing_redis_and_ttl_sanity(
     mock_redis_client, redis_models
 ):
     # Arrange
@@ -102,7 +107,7 @@ def test_init_rapyer_override_existing_redis_and_ttl_sanity(
     TaskModel.Meta.ttl = old_ttl
 
     # Act
-    init_rapyer(mock_redis_client, ttl=new_ttl)
+    await init_rapyer(mock_redis_client, ttl=new_ttl)
 
     # Assert
     assert UserModelWithTTL.Meta.redis is mock_redis_client
