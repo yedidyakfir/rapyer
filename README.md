@@ -143,7 +143,7 @@ await user.scores.aappend(95)               # Native Redis operation
 
 ## Why Choose Rapyer?
 
-<!-- comparison-start -->
+<!-- --8<-- [start:comparison] -->
 ### Comparison with Other Redis ORMs
 
 | Feature | Rapyer | Redis OM | pydantic-redis | orredis |
@@ -156,12 +156,11 @@ await user.scores.aappend(95)               # Native Redis operation
 | **📦 Redis JSON Native** | ✅ Optimized JSON operations | ✅ Via JsonModel only | ❌ Hash-based | ❌ Hash-based |
 | **⚙️ Pydantic v2 Support** | ✅ Full compatibility | ✅ Recent support | ⚠️ Limited support | ⚠️ Basic support |
 | **🎯 Type Safety** | ✅ Complete validation | ✅ Good validation | ✅ Good validation | ⚠️ Basic validation |
-| **🚪 Official Support** | ❌ Independent project | ✅ Redis official | ❌ Community | ❌ Community |
 | **⚡ Performance** | ✅ Optimized operations | ✅ Good performance | ✅ Standard | ✅ Rust-optimized |
 | **🔧 Nested Model Support** | ✅ Full Redis functionality preserved | ⚠️ Limited nesting | ✅ Advanced relationships | ⚠️ Basic support |
 | **🎛️ Custom Primary Keys** | ✅ Field annotations | ❌ ULIDs only | ✅ Custom fields | ✅ Custom fields |
-| **🔍 Query/Search Support** | ⚠️ Basic (roadmap item) | ✅ RediSearch integration | ❌ No search | ❌ No search |
-<!-- comparison-end -->
+
+<!-- --8<-- [end:comparison] -->
 
 ### 🏆 What Makes Rapyer Unique
 
