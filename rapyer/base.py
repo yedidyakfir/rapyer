@@ -231,6 +231,8 @@ class AtomicRedisModel(BaseModel):
 
     @classmethod
     async def get(cls, key: str) -> Self:
+        if cls._key_field_name and ":" not in key:
+            key = f"{cls.class_key_initials()}:{key}"
         model_dump = await cls.Meta.redis.json().get(key, "$")
         if not model_dump:
             raise KeyNotFound(f"{key} is missing in redis")
