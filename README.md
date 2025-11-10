@@ -220,8 +220,6 @@ async with user.pipeline() as pipelined_user:
 ## Learn More
 
 - 📖 **[Documentation](https://yedidyakfir.github.io/rapyer/)** - Complete guide and API reference
-- 🚀 **[Examples](https://yedidyakfir.github.io/rapyer/examples/)** - Real-world usage patterns  
-- ⚡ **[Advanced Features](https://yedidyakfir.github.io/rapyer/advanced/)** - Locks, pipelines, and nested models
 - 🗺️ **[Roadmap](https://yedidyakfir.github.io/rapyer/roadmap/)** - Future features and development plans
 
 ---
