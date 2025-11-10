@@ -146,19 +146,20 @@ await user.scores.aappend(95)               # Native Redis operation
 <!-- --8<-- [start:comparison] -->
 ### Comparison with Other Redis ORMs
 
-| Feature | Rapyer | Redis OM | pydantic-redis | orredis |
-|---------|--------|----------|----------------|---------|
-| **🚀 Atomic Operations** | ✅ Built-in for all operations | ❌ Manual transactions only | ❌ Manual transactions only | ❌ Manual transactions only |
-| **🔒 Lock Context Manager** | ✅ Automatic with `async with model.lock()` | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
-| **⚡ Pipeline Operations** | ✅ True atomic batching with `model.pipeline()` | ⚠️ Basic pipeline support | ❌ No pipeline support | ❌ No pipeline support |
+| Feature | Rapyer                                          | Redis OM | pydantic-redis | orredis |
+|---------|-------------------------------------------------|----------|----------------|---------|
+| **🚀 Atomic Operations** | ✅ Built-in for all operations                   | ❌ Manual transactions only | ❌ Manual transactions only | ❌ Manual transactions only |
+| **🔒 Lock Context Manager** | ✅ Automatic with `async with model.lock()`      | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
+| **⚡ Pipeline Operations** | ✅ True atomic batching with `model.pipeline()`  | ⚠️ Basic pipeline support | ❌ No pipeline support | ❌ No pipeline support |
 | **🌐 Universal Type Support** | ✅ Native + automatic serialization for any type | ⚠️ HashModel vs JsonModel limitations | ⚠️ Limited complex types | ⚠️ Limited complex types |
-| **🔄 Race Condition Safe** | ✅ Built-in prevention with Lua scripts | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
-| **📦 Redis JSON Native** | ✅ Optimized JSON operations | ✅ Via JsonModel only | ❌ Hash-based | ❌ Hash-based |
-| **⚙️ Pydantic v2 Support** | ✅ Full compatibility | ✅ Recent support | ⚠️ Limited support | ⚠️ Basic support |
-| **🎯 Type Safety** | ✅ Complete validation | ✅ Good validation | ✅ Good validation | ⚠️ Basic validation |
-| **⚡ Performance** | ✅ Optimized operations | ✅ Good performance | ✅ Standard | ✅ Rust-optimized |
-| **🔧 Nested Model Support** | ✅ Full Redis functionality preserved | ⚠️ Limited nesting | ✅ Advanced relationships | ⚠️ Basic support |
-| **🎛️ Custom Primary Keys** | ✅ Field annotations | ❌ ULIDs only | ✅ Custom fields | ✅ Custom fields |
+| **🔄 Race Condition Safe** | ✅ Built-in prevention with Lua scripts          | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
+| **📦 Redis JSON Native** | ✅ Optimized JSON operations                     | ✅ Via JsonModel only | ❌ Hash-based | ❌ Hash-based |
+| **⚙️ Pydantic v2 Support** | ✅ Full compatibility                            | ✅ Recent support | ⚠️ Limited support | ⚠️ Basic support |
+| **🎯 Type Safety** | ✅ Complete validation                           | ✅ Good validation | ✅ Good validation | ⚠️ Basic validation |
+| **⚡ Performance** | ✅ Optimized operations                          | ✅ Good performance | ✅ Standard | ✅ Rust-optimized |
+| **🔧 Nested Model Support** | ✅ Full Redis functionality preserved            | ⚠️ Limited nesting | ✅ Advanced relationships | ⚠️ Basic support |
+| **🎛️ Custom Primary Keys** | ✅ Field annotations                             | ❌ ULIDs only | ✅ Custom fields | ✅ Custom fields |
+| **🧪 Extensive Test Coverage** | ✅ 90%+ comprehensive tests with CI              | ⚠️ Basic testing with CI | ⚠️ Limited test coverage | ⚠️ Basic test suite |
 
 <!-- --8<-- [end:comparison] -->
 
