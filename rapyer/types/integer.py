@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 from rapyer.types.base import RedisType
 
 
@@ -10,3 +12,6 @@ class RedisInt(int, RedisType):
 
     def clone(self):
         return int(self)
+
+
+RedisIntType: TypeAlias = RedisInt | int
