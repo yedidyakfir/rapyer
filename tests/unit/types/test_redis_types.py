@@ -34,7 +34,7 @@ def test_direct_redis_str_model_creation_sanity(test_value):
 @pytest.mark.parametrize("test_value", [0, 1, -1, 100, -100])
 def test_direct_redis_int_model_creation_sanity(test_value):
     # Arrange & Act
-    model = DirectRedisIntModel(count=RedisInt(test_value))
+    model = DirectRedisIntModel(count=test_value)
 
     # Assert
     assert isinstance(model.count, RedisInt)
@@ -47,7 +47,7 @@ def test_direct_redis_int_model_creation_sanity(test_value):
 @pytest.mark.parametrize("test_value", [b"hello", b"world", b"", b"\x00\x01\x02"])
 def test_direct_redis_bytes_model_creation_sanity(test_value):
     # Arrange & Act
-    model = DirectRedisBytesModel(data=RedisBytes(test_value))
+    model = DirectRedisBytesModel(data=test_value)
 
     # Assert
     assert isinstance(model.data, RedisBytes)

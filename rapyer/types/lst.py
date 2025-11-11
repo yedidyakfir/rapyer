@@ -3,6 +3,7 @@ from typing import TypeVar
 
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, SerializationInfo
+from typing_extensions import TypeAlias
 
 from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
 
@@ -158,3 +159,6 @@ class RedisList(list, GenericRedisType[T]):
     @classmethod
     def schema_for_unknown(cls):
         core_schema.list_schema(core_schema.str_schema())
+
+
+RedisListType: TypeAlias = RedisList[T] | list[T]

@@ -25,3 +25,6 @@ class RedisDatetime(datetime, RedisType):
 
     def clone(self):
         return datetime.fromtimestamp(self.timestamp())
+
+
+RedisDatetimeType = RedisDatetime | datetime
