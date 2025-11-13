@@ -72,3 +72,23 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+## find_redis_models()
+
+```python
+def find_redis_models() -> list[type[AtomicRedisModel]]
+```
+
+Returns a list of all registered Redis model classes.
+
+### Parameters
+
+None
+
+### Returns
+
+- **list[type[AtomicRedisModel]]**: A list containing all model classes that inherit from `AtomicRedisModel`
+
+### Description
+
+The `find_redis_models()` function provides access to all Redis model classes that have been defined and registered in the application.
