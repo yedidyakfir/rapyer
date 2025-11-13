@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime
 
 import rapyer
 from tests.models.collection_types import (
@@ -8,11 +9,17 @@ from tests.models.collection_types import (
     BaseModelListModel,
     BaseModelDictModel,
 )
-from tests.models.common import UserProfile, Product, NestedConfig, UserWithKeyModel
+from tests.models.common import UserProfile, Product, NestedConfig, UserWithKeyModel, EventWithDatetimeKeyModel
 from tests.models.complex_types import (
     OuterModel,
     TestRedisModel,
     OuterModelWithRedisNested,
+    MiddleModel,
+    InnerMostModel,
+    TripleNestedModel,
+    ComplexNestedModel,
+    DuplicateMiddleModel,
+    DuplicateInnerMostModel,
 )
 from tests.models.inheritance_types import BaseUserModel, AdminUserModel, UserRole
 from tests.models.pickle_types import ModelWithUnserializableFields
@@ -44,10 +51,33 @@ from tests.models.simple_types import (
                 counter=5,
             )
         ],
-        [OuterModel(user_data={"user": 123}, items=[10, 20])],
+        [
+            OuterModel(
+                middle_model=MiddleModel(
+                    inner_model=InnerMostModel(
+                        lst=["nested", "list", "values"], counter=42
+                    ),
+                    tags=["middleware", "complex", "nested"],
+                    metadata={"level": "middle", "type": "nested", "depth": "2"},
+                ),
+                user_data={"active_users": 150, "total_sessions": 1200},
+                items=[10, 20, 30, 40, 50],
+            )
+        ],
         [
             TestRedisModel(
-                user_data={"test": 456}, items=[30, 40], description="test_redis"
+                middle_model=DuplicateMiddleModel(
+                    inner_model=DuplicateInnerMostModel(
+                        names=["alice", "bob", "charlie"],
+                        scores={"math": 95, "science": 87, "english": 92},
+                        counter=15,
+                    ),
+                    tags=["test", "redis", "complex"],
+                    metadata={"version": "1.0", "environment": "test", "type": "duplicate"},
+                ),
+                user_data={"active": 456, "pending": 123, "inactive": 78},
+                items=[30, 40, 50, 60, 70],
+                description="complex_test_redis_model",
             )
         ],
         [DirectRedisStringModel(name="redis_string_test")],
@@ -93,6 +123,51 @@ from tests.models.simple_types import (
                 outer_data=[1, 2, 3, 4, 5],
             )
         ],
+        # Triple nested complex structures
+        [
+            TripleNestedModel(
+                triple_list=[
+                    [["level1", "data1"], ["level1", "data2"]],
+                    [["level2", "data1"], ["level2", "data2"], ["level2", "data3"]],
+                    [["level3", "final"]],
+                ],
+                triple_dict={
+                    "outer1": {
+                        "middle1": {"inner1": "value1", "inner2": "value2"},
+                        "middle2": {"inner3": "value3"},
+                    },
+                    "outer2": {
+                        "middle3": {"inner4": "value4", "inner5": "value5"},
+                        "middle4": {"inner6": "value6", "inner7": "value7"},
+                    },
+                },
+            )
+        ],
+        # Complex multi-type nested structures
+        [
+            ComplexNestedModel(
+                nested_list=[
+                    ["group1", "item1", "item2"],
+                    ["group2", "item3", "item4", "item5"],
+                    ["group3", "item6"],
+                ],
+                nested_dict={
+                    "config": {"theme": "dark", "language": "en"},
+                    "settings": {"timeout": "30", "retries": "3"},
+                    "features": {"advanced": "true", "beta": "false"},
+                },
+                list_of_dicts=[
+                    {"name": "user1", "role": "admin"},
+                    {"name": "user2", "role": "viewer"},
+                    {"name": "user3", "role": "editor"},
+                ],
+                dict_of_lists={
+                    "permissions": ["read", "write", "delete"],
+                    "tags": ["important", "urgent", "review"],
+                    "categories": ["finance", "operations", "hr"],
+                },
+            )
+        ],
         # Inheritance models
         [
             BaseUserModel(
@@ -134,6 +209,15 @@ from tests.models.simple_types import (
                 name="Key User",
                 email="keyuser@example.com",
                 age=32,
+            )
+        ],
+        # Model with datetime key annotation
+        [
+            EventWithDatetimeKeyModel(
+                created_at=datetime(2024, 12, 15, 9, 0, 0),
+                event_name="Annual Conference 2024",
+                description="Company-wide annual conference with technical sessions",
+                duration_minutes=480,
             )
         ],
     ],
