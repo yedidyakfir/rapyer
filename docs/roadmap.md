@@ -242,3 +242,36 @@ except PickleError:
 ```
 
 **Benefits**: Resilient model loading, graceful degradation with corrupted data, partial model functionality when some fields fail to load
+
+## Sync Redis Client Support
+
+**Goal**: Enable synchronous Redis client support alongside the existing async implementation, providing sync equivalents for all operations
+
+### Tasks
+- [ ] **Sync Client Implementation**: Add synchronous Redis client wrapper and connection management
+- [ ] **Sync Model Operations**: Implement sync versions of core model operations (sync_get, sync_save, sync_delete, etc.)
+- [ ] **Sync Pipeline Support**: Enable pipeline operations with synchronous client (sync_pipeline context manager)
+- [ ] **Sync Field Operations**: Add synchronous versions for all Redis field types (RedisStr, RedisInt, RedisList, etc.)
+- [ ] **Configuration Management**: Support both sync and async clients in model configuration
+- [ ] **Testing**: Comprehensive test coverage for all sync operations
+- [ ] **Documentation**: Update docs with sync usage patterns and migration guides
+
+### Example Usage
+```python
+# Sync model operations
+user = User.sync_get("user:123")
+user.name = "Updated Name"
+user.sync_save()
+
+# Sync pipeline operations
+with user.sync_pipeline() as p:
+    p.score += 10
+    p.tags.append("new_tag")
+    # All changes applied atomically
+
+# Sync field operations
+user.score.sync_update(100)
+tags = user.tags.sync_get_all()
+```
+
+**Benefits**: Support for synchronous codebases, easier integration with existing sync applications, consistent API patterns between async and sync operations
