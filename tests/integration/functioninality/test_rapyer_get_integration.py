@@ -1,5 +1,6 @@
-import pytest
 from datetime import datetime
+
+import pytest
 
 import rapyer
 from tests.models.collection_types import (
@@ -9,7 +10,13 @@ from tests.models.collection_types import (
     BaseModelListModel,
     BaseModelDictModel,
 )
-from tests.models.common import UserProfile, Product, NestedConfig, UserWithKeyModel, EventWithDatetimeKeyModel
+from tests.models.common import (
+    UserProfile,
+    Product,
+    NestedConfig,
+    UserWithKeyModel,
+    EventWithDatetimeKeyModel,
+)
 from tests.models.complex_types import (
     OuterModel,
     TestRedisModel,
@@ -73,7 +80,11 @@ from tests.models.simple_types import (
                         counter=15,
                     ),
                     tags=["test", "redis", "complex"],
-                    metadata={"version": "1.0", "environment": "test", "type": "duplicate"},
+                    metadata={
+                        "version": "1.0",
+                        "environment": "test",
+                        "type": "duplicate",
+                    },
                 ),
                 user_data={"active": 456, "pending": 123, "inactive": 78},
                 items=[30, 40, 50, 60, 70],
