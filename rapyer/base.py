@@ -353,3 +353,7 @@ async def get(redis_key: str) -> AtomicRedisModel:
     class_name = redis_key.split(":")[0]
     klass = redis_model_mapping.get(class_name)
     return await klass.get(redis_key)
+
+
+def find_redis_models() -> list[type[AtomicRedisModel]]:
+    return REDIS_MODELS
