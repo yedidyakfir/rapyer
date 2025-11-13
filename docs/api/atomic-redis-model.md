@@ -143,6 +143,15 @@ user = await User.get("User:abc-123")
 success = await User.delete_by_key("User:abc-123")
 ```
 
+#### `afind_keys()`
+**Type:** `async` class method  
+**Returns:** `list[str]`  
+**Description:** Retrieves all Redis keys for instances of this model class.
+
+```python
+user_keys = await User.afind_keys()  # Returns ["User:123", "User:456", ...]
+```
+
 #### `class_key_initials()`
 **Type:** Class method  
 **Returns:** `str`  

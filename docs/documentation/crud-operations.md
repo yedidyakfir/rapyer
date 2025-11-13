@@ -60,6 +60,33 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+### Using rapyer.get() - Global Retrieval
+
+You can also retrieve models using the global `rapyer.get()` function, which can load any model type by examining the Redis key:
+
+```python
+import rapyer
+
+async def main():
+    # Create and save a user
+    user = User(name="Bob", age=30, email="bob@example.com")
+    await user.save()
+    user_key = user.key
+    
+    # Retrieve using the global get function
+    loaded_model = await rapyer.get(user_key)
+    print(f"Loaded model: {loaded_model.name}, Age: {loaded_model.age}")
+    print(f"Model type: {type(loaded_model).__name__}")
+    
+    # Works with any model type - rapyer.get automatically determines the correct class
+    # from the Redis key pattern (ClassName:instance_id)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+The `rapyer.get()` function automatically determines the correct model class from the Redis key format and returns the appropriate model instance. This is particularly useful when you have multiple model types and want a unified way to retrieve them.
+
 ## Updating Models
 
 There are several ways to update model data:
@@ -137,23 +164,34 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Checking Existence
+## Finding All Model Keys
 
-Check if a model exists in Redis without loading it:
+Discover all Redis keys for a specific model class:
 
 ```python
 async def main():
-    user = User(name="Frank", age=40, email="frank@example.com")
-    await user.save()
-    
-    # Check if user exists
-    exists = await User.exists(user.key)
-    print(f"User exists: {exists}")
-    
-    # Delete and check again
-    await user.delete()
-    exists_after_delete = await User.exists(user.key)
-    print(f"User exists after delete: {exists_after_delete}")
+    # Create multiple users
+    user1 = User(name="Alice", age=25, email="alice@example.com")
+    user2 = User(name="Bob", age=30, email="bob@example.com")
+    user3 = User(name="Charlie", age=35, email="charlie@example.com")
+
+    await user1.save()
+    await user2.save()
+    await user3.save()
+
+    # Find all User keys in Redis
+    user_keys = await User.afind_keys()
+    print(f"Found {len(user_keys)} users: {user_keys}")
+
+    # Load all users
+    users = []
+    for key in user_keys:
+        user = await User.get(key)
+        users.append(user)
+
+    for user in users:
+        print(f"User: {user.name}, Age: {user.age}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -25,7 +25,11 @@ from rapyer.errors.base import KeyNotFound
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
-from rapyer.utils.annotation import replace_to_redis_types_in_annotation, has_annotation
+from rapyer.utils.annotation import (
+    replace_to_redis_types_in_annotation,
+    has_annotation,
+    DYNAMIC_CLASS_MODULE,
+)
 from rapyer.utils.fields import (
     get_all_pydantic_annotation,
     find_first_type_in_annotation,
@@ -179,7 +183,9 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, attr_name, adapter.validate_python(value))
 
         # Update the redis model list for initialization
-        REDIS_MODELS.append(cls)
+        # Skip dynamically created classes from type conversion
+        if cls.__module__ != DYNAMIC_CLASS_MODULE:
+            REDIS_MODELS.append(cls)
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
@@ -254,6 +260,10 @@ class AtomicRedisModel(BaseModel):
         instance._pk = self._pk
         instance._base_model_link = self._base_model_link
         return instance
+
+    @classmethod
+    async def afind_keys(cls):
+        return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
 
     @classmethod
     async def delete_by_key(cls, key: str) -> bool:
@@ -338,7 +348,7 @@ class AtomicRedisModel(BaseModel):
 
     @model_validator(mode="after")
     def assign_fields_links(self):
-        for field_name in self.__class__.model_fields:
+        for field_name in self.__class__.model_fields.keys():
             attr = getattr(self, field_name)
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = self
@@ -346,3 +356,14 @@ class AtomicRedisModel(BaseModel):
 
 
 REDIS_MODELS: list[type[AtomicRedisModel]] = []
+
+
+async def get(redis_key: str) -> AtomicRedisModel:
+    redis_model_mapping = {klass.__name__: klass for klass in REDIS_MODELS}
+    class_name = redis_key.split(":")[0]
+    klass = redis_model_mapping.get(class_name)
+    return await klass.get(redis_key)
+
+
+def find_redis_models() -> list[type[AtomicRedisModel]]:
+    return REDIS_MODELS

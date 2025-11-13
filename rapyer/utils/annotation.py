@@ -4,6 +4,9 @@ from types import UnionType
 from typing import get_origin, Union, get_args, Any, Annotated
 
 
+DYNAMIC_CLASS_MODULE = "___dynamic_class___"
+
+
 class TypeConverter(ABC):
     @abc.abstractmethod
     def is_type_support(self, type_to_check: type) -> bool:
