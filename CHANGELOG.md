@@ -9,6 +9,7 @@
 - **Global Model Retrieval**: Added `rapyer.get()` function to retrieve any Redis model instance by its key without needing to know the specific model class
   - Example: `model = await rapyer.get("UserModel:12345")`
 - **Model Discovery**: Added `find_redis_models()` function to discover all Redis model classes in the current environment
+- **Key Discovery**: Added `find_keys()` class method to retrieve all Redis keys for a specific model class
 
 ## [1.0.2] - 2025-11-05
 
