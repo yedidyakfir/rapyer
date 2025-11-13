@@ -262,6 +262,10 @@ class AtomicRedisModel(BaseModel):
         return instance
 
     @classmethod
+    async def find_keys(cls):
+        return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
+
+    @classmethod
     async def delete_by_key(cls, key: str) -> bool:
         client = _context_var.get() or cls.Meta.redis
         return await client.delete(key) == 1
