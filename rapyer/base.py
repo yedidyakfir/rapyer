@@ -262,7 +262,7 @@ class AtomicRedisModel(BaseModel):
         return instance
 
     @classmethod
-    async def find_keys(cls):
+    async def afind_keys(cls):
         return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
 
     @classmethod

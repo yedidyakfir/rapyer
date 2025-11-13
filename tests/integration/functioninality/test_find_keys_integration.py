@@ -21,9 +21,9 @@ async def test_find_keys_returns_only_saved_keys_for_specific_class_sanity():
     await bool_model_1.save()
 
     # Act
-    str_keys = await StrModel.find_keys()
-    int_keys = await IntModel.find_keys()
-    bool_keys = await BoolModel.find_keys()
+    str_keys = await StrModel.afind_keys()
+    int_keys = await IntModel.afind_keys()
+    bool_keys = await BoolModel.afind_keys()
 
     # Assert
     assert set(str_keys) == {str_model_1.key, str_model_2.key}
@@ -39,9 +39,9 @@ async def test_find_keys_empty_results_when_no_saved_models_sanity():
     bool_model_1 = BoolModel(is_active=True, is_deleted=False)
 
     # Act - Don't save any models, just find keys
-    str_keys = await StrModel.find_keys()
-    int_keys = await IntModel.find_keys()
-    bool_keys = await BoolModel.find_keys()
+    str_keys = await StrModel.afind_keys()
+    int_keys = await IntModel.afind_keys()
+    bool_keys = await BoolModel.afind_keys()
 
     # Assert
     assert set(str_keys) == set()
@@ -67,9 +67,9 @@ async def test_find_keys_isolation_between_different_model_classes_sanity():
         await model.save()
 
     # Find keys for each class
-    str_keys = await StrModel.find_keys()
-    int_keys = await IntModel.find_keys()
-    bool_keys = await BoolModel.find_keys()
+    str_keys = await StrModel.afind_keys()
+    int_keys = await IntModel.afind_keys()
+    bool_keys = await BoolModel.afind_keys()
 
     # Assert
     assert set(str_keys) == {model.key for model in str_models}
