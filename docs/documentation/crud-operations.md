@@ -60,6 +60,33 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+### Using rapyer.get() - Global Retrieval
+
+You can also retrieve models using the global `rapyer.get()` function, which can load any model type by examining the Redis key:
+
+```python
+import rapyer
+
+async def main():
+    # Create and save a user
+    user = User(name="Bob", age=30, email="bob@example.com")
+    await user.save()
+    user_key = user.key
+    
+    # Retrieve using the global get function
+    loaded_model = await rapyer.get(user_key)
+    print(f"Loaded model: {loaded_model.name}, Age: {loaded_model.age}")
+    print(f"Model type: {type(loaded_model).__name__}")
+    
+    # Works with any model type - rapyer.get automatically determines the correct class
+    # from the Redis key pattern (ClassName:instance_id)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+The `rapyer.get()` function automatically determines the correct model class from the Redis key format and returns the appropriate model instance. This is particularly useful when you have multiple model types and want a unified way to retrieve them.
+
 ## Updating Models
 
 There are several ways to update model data:
