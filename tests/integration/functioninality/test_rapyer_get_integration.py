@@ -1,6 +1,22 @@
 import pytest
 
 import rapyer
+from tests.models.collection_types import (
+    ListModel,
+    DictModel,
+    ComprehensiveTestModel,
+    BaseModelListModel,
+    BaseModelDictModel,
+)
+from tests.models.common import UserProfile, Product, NestedConfig, UserWithKeyModel
+from tests.models.complex_types import (
+    OuterModel,
+    TestRedisModel,
+    OuterModelWithRedisNested,
+)
+from tests.models.inheritance_types import BaseUserModel, AdminUserModel, UserRole
+from tests.models.pickle_types import ModelWithUnserializableFields
+from tests.models.redis_types import DirectRedisStringModel, MixedDirectRedisTypesModel
 from tests.models.simple_types import (
     StrModel,
     IntModel,
@@ -8,9 +24,6 @@ from tests.models.simple_types import (
     BytesModel,
     DatetimeModel,
 )
-from tests.models.collection_types import ListModel, DictModel, ComprehensiveTestModel
-from tests.models.complex_types import OuterModel, TestRedisModel
-from tests.models.redis_types import DirectRedisStringModel, MixedDirectRedisTypesModel
 
 
 @pytest.mark.parametrize(
@@ -45,6 +58,82 @@ from tests.models.redis_types import DirectRedisStringModel, MixedDirectRedisTyp
                 active=True,
                 tags=["redis1", "redis2"],
                 config={"config_key": 100},
+            )
+        ],
+        # Complex nested models with BaseModel objects
+        [
+            BaseModelListModel(
+                users=[
+                    UserProfile(name="Alice", age=30, email="alice@test.com"),
+                    UserProfile(name="Bob", age=25, email="bob@test.com"),
+                ],
+                products=[
+                    Product(name="laptop", price=1000, in_stock=True),
+                    Product(name="mouse", price=25, in_stock=False),
+                ],
+                configs=[
+                    NestedConfig(
+                        settings={"theme": "dark", "lang": "en"},
+                        options=["feature1", "feature2"],
+                    )
+                ],
+            )
+        ],
+        [
+            BaseModelDictModel(
+                metadata={
+                    "admin": UserProfile(name="Admin", age=35, email="admin@test.com"),
+                    "guest": UserProfile(name="Guest", age=22, email="guest@test.com"),
+                }
+            )
+        ],
+        # Deeply nested models
+        [
+            OuterModelWithRedisNested(
+                outer_data=[1, 2, 3, 4, 5],
+            )
+        ],
+        # Inheritance models
+        [
+            BaseUserModel(
+                name="base_user",
+                email="base@example.com",
+                age=28,
+                is_active=True,
+                tags=["tag1", "tag2", "tag3"],
+                metadata={"level": "basic", "department": "IT"},
+                role=UserRole.USER,
+                optional_field="optional_value",
+                scores=[95, 87, 92],
+            )
+        ],
+        [
+            AdminUserModel(
+                name="admin_user",
+                email="admin@example.com",
+                age=35,
+                is_active=True,
+                tags=["admin", "supervisor"],
+                metadata={"level": "senior", "department": "Management"},
+                role=UserRole.ADMIN,
+                admin_level=5,
+                permissions=["read", "write", "delete", "admin"],
+                managed_users={"user1": "John Doe", "user2": "Jane Smith"},
+                is_super_admin=True,
+                admin_notes="Senior administrator with full privileges",
+                backup_email="admin.backup@example.com",
+                access_codes=[2001, 2002, 2003],
+            )
+        ],
+        # Models with picklable/unserializable fields
+        [ModelWithUnserializableFields(value=123, python_type=AdminUserModel)],
+        # Models with custom key annotations
+        [
+            UserWithKeyModel(
+                user_id="custom_user_key_123",
+                name="Key User",
+                email="keyuser@example.com",
+                age=32,
             )
         ],
     ],
