@@ -25,7 +25,11 @@ from rapyer.errors.base import KeyNotFound
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
-from rapyer.utils.annotation import replace_to_redis_types_in_annotation, has_annotation
+from rapyer.utils.annotation import (
+    replace_to_redis_types_in_annotation,
+    has_annotation,
+    DYNAMIC_CLASS_MODULE,
+)
 from rapyer.utils.fields import (
     get_all_pydantic_annotation,
     find_first_type_in_annotation,
@@ -179,7 +183,9 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, attr_name, adapter.validate_python(value))
 
         # Update the redis model list for initialization
-        REDIS_MODELS.append(cls)
+        # Skip dynamically created classes from type conversion
+        if cls.__module__ != DYNAMIC_CLASS_MODULE:
+            REDIS_MODELS.append(cls)
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
