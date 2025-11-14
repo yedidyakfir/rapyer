@@ -144,3 +144,29 @@ async def test_redis_dict__model_creation__check_redis_dict_instance_sanity(
     assert user.metadata.key == user.key
     assert user.metadata.field_path == ".metadata"
     assert user.metadata.json_path == "$.metadata"
+
+
+@pytest.mark.asyncio
+async def test_model_creation__check_private_and_class_fields_not_converted_to_redis_types_sanity():
+    # Arrange
+    from typing import ClassVar
+    from pydantic import PrivateAttr
+
+    class TestModel(AtomicRedisModel):
+        _private_field: str = PrivateAttr(default="private")
+        class_field: ClassVar[int] = 42
+
+    # Act
+    model = TestModel()
+
+    # Assert
+    assert model.__annotations__["_private_field"] == str
+    assert model.__annotations__["class_field"] == ClassVar[int]
+
+    assert hasattr(model, "_private_field")
+    assert not isinstance(model._private_field, RedisType)
+    assert model._private_field == "private"
+
+    assert hasattr(TestModel, "class_field")
+    assert not isinstance(TestModel.class_field, RedisType)
+    assert TestModel.class_field == 42
