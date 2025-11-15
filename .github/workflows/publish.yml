@@ -95,7 +95,7 @@ jobs:
         echo "Extracted version: $VERSION from pyproject.toml"
         echo "Git tag: $TAG"
         echo "Release date: $RELEASE_DATE"
-    
+
     - name: Extract release notes
       id: release_notes
       run: |
