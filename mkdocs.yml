@@ -6,6 +6,8 @@ repo_name: yedidyakfir/rapyer
 
 theme:
   name: material
+  logo: icon.png
+  favicon: icon.png
   palette:
     - scheme: default
       primary: red
@@ -20,22 +22,39 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.tabs
-    - navigation.sections
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.path
+    - navigation.indexes
     - navigation.top
+    - navigation.tracking
+    - navigation.footer
     - search.highlight
+    - search.suggest
     - search.share
     - content.code.copy
+    - content.code.annotate
+    - content.tooltips
+  font:
+    text: Inter
+    code: JetBrains Mono
 
 nav:
-  - Home: index.md
-  - Setup: setup.md
-  - Basic Operations: basic-operations.md
-  - Supported Types: supported-types.md
-  - Redis Types: redis-types.md
-  - Atomic Actions: atomic-actions.md
-  - Nested Models: nested-models.md
+  - Overview: index.md
+  - Installation: installation.md
+  - Documentation:
+    - Defining a Model: documentation/defining-models.md
+    - CRUD Operations: documentation/crud-operations.md
+    - Initialization: documentation/initialization.md
+    - Redis Types: documentation/redis-types.md
+    - Atomic Actions: documentation/atomic-actions.md
+    - Special Fields: documentation/special-fields.md
+  - API Reference:
+    - AtomicRedisModel: api/atomic-redis-model.md
+    - Redis Types: api/redis-types.md
+    - Rapyer: api/rapyer-functions.md
   - Roadmap: roadmap.md
+  - Changelog: changelog.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -43,7 +62,8 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path: .
   - pymdownx.superfences
   - admonition
   - pymdownx.details

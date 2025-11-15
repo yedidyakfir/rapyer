@@ -3,40 +3,40 @@ from typing import Annotated
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
-from rapyer.types.byte import RedisBytes
-from rapyer.types.dct import RedisDict
-from rapyer.types.integer import RedisInt
-from rapyer.types.lst import RedisList
-from rapyer.types.string import RedisStr
+from rapyer.types.byte import RedisBytesType
+from rapyer.types.dct import RedisDict, RedisDictType
+from rapyer.types.integer import RedisInt, RedisIntType
+from rapyer.types.lst import RedisList, RedisListType
+from rapyer.types.string import RedisStr, RedisStrType
 
 
 # Models with direct Redis type annotations
 class DirectRedisStringModel(AtomicRedisModel):
-    name: RedisStr = ""
+    name: RedisStrType = ""
 
 
 class DirectRedisIntModel(AtomicRedisModel):
-    count: RedisInt = 0
+    count: RedisIntType = 0
 
 
 class DirectRedisBytesModel(AtomicRedisModel):
-    data: RedisBytes = b""
+    data: RedisBytesType = b""
 
 
 class DirectRedisListModel(AtomicRedisModel):
-    items: RedisList[str] = Field(default_factory=list)
+    items: RedisListType[str] = Field(default_factory=list)
 
 
 class DirectRedisListIntModel(AtomicRedisModel):
-    numbers: RedisList[int] = Field(default_factory=list)
+    numbers: RedisListType[int] = Field(default_factory=list)
 
 
 class DirectRedisDictModel(AtomicRedisModel):
-    metadata: RedisDict[str, str] = Field(default_factory=dict)
+    metadata: RedisDictType[str] = Field(default_factory=dict)
 
 
 class DirectRedisDictIntModel(AtomicRedisModel):
-    counters: RedisDict[str, int] = Field(default_factory=dict)
+    counters: RedisDict[int] = Field(default_factory=dict)
 
 
 class MixedDirectRedisTypesModel(AtomicRedisModel):
@@ -44,7 +44,7 @@ class MixedDirectRedisTypesModel(AtomicRedisModel):
     count: RedisInt = 0
     active: bool = True
     tags: RedisList[str] = Field(default_factory=list)
-    config: RedisDict[str, int] = Field(default_factory=dict)
+    config: RedisDict[int] = Field(default_factory=dict)
 
 
 class AnnotatedDirectRedisTypesModel(AtomicRedisModel):
@@ -54,6 +54,6 @@ class AnnotatedDirectRedisTypesModel(AtomicRedisModel):
     categories: Annotated[RedisList[str], Field(description="Categories list")] = Field(
         default_factory=list
     )
-    settings: Annotated[RedisDict[str, str], Field(description="Settings dict")] = (
-        Field(default_factory=dict)
+    settings: Annotated[RedisDict[str], Field(description="Settings dict")] = Field(
+        default_factory=dict
     )

@@ -4,7 +4,7 @@ from redis.asyncio.client import Redis
 from rapyer.base import REDIS_MODELS
 
 
-def init_rapyer(redis: str | Redis = None, ttl: int = None):
+async def init_rapyer(redis: str | Redis = None, ttl: int = None):
     if isinstance(redis, str):
         redis = redis_async.from_url(redis, decode_responses=True, max_connection=20)
 

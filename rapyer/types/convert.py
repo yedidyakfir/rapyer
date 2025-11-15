@@ -3,7 +3,7 @@ from typing import Any
 from pydantic import BaseModel, PrivateAttr, TypeAdapter
 
 from rapyer.types.base import RedisType
-from rapyer.utils.annotation import TypeConverter
+from rapyer.utils.annotation import TypeConverter, DYNAMIC_CLASS_MODULE
 from rapyer.utils.pythonic import safe_issubclass
 
 
@@ -29,14 +29,20 @@ class RedisConverter(TypeConverter):
             return type(
                 type_to_convert.__name__,
                 (type_to_convert,),
-                dict(_field_name=PrivateAttr(default=self.field_name)),
+                dict(
+                    _field_name=PrivateAttr(default=self.field_name),
+                    __module__=DYNAMIC_CLASS_MODULE,
+                ),
             )
         if safe_issubclass(type_to_convert, BaseModel):
             origin: type[BaseModel]
             return type(
                 f"Redis{type_to_convert.__name__}",
                 (AtomicRedisModel, type_to_convert),
-                dict(_field_name=PrivateAttr(default=self.field_name)),
+                dict(
+                    _field_name=PrivateAttr(default=self.field_name),
+                    __module__=DYNAMIC_CLASS_MODULE,
+                ),
             )
         if safe_issubclass(type_to_convert, RedisType):
             redis_type = type_to_convert
@@ -48,7 +54,11 @@ class RedisConverter(TypeConverter):
         new_type = type(
             redis_type.__name__,
             (redis_type,),
-            dict(field_name=self.field_name, original_type=original_type),
+            dict(
+                field_name=self.field_name,
+                original_type=original_type,
+                __module__=DYNAMIC_CLASS_MODULE,
+            ),
         )
 
         new_type._adapter = TypeAdapter(new_type)
@@ -63,14 +73,20 @@ class RedisConverter(TypeConverter):
             return type(
                 type_to_covert.__name__,
                 (type_to_covert,),
-                dict(_field_name=PrivateAttr(default=self.field_name)),
+                dict(
+                    _field_name=PrivateAttr(default=self.field_name),
+                    __module__=DYNAMIC_CLASS_MODULE,
+                ),
             )
         if safe_issubclass(type_to_covert, BaseModel):
             type_to_covert: type[BaseModel]
             return type(
                 f"Redis{type_to_covert.__name__}",
                 (AtomicRedisModel, type_to_covert),
-                dict(_field_name=PrivateAttr(default=self.field_name)),
+                dict(
+                    _field_name=PrivateAttr(default=self.field_name),
+                    __module__=DYNAMIC_CLASS_MODULE,
+                ),
             )
 
         if safe_issubclass(type_to_covert, RedisType):
@@ -84,7 +100,11 @@ class RedisConverter(TypeConverter):
         new_type = type(
             redis_type.__name__,
             (redis_type,),
-            dict(field_name=self.field_name, original_type=original_type),
+            dict(
+                field_name=self.field_name,
+                original_type=original_type,
+                __module__=DYNAMIC_CLASS_MODULE,
+            ),
         )
         adapter_type = new_type[generic_values]
 

@@ -1,6 +1,11 @@
+from datetime import datetime
 from enum import Enum
+from typing import Annotated
 
 from pydantic import Field, BaseModel
+
+from rapyer.base import AtomicRedisModel
+from rapyer.fields.key import Key
 
 
 class Status(str, Enum):
@@ -66,3 +71,17 @@ class Address(BaseModel):
 class Settings(BaseModel):
     preferences: dict[str, str] = Field(default_factory=dict)
     features: list[str] = Field(default_factory=list)
+
+
+class UserWithKeyModel(AtomicRedisModel):
+    user_id: Key(str)
+    name: str
+    email: str
+    age: int = 25
+
+
+class EventWithDatetimeKeyModel(AtomicRedisModel):
+    created_at: Annotated[datetime, Key()]
+    event_name: str
+    description: str
+    duration_minutes: int = 60

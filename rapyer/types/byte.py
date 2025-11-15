@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, SerializationInfo
 
@@ -42,3 +44,6 @@ class RedisBytes(bytes, RedisType):
         if is_redis_data:
             return cls.serialize_unknown(value)
         return value
+
+
+RedisBytesType: TypeAlias = RedisBytes | bytes

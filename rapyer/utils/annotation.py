@@ -4,6 +4,9 @@ from types import UnionType
 from typing import get_origin, Union, get_args, Any, Annotated
 
 
+DYNAMIC_CLASS_MODULE = "___dynamic_class___"
+
+
 class TypeConverter(ABC):
     @abc.abstractmethod
     def is_type_support(self, type_to_check: type) -> bool:
@@ -72,3 +75,18 @@ def replace_to_redis_types_in_annotation(
             origin = annotation
         return origin
     return annotation
+
+
+def has_annotation(field: Any, annotation_type: Any) -> bool:
+    if field is annotation_type:
+        return True
+
+    origin = get_origin(field)
+    if origin is Annotated:
+        args = get_args(field)
+        # Check metadata for annotation_type instances
+        for metadata in args[1:]:
+            if isinstance(metadata, annotation_type):
+                return True
+
+    return False
