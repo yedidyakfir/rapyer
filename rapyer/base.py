@@ -34,6 +34,7 @@ from rapyer.utils.fields import (
     get_all_pydantic_annotation,
     find_first_type_in_annotation,
     convert_field_factory_type,
+    is_redis_field,
 )
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
 
@@ -139,6 +140,7 @@ class AtomicRedisModel(BaseModel):
                 annotation, RedisConverter(cls.Meta.redis_type, f".{field_name}")
             )
             for field_name, annotation in original_annotations.items()
+            if is_redis_field(field_name, annotation)
         }
         cls.__annotations__.update(new_annotations)
         for field_name, field in pydantic_annotation.items():
@@ -147,11 +149,14 @@ class AtomicRedisModel(BaseModel):
 
         # Set new default values if needed
         for attr_name, attr_type in cls.__annotations__.items():
+            if not is_redis_field(attr_name, attr_type):
+                continue
             if original_annotations[attr_name] == attr_type:
                 serializer, validator = make_pickle_field_serializer(attr_name)
                 setattr(cls, serializer.__name__, serializer)
                 setattr(cls, validator.__name__, validator)
                 continue
+
             value = getattr(cls, attr_name, None)
             if value is None:
                 continue

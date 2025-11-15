@@ -1,5 +1,5 @@
 import inspect
-from typing import get_origin, get_args, Any, Callable
+from typing import get_origin, get_args, Any, Callable, ClassVar
 
 from pydantic import TypeAdapter, BaseModel
 from pydantic.fields import FieldInfo
@@ -74,3 +74,11 @@ def get_all_pydantic_annotation(
     visited = set()
 
     return _collect_annotations_recursive(cls, exclude_classes, visited)
+
+
+def is_redis_field(field_name, field_annotation):
+    return not (
+        field_name.startswith("_")
+        or field_name.endswith("_")
+        or get_origin(field_annotation) is ClassVar
+    )
