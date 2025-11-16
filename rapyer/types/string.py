@@ -13,7 +13,7 @@ class RedisStr(str, RedisType):
         new_value = self + other
         if self.pipeline:
             self.pipeline.json().set(self.key, self.json_path, new_value)
-        return RedisStr(new_value)
+        return self.__class__(new_value)
 
 
 RedisStrType: TypeAlias = RedisStr | str

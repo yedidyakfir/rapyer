@@ -16,7 +16,7 @@ class RedisBytes(bytes, RedisType):
         new_value = self + other
         if self.pipeline:
             self.pipeline.json().set(self.key, self.json_path, new_value)
-        return RedisBytes(new_value)
+        return self.__class__(new_value)
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type, handler):

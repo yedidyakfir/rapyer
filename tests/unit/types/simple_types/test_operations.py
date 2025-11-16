@@ -100,6 +100,8 @@ def test_redis_str_concatenation_operation_sanity():
 def test_redis_str_iadd_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleStringModel(name=initial_value)
+    original_id = id(model.name)
+    original_json_path = model.name.json_path
 
     # Act
     model.name += other_value
@@ -110,6 +112,8 @@ def test_redis_str_iadd_operation_sanity(initial_value, other_value):
     assert str(model.name) == expected
     assert model.name.key == model.key
     assert model.name.field_path == ".name"
+    assert id(model.name) != original_id
+    assert model.name.json_path == original_json_path
 
 
 def test_redis_bool_logical_operations_sanity():
@@ -133,6 +137,8 @@ def test_redis_bool_logical_operations_sanity():
 def test_redis_bytes_iadd_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleBytesModel(data=initial_value)
+    original_id = id(model.data)
+    original_json_path = model.data.json_path
 
     # Act
     model.data += other_value
@@ -143,6 +149,8 @@ def test_redis_bytes_iadd_operation_sanity(initial_value, other_value):
     assert bytes(model.data) == expected
     assert model.data.key == model.key
     assert model.data.field_path == ".data"
+    assert id(model.data) != original_id
+    assert model.data.json_path == original_json_path
 
 
 @pytest.mark.parametrize(
@@ -152,6 +160,8 @@ def test_redis_bytes_iadd_operation_sanity(initial_value, other_value):
 def test_redis_int_iadd_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleIntModel(count=initial_value)
+    original_id = id(model.count)
+    original_json_path = model.count.json_path
 
     # Act
     model.count += other_value
@@ -162,6 +172,8 @@ def test_redis_int_iadd_operation_sanity(initial_value, other_value):
     assert int(model.count) == expected
     assert model.count.key == model.key
     assert model.count.field_path == ".count"
+    assert id(model.count) != original_id
+    assert model.count.json_path == original_json_path
 
 
 @pytest.mark.parametrize(
@@ -171,6 +183,8 @@ def test_redis_int_iadd_operation_sanity(initial_value, other_value):
 def test_redis_int_isub_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleIntModel(count=initial_value)
+    original_id = id(model.count)
+    original_json_path = model.count.json_path
 
     # Act
     model.count -= other_value
@@ -181,6 +195,8 @@ def test_redis_int_isub_operation_sanity(initial_value, other_value):
     assert int(model.count) == expected
     assert model.count.key == model.key
     assert model.count.field_path == ".count"
+    assert id(model.count) != original_id
+    assert model.count.json_path == original_json_path
 
 
 @pytest.mark.parametrize(
@@ -190,6 +206,8 @@ def test_redis_int_isub_operation_sanity(initial_value, other_value):
 def test_redis_int_imul_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleIntModel(count=initial_value)
+    original_id = id(model.count)
+    original_json_path = model.count.json_path
 
     # Act
     model.count *= other_value
@@ -200,6 +218,8 @@ def test_redis_int_imul_operation_sanity(initial_value, other_value):
     assert int(model.count) == expected
     assert model.count.key == model.key
     assert model.count.field_path == ".count"
+    assert id(model.count) != original_id
+    assert model.count.json_path == original_json_path
 
 
 @pytest.mark.parametrize(
@@ -209,6 +229,8 @@ def test_redis_int_imul_operation_sanity(initial_value, other_value):
 def test_redis_int_ifloordiv_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleIntModel(count=initial_value)
+    original_id = id(model.count)
+    original_json_path = model.count.json_path
 
     # Act
     model.count //= other_value
@@ -219,6 +241,8 @@ def test_redis_int_ifloordiv_operation_sanity(initial_value, other_value):
     assert int(model.count) == expected
     assert model.count.key == model.key
     assert model.count.field_path == ".count"
+    assert id(model.count) != original_id
+    assert model.count.json_path == original_json_path
 
 
 @pytest.mark.parametrize(
@@ -228,6 +252,8 @@ def test_redis_int_ifloordiv_operation_sanity(initial_value, other_value):
 def test_redis_int_imod_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleIntModel(count=initial_value)
+    original_id = id(model.count)
+    original_json_path = model.count.json_path
 
     # Act
     model.count %= other_value
@@ -238,6 +264,8 @@ def test_redis_int_imod_operation_sanity(initial_value, other_value):
     assert int(model.count) == expected
     assert model.count.key == model.key
     assert model.count.field_path == ".count"
+    assert id(model.count) != original_id
+    assert model.count.json_path == original_json_path
 
 
 @pytest.mark.parametrize(
@@ -247,6 +275,8 @@ def test_redis_int_imod_operation_sanity(initial_value, other_value):
 def test_redis_int_ipow_operation_sanity(initial_value, other_value):
     # Arrange
     model = SimpleIntModel(count=initial_value)
+    original_id = id(model.count)
+    original_json_path = model.count.json_path
 
     # Act
     model.count **= other_value
@@ -257,3 +287,5 @@ def test_redis_int_ipow_operation_sanity(initial_value, other_value):
     assert int(model.count) == expected
     assert model.count.key == model.key
     assert model.count.field_path == ".count"
+    assert id(model.count) != original_id
+    assert model.count.json_path == original_json_path
