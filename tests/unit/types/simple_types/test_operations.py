@@ -105,3 +105,22 @@ def test_redis_bool_logical_operations_sanity():
     assert not model_false.flag or True
     assert isinstance(model_true.flag, bool)
     assert isinstance(model_false.flag, bool)
+
+
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [[b"hello", b" world"], [b"", b"test"], [b"\x00\x01", b"\x02\x03"]],
+)
+def test_redis_bytes_iadd_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleBytesModel(data=initial_value)
+
+    # Act
+    model.data += other_value
+    expected = initial_value + other_value
+
+    # Assert
+    assert isinstance(model.data, RedisBytes)
+    assert bytes(model.data) == expected
+    assert model.data.key == model.key
+    assert model.data.field_path == ".data"
