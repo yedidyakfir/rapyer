@@ -38,13 +38,13 @@ async def update_user_progress(user: User, points: int, achievement: str):
 
 ### Supported Operations
 
-Currently, the pipeline context manager supports atomic operations for:
+The pipeline context manager supports atomic operations for all Redis types:
 
-- **List operations**: `append()`, `extend()`, `insert()`, `pop()`, `remove()`
+- **List operations**: `append()`, `extend()`, `insert()`, `pop()`, `remove()`, `clear()`
 - **Dictionary operations**: `update()`, item assignment (`dict[key] = value`), `pop()`, `clear()`
-
-!!! warning "Limited Type Support"
-    Currently only list and dict operations are supported in pipeline contexts. Support for additional types will be added soon. For other field types, you can still modify the attribute and it will be saved atomically when the context exits.
+- **String operations**: Direct assignment and modification
+- **Integer operations**: Direct assignment, arithmetic operations
+- **Bytes operations**: Direct assignment and modification
 
 ### Real-World Examples
 
@@ -179,7 +179,7 @@ async def robust_cart_update(cart: ShoppingCart, items: List[dict]):
 **Consider alternatives for:**
 - Single field updates (use `field.asave()`)
 - Complex conditional logic requiring current values (use lock context manager)
-- Operations on unsupported types (use explicit async methods)
+- Operations requiring complex Python logic or conditional branching
 
 The pipeline context manager provides the most intuitive way to ensure your Redis operations are atomic while keeping your code clean and readable.
 
