@@ -93,6 +93,25 @@ def test_redis_str_concatenation_operation_sanity():
     assert model.name.field_path == ".name"
 
 
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [["hello", " world"], ["", "test"], ["old", " new"]],
+)
+def test_redis_str_iadd_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleStringModel(name=initial_value)
+
+    # Act
+    model.name += other_value
+    expected = initial_value + other_value
+
+    # Assert
+    assert isinstance(model.name, RedisStr)
+    assert str(model.name) == expected
+    assert model.name.key == model.key
+    assert model.name.field_path == ".name"
+
+
 def test_redis_bool_logical_operations_sanity():
     # Arrange
     model_true = SimpleBoolModel(flag=True)
