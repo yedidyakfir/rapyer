@@ -143,3 +143,117 @@ def test_redis_bytes_iadd_operation_sanity(initial_value, other_value):
     assert bytes(model.data) == expected
     assert model.data.key == model.key
     assert model.data.field_path == ".data"
+
+
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [[10, 5], [20, 8], [0, 15]],
+)
+def test_redis_int_iadd_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleIntModel(count=initial_value)
+
+    # Act
+    model.count += other_value
+    expected = initial_value + other_value
+
+    # Assert
+    assert isinstance(model.count, RedisInt)
+    assert int(model.count) == expected
+    assert model.count.key == model.key
+    assert model.count.field_path == ".count"
+
+
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [[20, 8], [15, 5], [100, 25]],
+)
+def test_redis_int_isub_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleIntModel(count=initial_value)
+
+    # Act
+    model.count -= other_value
+    expected = initial_value - other_value
+
+    # Assert
+    assert isinstance(model.count, RedisInt)
+    assert int(model.count) == expected
+    assert model.count.key == model.key
+    assert model.count.field_path == ".count"
+
+
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [[6, 4], [3, 7], [10, 2]],
+)
+def test_redis_int_imul_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleIntModel(count=initial_value)
+
+    # Act
+    model.count *= other_value
+    expected = initial_value * other_value
+
+    # Assert
+    assert isinstance(model.count, RedisInt)
+    assert int(model.count) == expected
+    assert model.count.key == model.key
+    assert model.count.field_path == ".count"
+
+
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [[15, 3], [20, 4], [100, 7]],
+)
+def test_redis_int_ifloordiv_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleIntModel(count=initial_value)
+
+    # Act
+    model.count //= other_value
+    expected = initial_value // other_value
+
+    # Assert
+    assert isinstance(model.count, RedisInt)
+    assert int(model.count) == expected
+    assert model.count.key == model.key
+    assert model.count.field_path == ".count"
+
+
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [[17, 5], [23, 7], [100, 9]],
+)
+def test_redis_int_imod_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleIntModel(count=initial_value)
+
+    # Act
+    model.count %= other_value
+    expected = initial_value % other_value
+
+    # Assert
+    assert isinstance(model.count, RedisInt)
+    assert int(model.count) == expected
+    assert model.count.key == model.key
+    assert model.count.field_path == ".count"
+
+
+@pytest.mark.parametrize(
+    ["initial_value", "other_value"],
+    [[2, 3], [3, 2], [5, 2]],
+)
+def test_redis_int_ipow_operation_sanity(initial_value, other_value):
+    # Arrange
+    model = SimpleIntModel(count=initial_value)
+
+    # Act
+    model.count **= other_value
+    expected = initial_value**other_value
+
+    # Assert
+    assert isinstance(model.count, RedisInt)
+    assert int(model.count) == expected
+    assert model.count.key == model.key
+    assert model.count.field_path == ".count"
