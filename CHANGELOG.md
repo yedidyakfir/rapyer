@@ -7,6 +7,7 @@
 - **In-Place Pipeline Changes**: Added support for in-place pipeline operations for all Redis types
   - Any action performed on Redis models within a pipeline now directly affects the Redis model instance
   - Both awaitable and non-awaitable functions now support in-place modifications during pipeline execution
+- **Support for generic fields for dict and list**: List and Dict now support any serializable type as a genric type
 
 ## [1.0.3]
 
