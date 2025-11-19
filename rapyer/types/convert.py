@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, get_origin
 
 from pydantic import BaseModel, PrivateAttr, TypeAdapter
 from rapyer.types.base import RedisType
@@ -10,6 +10,14 @@ class RedisConverter(TypeConverter):
     def __init__(self, supported_types: dict[type, type], field_name: str):
         self.supported_types = supported_types
         self.field_name = field_name
+
+    def is_redis_type(self, type_to_check: type) -> bool:
+        origin = get_origin(type_to_check) or type_to_check
+        if safe_issubclass(origin, RedisType):
+            return True
+        from rapyer.base import AtomicRedisModel
+
+        return safe_issubclass(origin, AtomicRedisModel)
 
     def is_type_support(self, type_to_check: type) -> bool:
         if safe_issubclass(type_to_check, BaseModel):

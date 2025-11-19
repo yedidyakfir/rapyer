@@ -138,8 +138,12 @@ class GenericRedisType(RedisType, Generic[T], ABC):
     ) -> CoreSchema:
         # Extract the generic type argument T from source_type
         element_type = cls.find_inner_type(source_type)
+        from rapyer.types.convert import RedisConverter
 
-        if element_type is Any:
+        checker = RedisConverter({}, "")
+        should_pickle = not checker.is_redis_type(element_type)
+
+        if should_pickle:
             # Build schema with both validator and serializer
             python_schema = core_schema.with_info_before_validator_function(
                 cls.full_deserializer, handler(cls.original_type)
