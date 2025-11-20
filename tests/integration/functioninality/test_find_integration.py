@@ -29,6 +29,7 @@ async def test_find_isolation_between_different_model_classes_sanity():
     bool_models = [
         BoolModel(is_active=bool(i % 2), is_deleted=not bool(i % 2)) for i in range(4)
     ]
+    another_str_model = StrModel(name="another_str", description="another_desc")
 
     # Act - Save all models
     for model in str_models:
@@ -55,3 +56,5 @@ async def test_find_isolation_between_different_model_classes_sanity():
     assert len(found_bool_models) == 4
     for model in bool_models:
         assert model in found_bool_models
+
+    assert another_str_model not in found_str_models
