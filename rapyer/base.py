@@ -119,6 +119,10 @@ class AtomicRedisModel(BaseModel):
             return self._base_model_link.key
         return f"{self.key_initials}:{self.pk}"
 
+    @key.setter
+    def key(self, value: str):
+        self._pk = value.split(":", maxsplit=1)[-1]
+
     def __init_subclass__(cls, **kwargs):
         # Find a field with KeyAnnotation and save its name
         for field_name, annotation in cls.__annotations__.items():
@@ -249,10 +253,7 @@ class AtomicRedisModel(BaseModel):
         model_dump = model_dump[0]
 
         instance = cls.model_validate(model_dump, context={REDIS_DUMP_FLAG_NAME: True})
-        # Extract pk from the key format: "ClassName:pk"
-        pk = key.split(":", 1)[1]
-        instance._pk = pk
-        # Update Redis field parameters to use the correct redis_key
+        instance.key = key
         return instance
 
     async def load(self) -> Self:
@@ -264,6 +265,21 @@ class AtomicRedisModel(BaseModel):
         instance._pk = self._pk
         instance._base_model_link = self._base_model_link
         return instance
+
+    @classmethod
+    async def afind(cls):
+        keys = await cls.afind_keys()
+        if not keys:
+            return []
+
+        models = await cls.Meta.redis.json().mget(keys=keys, path="$")
+
+        instances = []
+        for model, key in zip(models, keys):
+            model = cls.model_validate(model[0], context={REDIS_DUMP_FLAG_NAME: True})
+            model.key = key
+            instances.append(model)
+        return instances
 
     @classmethod
     async def afind_keys(cls):
