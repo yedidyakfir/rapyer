@@ -4,24 +4,6 @@ from tests.models.simple_types import StrModel, IntModel, BoolModel
 
 
 @pytest.mark.asyncio
-async def test_find_empty_results_when_no_saved_models_sanity():
-    # Arrange
-    str_model_1 = StrModel(name="test1", description="desc1")
-    int_model_1 = IntModel(count=10, score=100)
-    bool_model_1 = BoolModel(is_active=True, is_deleted=False)
-
-    # Act - Don't save any models, just find models
-    str_models = await StrModel.afind()
-    int_models = await IntModel.afind()
-    bool_models = await BoolModel.afind()
-
-    # Assert
-    assert str_models == []
-    assert int_models == []
-    assert bool_models == []
-
-
-@pytest.mark.asyncio
 async def test_find_isolation_between_different_model_classes_sanity():
     # Arrange
     str_models = [StrModel(name=f"str_{i}", description=f"desc_{i}") for i in range(3)]
@@ -43,6 +25,7 @@ async def test_find_isolation_between_different_model_classes_sanity():
     found_str_models = await StrModel.afind()
     found_int_models = await IntModel.afind()
     found_bool_models = await BoolModel.afind()
+    empty_bytes_models = await BytesModel.afind()
 
     # Assert
     assert len(found_str_models) == 3
@@ -58,3 +41,4 @@ async def test_find_isolation_between_different_model_classes_sanity():
         assert model in found_bool_models
 
     assert another_str_model not in found_str_models
+    assert empty_bytes_models == []
