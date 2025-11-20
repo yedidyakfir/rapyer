@@ -269,11 +269,14 @@ class AtomicRedisModel(BaseModel):
     @classmethod
     async def afind(cls):
         keys = await cls.afind_keys()
-        models = await cls.Meta.redis.json().mget(keys=keys)
+        if not keys:
+            return []
+
+        models = await cls.Meta.redis.json().mget(keys=keys, path="$")
 
         instances = []
         for model, key in zip(models, keys):
-            model = cls.model_validate(model, context={REDIS_DUMP_FLAG_NAME: True})
+            model = cls.model_validate(model[0], context={REDIS_DUMP_FLAG_NAME: True})
             model.key = key
             instances.append(model)
         return instances
