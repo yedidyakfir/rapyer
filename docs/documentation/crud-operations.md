@@ -87,6 +87,59 @@ if __name__ == "__main__":
 
 The `rapyer.get()` function automatically determines the correct model class from the Redis key format and returns the appropriate model instance. This is particularly useful when you have multiple model types and want a unified way to retrieve them.
 
+## Finding All Model Instances
+
+Use the `afind()` class method to retrieve all instances of a specific model class from Redis:
+
+```python
+async def main():
+    # Create and save multiple users
+    users = [
+        User(name="Alice", age=25, email="alice@example.com"),
+        User(name="Bob", age=30, email="bob@example.com"),
+        User(name="Charlie", age=35, email="charlie@example.com")
+    ]
+    
+    for user in users:
+        await user.save()
+    
+    # Find all User instances
+    all_users = await User.afind()
+    print(f"Found {len(all_users)} users:")
+    
+    for user in all_users:
+        print(f"- {user.name} ({user.age}) - {user.email}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+This is much more efficient than individual get operations when you need to retrieve multiple instances.
+
+### Finding vs. Loading Individual Models
+
+- Use `afind()` when you need all instances of a model class
+- Use `get()` when you know the specific key you want to retrieve
+- Use `afind_keys()` if you only need the Redis keys without loading the full models
+
+```python
+async def main():
+    # Get just the keys
+    user_keys = await User.afind_keys()
+    print(f"User keys: {user_keys}")
+    
+    # Get all user instances
+    users = await User.afind()
+    print(f"Loaded {len(users)} users")
+    
+    # Get specific user by key
+    specific_user = await User.get(user_keys[0])
+    print(f"Specific user: {specific_user.name}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
 ## Updating Models
 
 There are several ways to update model data:
@@ -183,7 +236,7 @@ async def main():
     user_keys = await User.afind_keys()
     print(f"Found {len(user_keys)} users: {user_keys}")
 
-    # Load all users
+    # Load all users manually (less efficient approach)
     users = []
     for key in user_keys:
         user = await User.get(key)
@@ -191,7 +244,10 @@ async def main():
 
     for user in users:
         print(f"User: {user.name}, Age: {user.age}")
-
+    
+    # More efficient approach using afind()
+    all_users = await User.afind()
+    print(f"Loaded all users efficiently: {len(all_users)}")
 
 if __name__ == "__main__":
     asyncio.run(main())
