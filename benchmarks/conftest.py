@@ -1,5 +1,6 @@
 import os
 
+import pytest
 import pytest_asyncio
 import rapyer
 
@@ -75,8 +76,20 @@ from tests.models.simple_types import (
 from tests.models.specialized import UserModel
 
 
+@pytest_asyncio.fixture
+async def redis_client():
+    meta_redis = rapyer.AtomicRedisModel.Meta.redis
+    db_num = os.getenv("REDIS_DB", "0")
+    redis = meta_redis.from_url(
+        f"redis://localhost:6370/{db_num}", decode_responses=True
+    )
+    await redis.flushdb()
+    yield redis
+    await redis.flushdb()
+
+
 @pytest_asyncio.fixture(autouse=True)
-async def redis_client(redis_client):
+async def real_redis_client(redis_client):
     # All Redis models that need the client configured
     redis_models = [
         # Collection types - List models
@@ -146,5 +159,12 @@ async def redis_client(redis_client):
 
     await redis_client.flushdb()
     yield redis_client
-    await redis_client.flushdb()
     await redis_client.aclose()
+
+
+@pytest.fixture
+def setup_benchmark(request, benchmark):
+    group_name = request.param
+    benchmark.group = group_name
+
+    yield benchmark
