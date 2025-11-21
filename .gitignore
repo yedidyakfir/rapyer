@@ -115,6 +115,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Benchmark
+.benchmarks
+
 # Dynaconf secrets
 .secrets.*
 future-work
