@@ -1,0 +1,150 @@
+import os
+
+import pytest_asyncio
+import rapyer
+
+# Collection types
+from tests.models.collection_types import (
+    UserListModel,
+    ProductListModel,
+    IntListModel,
+    StrListModel,
+    DictListModel,
+    BaseModelListModel,
+    ListModel,
+    IntDictModel,
+    StrDictModel,
+    DictDictModel,
+    BaseModelDictSetitemModel,
+    BytesDictModel,
+    DatetimeDictModel,
+    EnumDictModel,
+    AnyDictModel,
+    BaseModelDictModel,
+    BoolDictModel,
+    ListDictModel,
+    NestedDictModel,
+    DictModel,
+    MixedTypesModel,
+    PipelineTestModel,
+    ComprehensiveTestModel,
+    BaseDictMetadataModel,
+)
+
+# Common types with key annotations
+from tests.models.common import UserWithKeyModel, EventWithDatetimeKeyModel
+
+# Complex types
+from tests.models.complex_types import (
+    OuterModel,
+    InnerRedisModel,
+    OuterModelWithRedisNested,
+    TestRedisModel,
+)
+
+# Functionality types
+from tests.models.functionality_types import (
+    LockSaveTestModel,
+    LockUpdateTestModel,
+    RichModel,
+    AllTypesModel,
+)
+
+# Inheritance types
+from tests.models.inheritance_types import BaseUserModel, AdminUserModel
+
+# Pickle types
+from tests.models.pickle_types import ModelWithUnserializableFields
+
+# Simple types
+from tests.models.simple_types import (
+    IntModel,
+    BoolModel,
+    StrModel,
+    BytesModel,
+    DatetimeModel,
+    DatetimeListModel,
+    DatetimeDictModel,
+    UserModelWithTTL,
+    UserModelWithoutTTL,
+    TaskModel,
+    NoneTestModel,
+)
+
+# Specialized types
+from tests.models.specialized import UserModel
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def redis_client(redis_client):
+    # All Redis models that need the client configured
+    redis_models = [
+        # Collection types - List models
+        UserListModel,
+        ProductListModel,
+        IntListModel,
+        StrListModel,
+        DictListModel,
+        BaseModelListModel,
+        ListModel,
+        # Collection types - Dict models
+        BaseDictMetadataModel,
+        IntDictModel,
+        StrDictModel,
+        DictDictModel,
+        BaseModelDictSetitemModel,
+        BytesDictModel,
+        DatetimeDictModel,
+        EnumDictModel,
+        AnyDictModel,
+        BaseModelDictModel,
+        BoolDictModel,
+        ListDictModel,
+        NestedDictModel,
+        DictModel,
+        # Collection types - Mixed and pipeline models
+        MixedTypesModel,
+        PipelineTestModel,
+        ComprehensiveTestModel,
+        # Simple types
+        IntModel,
+        BoolModel,
+        StrModel,
+        BytesModel,
+        DatetimeModel,
+        DatetimeListModel,
+        DatetimeDictModel,
+        UserModelWithTTL,
+        UserModelWithoutTTL,
+        TaskModel,
+        NoneTestModel,
+        # Functionality types
+        LockSaveTestModel,
+        LockUpdateTestModel,
+        RichModel,
+        AllTypesModel,
+        # Specialized types
+        UserModel,
+        # Pickle types
+        ModelWithUnserializableFields,
+        # Inheritance types
+        BaseUserModel,
+        AdminUserModel,
+        # Complex types
+        OuterModel,
+        InnerRedisModel,
+        OuterModelWithRedisNested,
+        TestRedisModel,
+        # Common types with key annotations
+        UserWithKeyModel,
+        EventWithDatetimeKeyModel,
+    ]
+
+    # Configure Redis client for all models
+    for model in redis_models:
+        model.Meta.redis = redis_client
+
+    await redis_client.flushdb()
+    yield redis_client
+    await redis_client.flushdb()
+    await redis_client.aclose()
