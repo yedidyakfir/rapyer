@@ -2,7 +2,7 @@ from typing import Any, get_origin
 
 from pydantic import BaseModel, PrivateAttr, TypeAdapter
 from rapyer.types.base import RedisType
-from rapyer.utils.annotation import TypeConverter, DYNAMIC_CLASS_MODULE
+from rapyer.utils.annotation import TypeConverter, DYNAMIC_CLASS_DOC
 from rapyer.utils.pythonic import safe_issubclass
 
 
@@ -38,7 +38,7 @@ class RedisConverter(TypeConverter):
                 (type_to_convert,),
                 dict(
                     _field_name=PrivateAttr(default=self.field_name),
-                    __module__=DYNAMIC_CLASS_MODULE,
+                    __doc__=DYNAMIC_CLASS_DOC,
                 ),
             )
         if safe_issubclass(type_to_convert, BaseModel):
@@ -48,7 +48,7 @@ class RedisConverter(TypeConverter):
                 (AtomicRedisModel, type_to_convert),
                 dict(
                     _field_name=PrivateAttr(default=self.field_name),
-                    __module__=DYNAMIC_CLASS_MODULE,
+                    __doc__=DYNAMIC_CLASS_DOC,
                 ),
             )
         if safe_issubclass(type_to_convert, RedisType):
@@ -64,7 +64,7 @@ class RedisConverter(TypeConverter):
             dict(
                 field_name=self.field_name,
                 original_type=original_type,
-                __module__=DYNAMIC_CLASS_MODULE,
+                __doc__=DYNAMIC_CLASS_DOC,
             ),
         )
 
@@ -82,7 +82,7 @@ class RedisConverter(TypeConverter):
                 (type_to_covert,),
                 dict(
                     _field_name=PrivateAttr(default=self.field_name),
-                    __module__=DYNAMIC_CLASS_MODULE,
+                    __doc__=DYNAMIC_CLASS_DOC,
                 ),
             )
         if safe_issubclass(type_to_covert, BaseModel):
@@ -92,7 +92,7 @@ class RedisConverter(TypeConverter):
                 (AtomicRedisModel, type_to_covert),
                 dict(
                     _field_name=PrivateAttr(default=self.field_name),
-                    __module__=DYNAMIC_CLASS_MODULE,
+                    __doc__=DYNAMIC_CLASS_DOC,
                 ),
             )
 
@@ -110,7 +110,7 @@ class RedisConverter(TypeConverter):
             dict(
                 field_name=self.field_name,
                 original_type=original_type,
-                __module__=DYNAMIC_CLASS_MODULE,
+                __doc__=DYNAMIC_CLASS_DOC,
             ),
         )
         adapter_type = new_type[generic_values]
