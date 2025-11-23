@@ -27,7 +27,7 @@ from rapyer.types.convert import RedisConverter
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
-    DYNAMIC_CLASS_MODULE,
+    DYNAMIC_CLASS_DOC,
 )
 from rapyer.utils.fields import (
     get_all_pydantic_annotation,
@@ -192,7 +192,7 @@ class AtomicRedisModel(BaseModel):
 
         # Update the redis model list for initialization
         # Skip dynamically created classes from type conversion
-        if cls.__module__ != DYNAMIC_CLASS_MODULE:
+        if cls.__doc__ != DYNAMIC_CLASS_DOC:
             REDIS_MODELS.append(cls)
 
     def is_inner_model(self) -> bool:
