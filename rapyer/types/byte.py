@@ -2,7 +2,6 @@ from typing import TypeAlias
 
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, SerializationInfo
-
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 
 
@@ -11,6 +10,12 @@ class RedisBytes(bytes, RedisType):
 
     def clone(self):
         return bytes(self)
+
+    def __iadd__(self, other):
+        new_value = self + other
+        if self.pipeline:
+            self.pipeline.json().set(self.key, self.json_path, new_value)
+        return self.__class__(new_value)
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type, handler):

@@ -18,7 +18,6 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
-
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
@@ -28,7 +27,7 @@ from rapyer.types.convert import RedisConverter
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
-    DYNAMIC_CLASS_MODULE,
+    DYNAMIC_CLASS_DOC,
 )
 from rapyer.utils.fields import (
     get_all_pydantic_annotation,
@@ -120,6 +119,10 @@ class AtomicRedisModel(BaseModel):
             return self._base_model_link.key
         return f"{self.key_initials}:{self.pk}"
 
+    @key.setter
+    def key(self, value: str):
+        self._pk = value.split(":", maxsplit=1)[-1]
+
     def __init_subclass__(cls, **kwargs):
         # Find a field with KeyAnnotation and save its name
         for field_name, annotation in cls.__annotations__.items():
@@ -189,7 +192,7 @@ class AtomicRedisModel(BaseModel):
 
         # Update the redis model list for initialization
         # Skip dynamically created classes from type conversion
-        if cls.__module__ != DYNAMIC_CLASS_MODULE:
+        if cls.__doc__ != DYNAMIC_CLASS_DOC:
             REDIS_MODELS.append(cls)
 
     def is_inner_model(self) -> bool:
@@ -250,10 +253,7 @@ class AtomicRedisModel(BaseModel):
         model_dump = model_dump[0]
 
         instance = cls.model_validate(model_dump, context={REDIS_DUMP_FLAG_NAME: True})
-        # Extract pk from the key format: "ClassName:pk"
-        pk = key.split(":", 1)[1]
-        instance._pk = pk
-        # Update Redis field parameters to use the correct redis_key
+        instance.key = key
         return instance
 
     async def load(self) -> Self:
@@ -265,6 +265,21 @@ class AtomicRedisModel(BaseModel):
         instance._pk = self._pk
         instance._base_model_link = self._base_model_link
         return instance
+
+    @classmethod
+    async def afind(cls):
+        keys = await cls.afind_keys()
+        if not keys:
+            return []
+
+        models = await cls.Meta.redis.json().mget(keys=keys, path="$")
+
+        instances = []
+        for model, key in zip(models, keys):
+            model = cls.model_validate(model[0], context={REDIS_DUMP_FLAG_NAME: True})
+            model.key = key
+            instances.append(model)
+        return instances
 
     @classmethod
     async def afind_keys(cls):
