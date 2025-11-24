@@ -9,10 +9,6 @@ DYNAMIC_CLASS_DOC = "___dynamic_class___"
 
 class TypeConverter(ABC):
     @abc.abstractmethod
-    def is_annotation_support(self, type_to_check: type) -> bool:
-        pass
-
-    @abc.abstractmethod
     def is_type_support(self, type_to_check: type) -> bool:
         pass
 
