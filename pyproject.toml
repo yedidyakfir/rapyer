@@ -74,6 +74,7 @@ pytest-cov = "^6.0.0"
 
 [tool.poetry.group.benchmark.dependencies]
 pytest-benchmark = "^5.2.3"
+pytest-async-benchmark = {extras = ["asyncio"], version = ">=0.2.0,<0.3.0"}
 
 [tool.coverage.run]
 source = ["rapyer"]
