@@ -46,8 +46,9 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
-        pydantic-version: ["2.11"]
+        python-version: ["3.11", "3.12", "3.13"]
+        redis-version: ["6.0", "6.1", "6.2", "6.3", "6.4"]
+        pydantic-version: ["2.11", "2.12"]
     
     steps:
     - uses: actions/checkout@v4
@@ -83,7 +84,8 @@ jobs:
     - name: Run tests with tox
       env:
         REDIS_DB: ${{ strategy.job-index }}
-      run: tox
+        TOX_OVERRIDE: "testenv:py${{ matrix.python-version }}-redis${{ matrix.redis-version }}-pydantic${{ matrix.pydantic-version }}"
+      run: tox -e py$(echo "${{ matrix.python-version }}" | tr -d '.')-redis$(echo "${{ matrix.redis-version }}" | tr -d '.')-pydantic$(echo "${{ matrix.pydantic-version }}" | tr -d '.')
     
     - name: Stop Redis
       if: always()
