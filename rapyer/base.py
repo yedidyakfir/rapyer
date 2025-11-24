@@ -71,7 +71,7 @@ class AtomicRedisModel(BaseModel):
     Meta: ClassVar[RedisConfig] = RedisConfig()
     _key_field_name: ClassVar[str | None] = None
     _field_name: str = PrivateAttr(default="")
-    model_config = ConfigDict(validate_assignment=True)
+    model_config = ConfigDict(validate_assignment=True, validate_default=True)
 
     @property
     def pk(self):
