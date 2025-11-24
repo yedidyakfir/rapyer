@@ -4,7 +4,7 @@ from types import UnionType
 from typing import get_origin, Union, get_args, Any, Annotated
 
 
-DYNAMIC_CLASS_MODULE = "___dynamic_class___"
+DYNAMIC_CLASS_DOC = "___dynamic_class___"
 
 
 class TypeConverter(ABC):
