@@ -1,7 +1,6 @@
 import os
 
 import pytest_asyncio
-
 import rapyer
 
 # Collection types
@@ -31,6 +30,9 @@ from tests.models.collection_types import (
     ComprehensiveTestModel,
     BaseDictMetadataModel,
 )
+
+# Common types with key annotations
+from tests.models.common import UserWithKeyModel, EventWithDatetimeKeyModel
 
 # Complex types
 from tests.models.complex_types import (
@@ -145,6 +147,9 @@ async def real_redis_client(redis_client):
         InnerRedisModel,
         OuterModelWithRedisNested,
         TestRedisModel,
+        # Common types with key annotations
+        UserWithKeyModel,
+        EventWithDatetimeKeyModel,
     ]
 
     # Configure Redis client for all models

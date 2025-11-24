@@ -1,5 +1,8 @@
 import asyncio
+import base64
 import contextlib
+import functools
+import pickle
 import uuid
 from typing import Self, ClassVar, Any, AsyncGenerator
 
@@ -7,27 +10,73 @@ from pydantic import (
     BaseModel,
     PrivateAttr,
     ConfigDict,
+    TypeAdapter,
     model_validator,
+    field_serializer,
+    field_validator,
 )
-
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
+from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
-from rapyer.meta import RapyerMeta
+from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
+from rapyer.types.convert import RedisConverter
+from rapyer.utils.annotation import (
+    replace_to_redis_types_in_annotation,
+    has_annotation,
+    DYNAMIC_CLASS_DOC,
+)
+from rapyer.utils.fields import (
+    get_all_pydantic_annotation,
+    find_first_type_in_annotation,
+    convert_field_factory_type,
+    is_redis_field,
+)
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
 
 
-class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
+def make_pickle_field_serializer(field: str):
+    @field_serializer(field, when_used="json-unless-none")
+    def pickle_field_serializer(v, info: FieldSerializationInfo):
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME, False)
+        if should_serialize_redis:
+            return base64.b64encode(pickle.dumps(v)).decode("utf-8")
+        return v
+
+    pickle_field_serializer.__name__ = f"__serialize_{field}"
+
+    @field_validator(field, mode="before")
+    def pickle_field_validator(v, info: ValidationInfo):
+        if v is None:
+            return v
+        ctx = info.context or {}
+        should_serialize_redis = ctx.get(REDIS_DUMP_FLAG_NAME, False)
+        if should_serialize_redis:
+            return pickle.loads(base64.b64decode(v))
+        return v
+
+    pickle_field_validator.__name__ = f"__deserialize_{field}"
+
+    return pickle_field_serializer, pickle_field_validator
+
+
+class AtomicRedisModel(BaseModel):
     _pk: str = PrivateAttr(default_factory=lambda: str(uuid.uuid4()))
     _base_model_link: Self | RedisType = PrivateAttr(default=None)
 
     Meta: ClassVar[RedisConfig] = RedisConfig()
+    _key_field_name: ClassVar[str | None] = None
     _field_name: str = PrivateAttr(default="")
-    model_config = ConfigDict(validate_assignment=True, validate_default=True)
+    model_config = ConfigDict(validate_assignment=True)
 
     @property
     def pk(self):
+        if self._key_field_name:
+            return self.model_dump(include={self._key_field_name})[self._key_field_name]
         return self._pk
 
     @pk.setter
@@ -70,11 +119,81 @@ class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
             return self._base_model_link.key
         return f"{self.key_initials}:{self.pk}"
 
+    @key.setter
+    def key(self, value: str):
+        self._pk = value.split(":", maxsplit=1)[-1]
+
     def __init_subclass__(cls, **kwargs):
+        # Find a field with KeyAnnotation and save its name
+        for field_name, annotation in cls.__annotations__.items():
+            if has_annotation(annotation, KeyAnnotation):
+                cls._key_field_name = field_name
+                break
+
+        # Redefine annotations to use redis types
+        pydantic_annotation = get_all_pydantic_annotation(cls, AtomicRedisModel)
+        new_annotation = {
+            field_name: field.annotation
+            for field_name, field in pydantic_annotation.items()
+        }
+        original_annotations = cls.__annotations__.copy()
+        original_annotations.update(new_annotation)
+        new_annotations = {
+            field_name: replace_to_redis_types_in_annotation(
+                annotation, RedisConverter(cls.Meta.redis_type, f".{field_name}")
+            )
+            for field_name, annotation in original_annotations.items()
+            if is_redis_field(field_name, annotation)
+        }
+        cls.__annotations__.update(new_annotations)
+        for field_name, field in pydantic_annotation.items():
+            setattr(cls, field_name, field)
         super().__init_subclass__(**kwargs)
 
+        # Set new default values if needed
+        for attr_name, attr_type in cls.__annotations__.items():
+            if not is_redis_field(attr_name, attr_type):
+                continue
+            if original_annotations[attr_name] == attr_type:
+                serializer, validator = make_pickle_field_serializer(attr_name)
+                setattr(cls, serializer.__name__, serializer)
+                setattr(cls, validator.__name__, validator)
+                continue
+
+            value = getattr(cls, attr_name, None)
+            if value is None:
+                continue
+
+            real_type = find_first_type_in_annotation(attr_type)
+
+            if isinstance(value, real_type):
+                continue
+            redis_type = cls.__annotations__[attr_name]
+            redis_type: type[RedisType]
+            adapter = TypeAdapter(redis_type)
+
+            # Handle Field(default=...)
+            if isinstance(value, FieldInfo):
+                if value.default != PydanticUndefined:
+                    value.default = adapter.validate_python(value.default)
+                elif value.default_factory != PydanticUndefined and callable(
+                    value.default_factory
+                ):
+                    test_value = value.default_factory()
+                    if isinstance(test_value, real_type):
+                        continue
+                    original_factory = value.default_factory
+                    validate_from_adapter = functools.partial(
+                        convert_field_factory_type, original_factory, adapter
+                    )
+                    value.default_factory = validate_from_adapter
+            else:
+                setattr(cls, attr_name, adapter.validate_python(value))
+
         # Update the redis model list for initialization
-        REDIS_MODELS.append(cls)
+        # Skip dynamically created classes from type conversion
+        if cls.__doc__ != DYNAMIC_CLASS_DOC:
+            REDIS_MODELS.append(cls)
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
@@ -126,16 +245,15 @@ class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
 
     @classmethod
     async def get(cls, key: str) -> Self:
+        if cls._key_field_name and ":" not in key:
+            key = f"{cls.class_key_initials()}:{key}"
         model_dump = await cls.Meta.redis.json().get(key, "$")
         if not model_dump:
             raise KeyNotFound(f"{key} is missing in redis")
         model_dump = model_dump[0]
 
         instance = cls.model_validate(model_dump, context={REDIS_DUMP_FLAG_NAME: True})
-        # Extract pk from the key format: "ClassName:pk"
-        pk = key.split(":", 1)[1]
-        instance._pk = pk
-        # Update Redis field parameters to use the correct redis_key
+        instance.key = key
         return instance
 
     async def load(self) -> Self:
@@ -147,6 +265,25 @@ class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
         instance._pk = self._pk
         instance._base_model_link = self._base_model_link
         return instance
+
+    @classmethod
+    async def afind(cls):
+        keys = await cls.afind_keys()
+        if not keys:
+            return []
+
+        models = await cls.Meta.redis.json().mget(keys=keys, path="$")
+
+        instances = []
+        for model, key in zip(models, keys):
+            model = cls.model_validate(model[0], context={REDIS_DUMP_FLAG_NAME: True})
+            model.key = key
+            instances.append(model)
+        return instances
+
+    @classmethod
+    async def afind_keys(cls):
+        return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
 
     @classmethod
     async def delete_by_key(cls, key: str) -> bool:
@@ -231,7 +368,7 @@ class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
 
     @model_validator(mode="after")
     def assign_fields_links(self):
-        for field_name in self.model_fields:
+        for field_name in self.__class__.model_fields.keys():
             attr = getattr(self, field_name)
             if isinstance(attr, RedisType) or isinstance(attr, AtomicRedisModel):
                 attr._base_model_link = self
@@ -239,3 +376,14 @@ class AtomicRedisModel(BaseModel, metaclass=RapyerMeta):
 
 
 REDIS_MODELS: list[type[AtomicRedisModel]] = []
+
+
+async def get(redis_key: str) -> AtomicRedisModel:
+    redis_model_mapping = {klass.__name__: klass for klass in REDIS_MODELS}
+    class_name = redis_key.split(":")[0]
+    klass = redis_model_mapping.get(class_name)
+    return await klass.get(redis_key)
+
+
+def find_redis_models() -> list[type[AtomicRedisModel]]:
+    return REDIS_MODELS

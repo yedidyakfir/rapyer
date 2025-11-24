@@ -206,3 +206,72 @@ exists = await queue.user_filter.contains("user123")  # True/False with probabil
 ```
 
 **Benefits**: Support for advanced use cases, better performance for specialized operations, extensible type system for custom data structures
+
+## Lazy and Safe Field Loading
+
+**Goal**: Implement lazy-loading fields that gracefully handle corrupted or unpicklable data without breaking the entire model
+
+### Tasks
+- [ ] **Lazy Field Implementation**: Create field types that defer loading until accessed
+- [ ] **Safe Loading Mechanism**: Handle corrupted/unpicklable data gracefully without raising errors during model initialization
+- [ ] **Error Deferral**: Store loading errors and raise them only when the specific field is accessed
+- [ ] **Fallback Strategies**: Configurable fallback values or behaviors for failed field loading
+- [ ] **Type Safety**: Maintain type hints and IDE support for lazy fields
+- [ ] **Performance Optimization**: Minimize overhead for successfully loaded fields
+
+### Example Usage
+```python
+class User(AtomicRedisModel):
+    name: str
+    email: str
+    profile_data: LazyField[dict]  # Will not break model if corrupted
+    cached_results: SafeField[list, default_factory=list]  # Fallback to empty list
+    
+    class Config:
+        lazy_fields_on_error = "defer"  # or "ignore", "log"
+
+# Model loads successfully even if profile_data is corrupted
+user = await User.get("user:123")  # Works even with corrupted pickle data
+
+# Error is raised only when accessing the corrupted field
+try:
+    profile = user.profile_data  # PickleError raised here, not during model load
+except PickleError:
+    # Handle corrupted data gracefully
+    user.profile_data = {}  # Reset to valid state
+```
+
+**Benefits**: Resilient model loading, graceful degradation with corrupted data, partial model functionality when some fields fail to load
+
+## Sync Redis Client Support
+
+**Goal**: Enable synchronous Redis client support alongside the existing async implementation, providing sync equivalents for all operations
+
+### Tasks
+- [ ] **Sync Client Implementation**: Add synchronous Redis client wrapper and connection management
+- [ ] **Sync Model Operations**: Implement sync versions of core model operations (sync_get, sync_save, sync_delete, etc.)
+- [ ] **Sync Pipeline Support**: Enable pipeline operations with synchronous client (sync_pipeline context manager)
+- [ ] **Sync Field Operations**: Add synchronous versions for all Redis field types (RedisStr, RedisInt, RedisList, etc.)
+- [ ] **Configuration Management**: Support both sync and async clients in model configuration
+- [ ] **Testing**: Comprehensive test coverage for all sync operations
+- [ ] **Documentation**: Update docs with sync usage patterns and migration guides
+
+### Example Usage
+```python
+# Sync model operations
+user = User.sync_get("user:123")
+user.name = "Updated Name"
+user.sync_save()
+
+# Sync pipeline operations
+with user.sync_pipeline() as p:
+    p.score += 10
+    p.tags.append("new_tag")
+    # All changes applied atomically
+
+# Sync field operations
+user.score.sync_update(100)
+tags = user.tags.sync_get_all()
+```
+
+**Benefits**: Support for synchronous codebases, easier integration with existing sync applications, consistent API patterns between async and sync operations
