@@ -83,7 +83,7 @@ jobs:
     
     - name: Run tests with tox
       env:
-        REDIS_DB: ${{ strategy.job-index }}
+        REDIS_DB: 0
         TOX_OVERRIDE: "testenv:py${{ matrix.python-version }}-redis${{ matrix.redis-version }}-pydantic${{ matrix.pydantic-version }}"
       run: tox -e py$(echo "${{ matrix.python-version }}" | tr -d '.')-redis$(echo "${{ matrix.redis-version }}" | tr -d '.')-pydantic$(echo "${{ matrix.pydantic-version }}" | tr -d '.')
     
