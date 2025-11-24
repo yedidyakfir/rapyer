@@ -1,6 +1,6 @@
 import pytest
 
-from rapyer import RedisStr
+from rapyer.types import RedisStr
 from tests.models.complex_types import (
     OuterModelWithRedisNested,
     ContainerModel,
