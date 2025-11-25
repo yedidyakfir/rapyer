@@ -131,7 +131,7 @@ async def test_redis_dict__delitem__check_local_consistency_sanity(
     ],
 )
 async def test_redis_dict__update__check_local_consistency_sanity(
-    model_class: type[AtomicRedisModel], initial_data, update_data
+    model_class: type[BaseDictMetadataModel], initial_data, update_data
 ):
     # Arrange
     user = model_class(metadata=initial_data)
