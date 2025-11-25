@@ -146,7 +146,7 @@ class AtomicRedisModel(BaseModel):
             for field_name, annotation in original_annotations.items()
             if is_redis_field(field_name, annotation)
         }
-        cls.__annotations__.update(new_annotations)
+        cls.__annotations__ = {**cls.__annotations__, **new_annotations}
         for field_name, field in pydantic_annotation.items():
             setattr(cls, field_name, field)
         super().__init_subclass__(**kwargs)
