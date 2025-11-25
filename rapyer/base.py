@@ -18,6 +18,7 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
+
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
@@ -71,7 +72,7 @@ class AtomicRedisModel(BaseModel):
     Meta: ClassVar[RedisConfig] = RedisConfig()
     _key_field_name: ClassVar[str | None] = None
     _field_name: str = PrivateAttr(default="")
-    model_config = ConfigDict(validate_assignment=True)
+    model_config = ConfigDict(validate_assignment=True, validate_default=True)
 
     @property
     def pk(self):

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0]
+
+### ✨ Added
+- **Version Support**: Support more python versions, pydantic and redis versions, including tests in pipeline for each version.
+
+
 ## [1.0.4]
 
 ### ✨ Added
