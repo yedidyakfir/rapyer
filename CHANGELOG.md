@@ -5,6 +5,9 @@
 ### ✨ Added
 - **Version Support**: Support more python versions, pydantic and redis versions, including tests in pipeline for each version.
 
+### 🐛 Fixed
+- **Rapyer init**: Fix a bug for init_rapyer when using url.
+
 
 ## [1.0.4]
 
