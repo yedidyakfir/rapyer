@@ -8,13 +8,33 @@ from tests.models.pickle_types import ModelWithUnserializableFields
 @pytest.mark.parametrize(
     "test_data",
     [
-        {"model_type": str, "callable_field": type, "python_type": Any, "value": 42},
+        {
+            "model_type": str,
+            "callable_field": type,
+            "python_type": ModelWithUnserializableFields,
+            "value": 42,
+        },
         {"model_type": str, "callable_field": list, "python_type": str, "value": 100},
         {"model_type": str, "callable_field": tuple, "python_type": int, "value": 0},
-        {"model_type": None, "callable_field": type, "python_type": Any, "value": 42},
-        {"model_type": str, "callable_field": None, "python_type": Any, "value": 42},
+        {
+            "model_type": None,
+            "callable_field": type,
+            "python_type": ModelWithUnserializableFields,
+            "value": 42,
+        },
+        {
+            "model_type": str,
+            "callable_field": None,
+            "python_type": ModelWithUnserializableFields,
+            "value": 42,
+        },
         {"model_type": str, "callable_field": type, "python_type": None, "value": 42},
-        {"model_type": str, "callable_field": type, "python_type": Any, "value": None},
+        {
+            "model_type": str,
+            "callable_field": type,
+            "python_type": ModelWithUnserializableFields,
+            "value": None,
+        },
         {
             "model_type": None,
             "callable_field": None,
