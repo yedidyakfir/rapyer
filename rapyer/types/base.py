@@ -2,11 +2,12 @@ import abc
 import base64
 import pickle
 from abc import ABC
-from typing import get_args, Any, TypeVar, Generic, Self
+from typing import get_args, Any, TypeVar, Generic
 
 from pydantic import GetCoreSchemaHandler, TypeAdapter
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, CoreSchema, SerializationInfo
+from rapyer.typing_support import Self
 
 from rapyer.context import _context_var
 
