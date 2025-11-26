@@ -120,4 +120,4 @@ async def test_model_with_unserializable_fields__update_none_fields__edge_case()
     assert loaded_model.model_type is None
     assert loaded_model.value is None
     assert loaded_model.callable_field == type  # Should preserve default
-    assert loaded_model.python_type == Any  # Should preserve default
+    assert loaded_model.python_type == int  # Should preserve default
