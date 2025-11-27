@@ -8,6 +8,8 @@
 ### 🐛 Fixed
 - **Rapyer init**: Fix a bug for init_rapyer when using url.
 
+### 🔄 Changed
+- **BREAKING**: We stopped using RedisListType, RedisIntType, etc. instead, you can use RedisList directly with full IDE support.
 
 ## [1.0.4]
 
