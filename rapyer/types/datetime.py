@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from rapyer.types.base import RedisType
 
@@ -27,4 +28,5 @@ class RedisDatetime(datetime, RedisType):
         return datetime.fromtimestamp(self.timestamp())
 
 
-RedisDatetimeType = RedisDatetime | datetime
+if TYPE_CHECKING:
+    RedisDatetime = RedisDatetime | datetime

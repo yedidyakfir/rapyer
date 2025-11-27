@@ -3,36 +3,36 @@ from typing import Annotated
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel
-from rapyer.types.byte import RedisBytesType
-from rapyer.types.dct import RedisDict, RedisDictType
-from rapyer.types.integer import RedisInt, RedisIntType
-from rapyer.types.lst import RedisList, RedisListType
-from rapyer.types.string import RedisStr, RedisStrType
+from rapyer.types.byte import RedisBytes
+from rapyer.types.dct import RedisDict
+from rapyer.types.integer import RedisInt
+from rapyer.types.lst import RedisList
+from rapyer.types.string import RedisStr
 
 
 # Models with direct Redis type annotations
 class DirectRedisStringModel(AtomicRedisModel):
-    name: RedisStrType = ""
+    name: RedisStr = ""
 
 
 class DirectRedisIntModel(AtomicRedisModel):
-    count: RedisIntType = 0
+    count: RedisInt = 0
 
 
 class DirectRedisBytesModel(AtomicRedisModel):
-    data: RedisBytesType = b""
+    data: RedisBytes = b""
 
 
 class DirectRedisListModel(AtomicRedisModel):
-    items: RedisListType[str] = Field(default_factory=list)
+    items: RedisList[str] = Field(default_factory=list)
 
 
 class DirectRedisListIntModel(AtomicRedisModel):
-    numbers: RedisListType[int] = Field(default_factory=list)
+    numbers: RedisList[int] = Field(default_factory=list)
 
 
 class DirectRedisDictModel(AtomicRedisModel):
-    metadata: RedisDictType[str] = Field(default_factory=dict)
+    metadata: RedisDict[str] = Field(default_factory=dict)
 
 
 class DirectRedisDictIntModel(AtomicRedisModel):
