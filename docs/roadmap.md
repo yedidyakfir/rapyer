@@ -3,29 +3,6 @@
 This is the current roadmap for the rayper package, note that this is just a basic POC.
 You are welcome to add suggestions and contribute to our development.
 
-## Enhanced Pipeline Support for All Types
-
-**Current**: Only list and dict operations sync with Redis in pipeline mode
-**Goal**: All Redis types support automatic pipeline synchronization
-
-### Tasks
-- [ ] **RedisInt**: Support `+=`, `-=`, `*=`, `/=` operators in pipeline
-- [ ] **RedisStr**: Support `+=` (concatenation) in pipeline  
-- [ ] **RedisBytes**: Support byte operations in a pipeline
-- [ ] **RedisDateTime**: Support datetime modifications in pipeline
-- [ ] **Testing**: Comprehensive tests for all pipeline operations
-
-### Example Usage
-```python
-async with model.pipeline() as p:
-    p.score += 10        # RedisInt - syncs to Redis
-    p.name += " (Pro)"   # RedisStr - syncs to Redis  
-    p.tags.append("new") # RedisList - already works
-    # All changes applied atomically
-```
-
-**Benefits**: Complete atomic operation coverage, consistent developer experience across all types
-
 ## Bulk Operations Support
 
 **Goal**: Enable efficient bulk insert, update, and delete operations for multiple models

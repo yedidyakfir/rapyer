@@ -1,4 +1,4 @@
-from typing import TypeAlias
+from typing import TypeAlias, TYPE_CHECKING
 
 from rapyer.types.base import RedisType
 
@@ -50,4 +50,5 @@ class RedisInt(int, RedisType):
         return self.__class__(new_value)
 
 
-RedisIntType: TypeAlias = RedisInt | int
+if TYPE_CHECKING:
+    RedisInt: TypeAlias = RedisInt | int

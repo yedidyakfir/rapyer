@@ -1,6 +1,6 @@
 import pytest
 
-from rapyer import RedisStr, RedisInt, RedisList
+from rapyer.types import RedisStr, RedisInt, RedisList
 from tests.models.functionality_types import LockUpdateTestModel as PipelineTestModel
 
 

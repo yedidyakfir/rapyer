@@ -4,7 +4,7 @@ import contextlib
 import functools
 import pickle
 import uuid
-from typing import Self, ClassVar, Any, AsyncGenerator
+from typing import ClassVar, Any, AsyncGenerator
 
 from pydantic import (
     BaseModel,
@@ -18,12 +18,14 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
+
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
+from rapyer.typing_support import Self
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
@@ -71,7 +73,7 @@ class AtomicRedisModel(BaseModel):
     Meta: ClassVar[RedisConfig] = RedisConfig()
     _key_field_name: ClassVar[str | None] = None
     _field_name: str = PrivateAttr(default="")
-    model_config = ConfigDict(validate_assignment=True)
+    model_config = ConfigDict(validate_assignment=True, validate_default=True)
 
     @property
     def pk(self):
@@ -145,7 +147,7 @@ class AtomicRedisModel(BaseModel):
             for field_name, annotation in original_annotations.items()
             if is_redis_field(field_name, annotation)
         }
-        cls.__annotations__.update(new_annotations)
+        cls.__annotations__ = {**cls.__annotations__, **new_annotations}
         for field_name, field in pydantic_annotation.items():
             setattr(cls, field_name, field)
         super().__init_subclass__(**kwargs)
@@ -199,11 +201,17 @@ class AtomicRedisModel(BaseModel):
         return bool(self.field_name)
 
     async def save(self) -> Self:
-        model_dump = self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
+        model_dump = self.redis_dump()
         await self.Meta.redis.json().set(self.key, self.json_path, model_dump)
         if self.Meta.ttl is not None:
             await self.Meta.redis.expire(self.key, self.Meta.ttl)
         return self
+
+    def redis_dump(self):
+        return self.model_dump(mode="json", context={REDIS_DUMP_FLAG_NAME: True})
+
+    def redis_dump_json(self):
+        return self.model_dump_json(context={REDIS_DUMP_FLAG_NAME: True})
 
     async def duplicate(self) -> Self:
         if self.is_inner_model():

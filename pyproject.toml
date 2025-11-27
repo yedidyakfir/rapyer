@@ -4,12 +4,12 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "rapyer"
-version = "1.0.4"
+version = "1.1.0"
 description = "Pydantic models with Redis as the backend"
 authors = [{name = "YedidyaHKfir", email = "yedidyakfir@gmail.com"}]
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.10,<3.14"
 keywords = [
     "redis",
     "redis-json",
@@ -45,8 +45,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "redis[async]>=6.4.0, <6.5.0",
-    "pydantic>=2.11.0, <2.12.0",
+    "redis[async]>=6.0.0, <7.1.0",
+    "pydantic>=2.11.0, <2.13.0",
 ]
 
 [project.urls]
@@ -59,8 +59,6 @@ Repository = "https://github.com/yedidyakfir/rapyer"
 
 [tool.poetry]
 packages = [{include = "rapyer"}]
-
-
 
 
 [tool.poetry.group.dev.dependencies]

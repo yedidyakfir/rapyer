@@ -1,4 +1,4 @@
-from typing import TypeAlias
+from typing import TypeAlias, TYPE_CHECKING
 
 from rapyer.types.base import RedisType
 
@@ -16,4 +16,5 @@ class RedisStr(str, RedisType):
         return self.__class__(new_value)
 
 
-RedisStrType: TypeAlias = RedisStr | str
+if TYPE_CHECKING:
+    RedisStr: TypeAlias = RedisStr | str

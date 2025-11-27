@@ -1,10 +1,11 @@
 import json
-from typing import TypeVar
+from typing import TypeVar, TYPE_CHECKING
 
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, SerializationInfo
-from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
 from typing_extensions import TypeAlias
+
+from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
 
 T = TypeVar("T")
 
@@ -160,4 +161,5 @@ class RedisList(list, GenericRedisType[T]):
         core_schema.list_schema(core_schema.str_schema())
 
 
-RedisListType: TypeAlias = RedisList[T] | list[T]
+if TYPE_CHECKING:
+    RedisList: TypeAlias = RedisList[T] | list[T]
