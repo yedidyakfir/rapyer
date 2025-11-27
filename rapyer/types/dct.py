@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, get_args, Any, TypeAlias
+from typing import TypeVar, Generic, get_args, Any, TypeAlias, TYPE_CHECKING
 
 from pydantic_core import core_schema
 
@@ -229,4 +229,5 @@ class RedisDict(dict[str, T], GenericRedisType, Generic[T]):
         core_schema.dict_schema(core_schema.str_schema(), core_schema.str_schema())
 
 
-RedisDictType: TypeAlias = RedisDict[T] | dict[str, T]
+if TYPE_CHECKING:
+    RedisDict: TypeAlias = RedisDict[T] | dict[str, T]
