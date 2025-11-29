@@ -65,6 +65,7 @@ packages = [{include = "rapyer"}]
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.9.0"
+mypy = "^1.0.0"
 
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.4.2"
