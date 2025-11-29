@@ -9,7 +9,7 @@ from rapyer.base import AtomicRedisModel
 class CustomSerializableType:
     """A custom type that implements Pydantic serialization."""
 
-    def __init__(self, value: str, metadata: dict = None):
+    def __init__(self, value: str, metadata: dict = None):  # type: ignore[assignment]
         self.value = value
         self.metadata = metadata or {}
 

@@ -74,7 +74,7 @@ class Settings(BaseModel):
 
 
 class UserWithKeyModel(AtomicRedisModel):
-    user_id: Key(str)
+    user_id: Key[str]
     name: str
     email: str
     age: int = 25
