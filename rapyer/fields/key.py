@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Annotated
+from typing import Annotated, Any, Generic, TypeVar
 
 
 @dataclasses.dataclass(frozen=True)
@@ -7,8 +7,18 @@ class KeyAnnotation:
     pass
 
 
-def Key(typ: type = None):
-    if typ is None:
-        return KeyAnnotation()
+T = TypeVar("T")
 
-    return Annotated[typ, KeyAnnotation()]
+
+class _KeyType(Generic[T]):
+    def __new__(cls, typ: Any = None):
+        if typ is None:
+            return KeyAnnotation()
+        return Annotated[typ, KeyAnnotation()]
+
+    def __class_getitem__(cls, item):
+        return Annotated[item, KeyAnnotation()]
+
+
+# Create the Key callable that works both as a function and generic type
+Key = _KeyType
