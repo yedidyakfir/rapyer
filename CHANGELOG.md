@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1]
+
+### ✨ Added
+- **Bulk Insert**: We added the ainsert classmethod to AtomicRedisModel to insert multiple models in a single operation. 
+
 ## [1.1.0]
 
 ### ✨ Added

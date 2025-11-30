@@ -25,7 +25,7 @@ from rapyer.errors.base import KeyNotFound
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
-from rapyer.typing_support import Self
+from rapyer.typing_support import Self, Unpack
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
@@ -292,6 +292,13 @@ class AtomicRedisModel(BaseModel):
     @classmethod
     async def afind_keys(cls):
         return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
+
+    @classmethod
+    async def ainsert(cls, *models: Unpack[Self]):
+        pipe = cls.Meta.redis.pipeline()
+        for model in models:
+            pipe.json().set(model.key, model.json_path, model.redis_dump())
+        await pipe.execute()
 
     @classmethod
     async def delete_by_key(cls, key: str) -> bool:

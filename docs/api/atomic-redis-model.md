@@ -143,6 +143,15 @@ user = await User.get("User:abc-123")
 success = await User.delete_by_key("User:abc-123")
 ```
 
+#### `afind()`
+**Type:** `async` class method  
+**Returns:** `list of redis models`  
+**Description:** Retrieves all instances of this model class from Redis.
+
+```python
+all_users = await User.afind()  # Returns [User(...), User(...), ...]
+```
+
 #### `afind_keys()`
 **Type:** `async` class method  
 **Returns:** `list[str]`  
@@ -150,6 +159,34 @@ success = await User.delete_by_key("User:abc-123")
 
 ```python
 user_keys = await User.afind_keys()  # Returns ["User:123", "User:456", ...]
+```
+
+#### `ainsert(*models)`
+**Type:** `async` class method  
+**Parameters:** 
+- `*models` (Self): Variable number of model instances to insert  
+**Returns:** `None`  
+**Description:** Inserts multiple model instances to Redis in a single atomic transaction. This is significantly more efficient than calling `save()` on each model individually, as it uses Redis pipelining to batch all operations.
+
+**Benefits:**
+- **Transactional**: All models are saved atomically - either all succeed or all fail
+- **Performance**: Uses a single Redis pipeline instead of multiple round trips
+- **Network Efficiency**: Reduces network latency by batching operations
+- **Consistency**: Prevents partial saves if an error occurs during bulk operations
+
+```python
+# Create multiple user instances
+users = [
+    User(name="Alice", email="alice@example.com"),
+    User(name="Bob", email="bob@example.com"),
+    User(name="Charlie", email="charlie@example.com")
+]
+
+# Insert all users atomically
+await User.ainsert(*users)
+
+# Alternative syntax
+await User.ainsert(user1, user2, user3)
 ```
 
 #### `class_key_initials()`
