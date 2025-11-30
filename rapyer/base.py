@@ -4,7 +4,7 @@ import contextlib
 import functools
 import pickle
 import uuid
-from typing import ClassVar, Any, AsyncGenerator, Unpack
+from typing import ClassVar, Any, AsyncGenerator
 
 from pydantic import (
     BaseModel,
@@ -25,7 +25,7 @@ from rapyer.errors.base import KeyNotFound
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
-from rapyer.typing_support import Self
+from rapyer.typing_support import Self, Unpack
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
