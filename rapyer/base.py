@@ -294,6 +294,13 @@ class AtomicRedisModel(BaseModel):
         return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
 
     @classmethod
+    async def ainert(cls, models: list[Self]):
+        pipe = cls.Meta.redis.pipeline()
+        for model in models:
+            pipe.json().set(model.key, model.json_path, model.redis_dump())
+        await pipe.execute()
+
+    @classmethod
     async def delete_by_key(cls, key: str) -> bool:
         client = _context_var.get() or cls.Meta.redis
         return await client.delete(key) == 1
