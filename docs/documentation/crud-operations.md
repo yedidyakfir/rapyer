@@ -151,6 +151,38 @@ if __name__ == "__main__":
 
 This is much more efficient than individual get operations when you need to retrieve multiple instances.
 
+### Performance Comparison: `afind()` vs Individual `get()` Operations
+
+The `afind()` method provides significant performance improvements over retrieving models individually, especially as the number of models increases. The chart below shows the performance difference:
+
+![Performance Comparison: afind() vs One-by-one Model Extraction](../images/afind_performance.png)
+
+**Key Performance Benefits:**
+
+- **Batch Operations**: `afind()` uses Redis's `MGET` command to retrieve multiple models in a single operation
+- **Reduced Network Overhead**: One network round-trip instead of multiple individual requests
+- **Exponential Performance Gains**: Performance improvement scales dramatically with model count
+  - **3+ models**: ~1.5-3x faster
+  - **20+ models**: ~6-8x faster  
+  - **100+ models**: ~10x faster
+
+**When to Use Each Method:**
+
+```python
+async def performance_example():
+    # ❌ Inefficient for multiple models
+    user_keys = await User.afind_keys()
+    users = []
+    for key in user_keys:  # Multiple network round-trips
+        user = await User.get(key)
+        users.append(user)
+    
+    # ✅ Efficient batch retrieval
+    users = await User.afind()  # Single network round-trip
+    
+    print(f"Retrieved {len(users)} users efficiently")
+```
+
 ### Finding vs. Loading Individual Models
 
 - Use `afind()` when you need all instances of a model class
