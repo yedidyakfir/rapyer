@@ -70,6 +70,11 @@ if __name__ == "__main__":
 - **Performance**: Single Redis pipeline operation instead of multiple round trips
 - **Network Efficiency**: Reduces network latency by batching operations
 
+### Performance Comparison: `ainsert()` vs Multiple `save()` Operations
+
+The `ainsert()` method provides significant performance improvements over multiple individual save operations, even when using `asyncio.gather()` for concurrency. The chart below shows the performance difference:
+
+![Performance Comparison: ainsert() vs Multiple save() Model Insertion](../images/ainsert_performance.png)
 
 ## Retrieving Models
 
