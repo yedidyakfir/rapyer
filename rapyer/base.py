@@ -294,7 +294,7 @@ class AtomicRedisModel(BaseModel):
         return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
 
     @classmethod
-    async def ainert(cls, *models: Unpack[Self]):
+    async def ainsert(cls, *models: Unpack[Self]):
         pipe = cls.Meta.redis.pipeline()
         for model in models:
             pipe.json().set(model.key, model.json_path, model.redis_dump())

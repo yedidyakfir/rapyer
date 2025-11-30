@@ -22,7 +22,7 @@ async def test_ainert_multiple_models_single_transaction_sanity(transaction_redi
     ]
 
     # Act
-    await StrModel.ainert(*models)
+    await StrModel.ainsert(*models)
 
     # Assert
     for model in models:
