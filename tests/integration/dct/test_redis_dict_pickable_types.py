@@ -1,8 +1,6 @@
 import pytest
-from typing import Type
 
-from rapyer import RedisStr
-from rapyer.types.dct import RedisDict
+from rapyer.types import RedisStr
 from tests.models.pickle_types import DictPickableTypesModel
 
 

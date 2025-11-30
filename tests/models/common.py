@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Annotated
 
 from pydantic import Field, BaseModel
+
 from rapyer.base import AtomicRedisModel
 from rapyer.fields.key import Key
 
@@ -73,7 +74,7 @@ class Settings(BaseModel):
 
 
 class UserWithKeyModel(AtomicRedisModel):
-    user_id: Key(str)
+    user_id: Key[str]
     name: str
     email: str
     age: int = 25

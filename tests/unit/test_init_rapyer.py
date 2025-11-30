@@ -1,8 +1,9 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from rapyer.init import init_rapyer
 from redis.asyncio.client import Redis
+
+from rapyer.init import init_rapyer
 from tests.models.collection_types import IntListModel, ProductListModel, StrListModel
 from tests.models.simple_types import (
     NoneTestModel,
@@ -57,7 +58,7 @@ async def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_mo
 
     # Assert
     mock_from_url.assert_called_once_with(
-        connection_string, decode_responses=True, max_connection=20
+        connection_string, decode_responses=True, max_connections=20
     )
     for model in redis_models:
         assert model.Meta.redis is mock_redis_client

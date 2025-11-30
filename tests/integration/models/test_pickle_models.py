@@ -1,19 +1,40 @@
 from typing import Any
 
 import pytest
+
 from tests.models.pickle_types import ModelWithUnserializableFields
 
 
 @pytest.mark.parametrize(
     "test_data",
     [
-        {"model_type": str, "callable_field": type, "python_type": Any, "value": 42},
+        {
+            "model_type": str,
+            "callable_field": type,
+            "python_type": ModelWithUnserializableFields,
+            "value": 42,
+        },
         {"model_type": str, "callable_field": list, "python_type": str, "value": 100},
         {"model_type": str, "callable_field": tuple, "python_type": int, "value": 0},
-        {"model_type": None, "callable_field": type, "python_type": Any, "value": 42},
-        {"model_type": str, "callable_field": None, "python_type": Any, "value": 42},
+        {
+            "model_type": None,
+            "callable_field": type,
+            "python_type": ModelWithUnserializableFields,
+            "value": 42,
+        },
+        {
+            "model_type": str,
+            "callable_field": None,
+            "python_type": ModelWithUnserializableFields,
+            "value": 42,
+        },
         {"model_type": str, "callable_field": type, "python_type": None, "value": 42},
-        {"model_type": str, "callable_field": type, "python_type": Any, "value": None},
+        {
+            "model_type": str,
+            "callable_field": type,
+            "python_type": ModelWithUnserializableFields,
+            "value": None,
+        },
         {
             "model_type": None,
             "callable_field": None,
@@ -99,4 +120,4 @@ async def test_model_with_unserializable_fields__update_none_fields__edge_case()
     assert loaded_model.model_type is None
     assert loaded_model.value is None
     assert loaded_model.callable_field == type  # Should preserve default
-    assert loaded_model.python_type == Any  # Should preserve default
+    assert loaded_model.python_type == int  # Should preserve default

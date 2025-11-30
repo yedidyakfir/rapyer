@@ -1,11 +1,12 @@
 import redis.asyncio as redis_async
-from rapyer.base import REDIS_MODELS
 from redis.asyncio.client import Redis
+
+from rapyer.base import REDIS_MODELS
 
 
 async def init_rapyer(redis: str | Redis = None, ttl: int = None):
     if isinstance(redis, str):
-        redis = redis_async.from_url(redis, decode_responses=True, max_connection=20)
+        redis = redis_async.from_url(redis, decode_responses=True, max_connections=20)
 
     for model in REDIS_MODELS:
         if redis is not None:

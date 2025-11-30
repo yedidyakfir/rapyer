@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0]
+
+### ✨ Added
+- **Version Support**: Support more python versions, pydantic and redis versions, including tests in pipeline for each version.
+
+### 🐛 Fixed
+- **Rapyer init**: Fix a bug for init_rapyer when using url.
+
+### 🔄 Changed
+- **BREAKING**: We stopped using RedisListType, RedisIntType, etc. instead, you can use RedisList directly with full IDE support.
+
 ## [1.0.4]
 
 ### ✨ Added

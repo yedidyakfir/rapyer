@@ -29,29 +29,6 @@ await user.tags.aappend("redis")  # Atomic list append
 await user.settings.aupdate(language="en")  # Atomic dict update
 ```
 
-## Explicit Typing for Enhanced IDE Support
-
-While automatic conversion works seamlessly, **explicitly declaring Redis types provides superior MyPy support and IDE autocomplete**. The new **TypeAlias types** offer the best typing experience:
-
-```python
-from rapyer.types import RedisStrType, RedisListType, RedisDictType, RedisIntType
-
-class User(AtomicRedisModel):
-    name: RedisStrType = ""                                    # Best MyPy support with union types
-    age: RedisIntType = 0                                     # Supports both int and RedisInt  
-    tags: RedisListType[str] = Field(default_factory=list)    # Superior IDE autocomplete
-    settings: RedisDictType[str, str] = Field(default_factory=dict)  # Perfect type safety
-
-# IDE provides comprehensive autocomplete for all Redis operations
-await user.tags.aappend("python")    # ✓ Full IDE support with type hints
-await user.settings.aupdate(role="developer")  # ✓ Complete type safety
-await user.age.increase(1)  # ✓ RedisInt-specific operations available
-```
-
-!!! note "Alternative: Direct Redis Classes"
-    You can also use direct Redis classes (`RedisStr`, `RedisList`, etc.), though TypeAlias types are recommended for better typing support.
-
-
 ## Type System Overview
 
 Rapyer's type system provides seamless integration between Python types and Redis operations through automatic conversion. Whether you use standard Python types or explicit Redis types, you get the same powerful atomic operations while maintaining full compatibility with your existing code.
@@ -63,12 +40,12 @@ Rapyer's type system provides seamless integration between Python types and Redi
 **Use Case:** Text data that benefits from atomic operations
 
 ```python
-from rapyer.types import RedisStrType  # Recommended: TypeAlias 
+from rapyer.types import RedisStr  # Recommended: TypeAlias 
 # from rapyer.types import RedisStr     # Alternative: Direct class
 
 class User(AtomicRedisModel):
-    name: RedisStrType = ""              # Flexible typing with union support
-    status: RedisStrType = "active"      # Accepts both str and RedisStr
+    name: RedisStr = ""              # Flexible typing with union support
+    status: RedisStr = "active"      # Accepts both str and RedisStr
 ```
 
 ### Available Operations
@@ -89,12 +66,12 @@ All standard `str` methods are available (upper, lower, strip, etc.) but operate
 **Use Case:** Counters, IDs, scores, and numeric data requiring atomic updates
 
 ```python
-from rapyer.types import RedisIntType  # Recommended: TypeAlias
+from rapyer.types import RedisInt  # Recommended: TypeAlias
 # from rapyer.types import RedisInt     # Alternative: Direct class
 
 class Counter(AtomicRedisModel):
-    count: RedisIntType = 0              # Flexible typing with union support
-    score: RedisIntType = 100            # Accepts both int and RedisInt
+    count: RedisInt = 0              # Flexible typing with union support
+    score: RedisInt = 100            # Accepts both int and RedisInt
 ```
 
 ### Available Operations
@@ -117,12 +94,12 @@ class Counter(AtomicRedisModel):
 **Use Case:** Collections, queues, and ordered data requiring atomic list operations
 
 ```python
-from rapyer.types import RedisListType  # Recommended: TypeAlias
+from rapyer.types import RedisList  # Recommended: TypeAlias
 # from rapyer.types import RedisList     # Alternative: Direct class
 
 class UserProfile(AtomicRedisModel):
-    tags: RedisListType[str] = Field(default_factory=list)    # Flexible typing with union support
-    scores: RedisListType[int] = Field(default_factory=list)  # Accepts both list[int] and RedisList[int]
+    tags: RedisList[str] = Field(default_factory=list)    # Flexible typing with union support
+    scores: RedisList[int] = Field(default_factory=list)  # Accepts both list[int] and RedisList[int]
 ```
 
 ### Available Operations
@@ -148,12 +125,12 @@ All standard `list` methods are available (append, extend, pop, etc.) and work o
 **Use Case:** Key-value mappings, settings, and structured data requiring atomic updates
 
 ```python
-from rapyer.types import RedisDictType  # Recommended: TypeAlias
+from rapyer.types import RedisDict  # Recommended: TypeAlias
 # from rapyer.types import RedisDict     # Alternative: Direct class
 
 class UserSettings(AtomicRedisModel):
-    preferences: RedisDictType[str, str] = Field(default_factory=dict)  # Flexible typing with union support
-    metadata: RedisDictType[str, int] = Field(default_factory=dict)     # Accepts both dict and RedisDict
+    preferences: RedisDict[str, str] = Field(default_factory=dict)  # Flexible typing with union support
+    metadata: RedisDict[str, int] = Field(default_factory=dict)     # Accepts both dict and RedisDict
 ```
 
 ### Available Operations
@@ -180,12 +157,12 @@ All standard `dict` methods are available (update, pop, clear, etc.) and work on
 **Use Case:** Binary data, images, or any bytes-like data
 
 ```python
-from rapyer.types import RedisBytesType  # Recommended: TypeAlias
+from rapyer.types import RedisBytes  # Recommended: TypeAlias
 # from rapyer.types import RedisBytes     # Alternative: Direct class
 
 class FileModel(AtomicRedisModel):
-    content: RedisBytesType = b""          # Flexible typing with union support
-    thumbnail: RedisBytesType = b""        # Accepts both bytes and RedisBytes
+    content: RedisBytes = b""          # Flexible typing with union support
+    thumbnail: RedisBytes = b""        # Accepts both bytes and RedisBytes
 ```
 
 ### Available Operations
@@ -206,13 +183,13 @@ All standard `bytes` methods are available but operate on the local copy.
 **Use Case:** Timestamps, dates, and time-based data
 
 ```python
-from rapyer.types import RedisDatetimeType  # Recommended: TypeAlias
+from rapyer.types import RedisDatetime  # Recommended: TypeAlias
 # from rapyer.types import RedisDatetime     # Alternative: Direct class
 from datetime import datetime
 
 class Event(AtomicRedisModel):
-    created_at: RedisDatetimeType = Field(default_factory=datetime.now)  # Flexible typing with union support
-    updated_at: RedisDatetimeType                                        # Accepts both datetime and RedisDatetime
+    created_at: RedisDatetime = Field(default_factory=datetime.now)  # Flexible typing with union support
+    updated_at: RedisDatetime                                        # Accepts both datetime and RedisDatetime
 ```
 
 ### Available Operations
