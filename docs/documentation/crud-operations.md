@@ -4,6 +4,8 @@ After defining your model, you'll need to perform basic CRUD (Create, Read, Upda
 
 ## Saving Models
 
+### Single Model Save
+
 Use the `save()` method to store your model instance in Redis:
 
 ```python
@@ -35,6 +37,39 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+### Bulk Model Insert - `ainsert()`
+
+For better performance when saving multiple models, use the `ainsert()` classmethod which performs all insertions in a single Redis transaction:
+
+```python
+async def bulk_save_example():
+    # Create multiple user instances
+    users = [
+        User(name="Alice", age=25, email="alice@example.com", tags=["python"]),
+        User(name="Bob", age=30, email="bob@example.com", tags=["redis"]),
+        User(name="Charlie", age=35, email="charlie@example.com", tags=["async"]),
+        User(name="Diana", age=28, email="diana@example.com", tags=["database"])
+    ]
+    
+    # Bulk insert all users in a single transaction
+    await User.ainsert(*users)
+    print(f"Successfully saved {len(users)} users in one transaction")
+    
+    # Verify all users were saved
+    saved_users = await User.afind()
+    print(f"Found {len(saved_users)} users in Redis")
+
+if __name__ == "__main__":
+    asyncio.run(bulk_save_example())
+```
+
+**Why `ainsert()` is Better Than Individual `save()` Calls:**
+
+- **Transactional**: All models are saved atomically - either all succeed or all fail
+- **Performance**: Single Redis pipeline operation instead of multiple round trips
+- **Network Efficiency**: Reduces network latency by batching operations
+
 
 ## Retrieving Models
 
