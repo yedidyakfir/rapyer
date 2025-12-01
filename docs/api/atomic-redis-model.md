@@ -189,6 +189,24 @@ await User.ainsert(*users)
 await User.ainsert(user1, user2, user3)
 ```
 
+#### `adelete_many(*models)`
+**Type:** `async` class method  
+**Parameters:** 
+- `*models` (Self): Variable number of model instances to delete   
+**Description:** Deletes multiple model instances from Redis in a single atomic transaction. This is significantly more efficient than calling `delete()` on each model individually, as it uses Redis batch deletion.
+
+```python
+# Delete multiple user instances atomically
+await User.adelete_many(*users)
+
+# Alternative syntax
+await User.adelete_many(user1, user2, user3)
+
+# Can be combined with afind() to delete all instances
+all_users = await User.afind()
+await User.adelete_many(*all_users)
+```
+
 #### `class_key_initials()`
 **Type:** Class method  
 **Returns:** `str`  
