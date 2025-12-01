@@ -295,10 +295,10 @@ class AtomicRedisModel(BaseModel):
 
     @classmethod
     async def ainsert(cls, *models: Unpack[Self]):
-        pipe = cls.Meta.redis.pipeline()
-        for model in models:
-            pipe.json().set(model.key, model.json_path, model.redis_dump())
-        await pipe.execute()
+        async with cls.Meta.redis.pipeline() as pipe:
+            for model in models:
+                pipe.json().set(model.key, model.json_path, model.redis_dump())
+            await pipe.execute()
 
     @classmethod
     async def delete_by_key(cls, key: str) -> bool:
@@ -309,6 +309,10 @@ class AtomicRedisModel(BaseModel):
         if self.is_inner_model():
             raise RuntimeError("Can only delete from inner model")
         return await self.delete_by_key(self.key)
+
+    @classmethod
+    async def adelete_many(cls, *args: Unpack[Self]):
+        await cls.Meta.redis.delete(*[model.key for model in args])
 
     @classmethod
     @contextlib.asynccontextmanager
