@@ -4,6 +4,7 @@
 
 ### ✨ Added
 - **Bulk Insert**: We added the ainsert classmethod to AtomicRedisModel to insert multiple models in a single operation. 
+- **Bulk delete**: We added the adelete_many classmethod to AtomicRedisModel to delete many objects in a single operation. 
 
 ## [1.1.0]
 

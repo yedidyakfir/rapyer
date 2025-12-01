@@ -267,6 +267,8 @@ if __name__ == "__main__":
 
 ## Deleting Models
 
+### Single Model Deletion
+
 Remove model instances from Redis using the `delete()` method:
 
 ```python
@@ -288,6 +290,48 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+### Bulk Model Deletion - `adelete_many()`
+
+For better performance when deleting multiple models, use the `adelete_many()` classmethod which performs all deletions in a single Redis transaction:
+
+```python
+async def bulk_delete_example():
+    # Create and save multiple users
+    users = [
+        User(name="Alice", age=25, email="alice@example.com"),
+        User(name="Bob", age=30, email="bob@example.com"),
+        User(name="Charlie", age=35, email="charlie@example.com"),
+        User(name="Diana", age=28, email="diana@example.com")
+    ]
+    
+    # Save all users
+    await User.ainsert(*users)
+    print(f"Created {len(users)} users")
+    
+    # Bulk delete all users in a single transaction
+    await User.adelete_many(*users)
+    print(f"Successfully deleted {len(users)} users in one transaction")
+    
+    # Verify all users were deleted
+    remaining_users = await User.afind()
+    print(f"Remaining users in Redis: {len(remaining_users)}")
+
+if __name__ == "__main__":
+    asyncio.run(bulk_delete_example())
+```
+
+**Why `adelete_many()` is Better Than Individual `delete()` Calls:**
+
+- **Transactional**: All models are deleted atomically - either all succeed or all fail
+- **Performance**: Single Redis operation instead of multiple round trips
+- **Network Efficiency**: Reduces network latency by batching operations
+
+### Performance Comparison: `adelete_many()` vs Individual `delete()` Operations
+
+The `adelete_many()` method provides significant performance improvements over deleting models individually, even when using `asyncio.gather()` for concurrency. The chart below shows the performance difference:
+
+![Performance Comparison: adelete_many() vs Multiple delete() Model Deletion](../images/adelete_many_performance.png)
 
 ## Finding All Model Keys
 
