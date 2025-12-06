@@ -63,7 +63,7 @@ class RedisType(ABC):
     def json_field_path(self, field_name: str):
         return f"${self.sub_field_path(field_name)}"
 
-    async def save(self) -> Self:
+    async def asave(self) -> Self:
         model_dump = self._adapter.dump_python(
             self, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
         )
