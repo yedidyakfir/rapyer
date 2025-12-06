@@ -12,9 +12,9 @@ async def test_adelete_many_integration__delete_multiple_models_sanity(
     user2 = UserModel(tags=["tag2"])
     user3 = UserModel(tags=["tag3"])
 
-    await user1.save()
-    await user2.save()
-    await user3.save()
+    await user1.asave()
+    await user2.asave()
+    await user3.asave()
 
     assert await real_redis_client.exists(user1.key) == 1
     assert await real_redis_client.exists(user2.key) == 1
@@ -38,9 +38,9 @@ async def test_adelete_many_integration__single_redis_transaction_verification(
     user2 = UserModel(tags=["tag2"])
     user3 = UserModel(tags=["tag3"])
 
-    await user1.save()
-    await user2.save()
-    await user3.save()
+    await user1.asave()
+    await user2.asave()
+    await user3.asave()
 
     # Get the initial DEL command count from Redis stats
     initial_stats = await real_redis_client.info("commandstats")

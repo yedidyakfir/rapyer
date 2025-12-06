@@ -11,7 +11,7 @@ async def test_inheritance_models__default_values__save_load_verify_sanity():
     instance = AdminUserModel()
 
     # Act
-    await instance.save()
+    await instance.asave()
     loaded_instance = await AdminUserModel.get(instance.key)
 
     # Assert
@@ -44,7 +44,7 @@ async def test_inheritance_models__explicit_values__save_load_verify_sanity():
     )
 
     # Act
-    await admin.save()
+    await admin.asave()
     loaded_admin = await AdminUserModel.get(admin.key)
 
     # Assert
@@ -76,7 +76,7 @@ async def test_inheritance_models__admin_with_default_base_values__save_load_ver
     )
 
     # Act
-    await admin.save()
+    await admin.asave()
     loaded_admin = await AdminUserModel.get(admin.key)
 
     # Assert
@@ -87,7 +87,7 @@ async def test_inheritance_models__admin_with_default_base_values__save_load_ver
 async def test_inheritance_models__admin_inherited_field_operations__redis_actions_sanity():
     # Arrange
     admin = AdminUserModel(name="Test Admin", tags=["initial"])
-    await admin.save()
+    await admin.asave()
 
     # Act & Assert - Test list operations on inherited fields
     await admin.tags.aappend("new_tag")
@@ -114,7 +114,7 @@ async def test_inheritance_models__admin_model_operations__redis_actions_both_pa
         permissions=["read"],
         managed_users={"user1": "John"},
     )
-    await admin.save()
+    await admin.asave()
 
     # Act & Assert - Test operations on parent fields
     await admin.tags.aappend("parent_field_tag")

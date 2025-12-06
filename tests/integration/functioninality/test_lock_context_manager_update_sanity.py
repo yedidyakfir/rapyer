@@ -7,14 +7,14 @@ from tests.models.functionality_types import LockUpdateTestModel as LockTestMode
 async def test_lock_context_manager_updates_model_with_new_data_sanity():
     # Arrange
     original_model = LockTestModel(name="test", value=42, tags=["tag1"])
-    await original_model.save()
+    await original_model.asave()
 
     # Act
     new_model = await LockTestModel.get(original_model.key)
     new_model.name = "updated_name"
     new_model.value = 100
     new_model.tags.append("tag2")
-    await new_model.save()
+    await new_model.asave()
 
     # Assert
     async with original_model.lock() as locked_model:

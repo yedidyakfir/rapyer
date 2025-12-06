@@ -15,10 +15,10 @@ async def test_find_keys_returns_only_saved_keys_for_specific_class_sanity():
 
     bool_model_1 = BoolModel(is_active=True, is_deleted=False)
 
-    await str_model_1.save()
-    await str_model_2.save()
-    await int_model_1.save()
-    await bool_model_1.save()
+    await str_model_1.asave()
+    await str_model_2.asave()
+    await int_model_1.asave()
+    await bool_model_1.asave()
 
     # Act
     str_keys = await StrModel.afind_keys()
@@ -60,11 +60,11 @@ async def test_find_keys_isolation_between_different_model_classes_sanity():
 
     # Act - Save all models
     for model in str_models:
-        await model.save()
+        await model.asave()
     for model in int_models:
-        await model.save()
+        await model.asave()
     for model in bool_models:
-        await model.save()
+        await model.asave()
 
     # Find keys for each class
     str_keys = await StrModel.afind_keys()

@@ -129,19 +129,21 @@ values = await model.extract_fields([
 - [ ] **Configuration Options**: Allow setting TTL refresh interval and grace periods
 
 ### Example Usage
+
 ```python
 class User(AtomicRedisModel):
     name: str
     email: str
-    
+
     class Config:
         ttl_postpone_on_access = True  # Refresh TTL on any access
-        ttl_postpone_on_write = True   # Refresh TTL on writes only
+        ttl_postpone_on_write = True  # Refresh TTL on writes only
+
 
 # TTL gets postponed automatically
 user = await User.get("user:123")  # TTL refreshed to another 3600 seconds
-user.name = "Updated Name"          # TTL refreshed again
-await user.save()
+user.name = "Updated Name"  # TTL refreshed again
+await user.asave()
 ```
 
 **Benefits**: Prevents premature deletion of active models, better cache behavior for frequently accessed data, configurable per-model basis

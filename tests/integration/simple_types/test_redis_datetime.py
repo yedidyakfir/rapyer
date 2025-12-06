@@ -21,11 +21,11 @@ date_values = [
 async def test_redis_datetime_set_functionality_sanity(test_values):
     # Arrange
     model = DatetimeModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.created_at = test_values
-    await model.created_at.save()
+    await model.created_at.asave()
 
     # Assert
     fresh_model = DatetimeModel()
@@ -39,9 +39,9 @@ async def test_redis_datetime_set_functionality_sanity(test_values):
 async def test_redis_datetime_load_functionality_sanity(test_values):
     # Arrange
     model = DatetimeModel()
-    await model.save()
+    await model.asave()
     model.created_at = test_values
-    await model.created_at.save()
+    await model.created_at.asave()
 
     # Act
     fresh_model = DatetimeModel()
@@ -79,11 +79,11 @@ async def test_redis_datetime_serialization_functionality_sanity(real_redis_clie
     # Arrange
     test_datetime = datetime(2023, 6, 15, 10, 30, 45, 123456)
     model = DatetimeModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.created_at = test_datetime
-    await model.created_at.save()
+    await model.created_at.asave()
 
     # Assert
     raw_value = await real_redis_client.json().get(
@@ -111,9 +111,9 @@ async def test_redis_datetime_persistence_across_instances_edge_case():
     # Arrange
     test_datetime = datetime(2023, 1, 1, 12, 0, 0)
     model1 = DatetimeModel()
-    await model1.save()
+    await model1.asave()
     model1.created_at = test_datetime
-    await model1.created_at.save()
+    await model1.created_at.asave()
 
     # Act
     model2 = DatetimeModel()
@@ -136,7 +136,7 @@ async def test_redis_datetime_persistence_across_instances_edge_case():
 async def test_redis_datetime_list_functionality_sanity(test_dates):
     # Arrange
     model = DatetimeListModel(dates=test_dates)
-    await model.save()
+    await model.asave()
 
     # Act
     fresh_model = DatetimeListModel()
@@ -159,7 +159,7 @@ async def test_redis_datetime_list_functionality_sanity(test_dates):
 async def test_redis_datetime_dict_functionality_sanity(test_date_dict):
     # Arrange
     model = DatetimeDictModel(event_dates=test_date_dict)
-    await model.save()
+    await model.asave()
 
     # Act
     fresh_model = DatetimeDictModel()
@@ -175,7 +175,7 @@ async def test_redis_datetime_isoformat_compatibility_edge_case(real_redis_clien
     # Arrange
     test_datetime = datetime(2023, 6, 15, 10, 30, 45, 123456)
     model = DatetimeModel()
-    await model.save()
+    await model.asave()
 
     # Manually set the ISO format string in Redis
     await real_redis_client.json().set(
@@ -196,7 +196,7 @@ async def test_redis_datetime_isoformat_compatibility_edge_case(real_redis_clien
 async def test_redis_datetime_model_save_load_sanity(test_datetime):
     # Arrange
     model = DatetimeModel(created_at=test_datetime)
-    await model.save()
+    await model.asave()
 
     # Act
     loaded_model = await DatetimeModel.get(model.key)

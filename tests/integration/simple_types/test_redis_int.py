@@ -8,11 +8,11 @@ from tests.models.simple_types import IntModel
 async def test_redis_int_set_functionality_sanity(test_values):
     # Arrange
     model = IntModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.count = test_values
-    await model.count.save()
+    await model.count.asave()
 
     # Assert
     fresh_model = IntModel()
@@ -26,9 +26,9 @@ async def test_redis_int_set_functionality_sanity(test_values):
 async def test_redis_int_load_functionality_sanity(test_values):
     # Arrange
     model = IntModel()
-    await model.save()
+    await model.asave()
     model.count = test_values
-    await model.count.save()
+    await model.count.asave()
 
     # Act
     fresh_model = IntModel()
@@ -58,7 +58,7 @@ async def test_redis_int_load_type_conversion_edge_case(
 ):
     # Arrange
     model = IntModel()
-    await model.save()
+    await model.asave()
     await real_redis_client.json().set(model.key, model.count.json_path, redis_values)
 
     # Act
@@ -113,9 +113,9 @@ async def test_redis_int_clone_functionality_sanity():
 async def test_redis_int_persistence_across_instances_edge_case():
     # Arrange
     model1 = IntModel(count=100)
-    await model1.save()
+    await model1.asave()
     model1.count = 100
-    await model1.count.save()
+    await model1.count.asave()
 
     # Act
     model2 = IntModel()
@@ -168,9 +168,9 @@ async def test_redis_int_increase_functionality_sanity(
 ):
     # Arrange
     model = IntModel()
-    await model.save()
+    await model.asave()
     model.count = initial_value
-    await model.count.save()
+    await model.count.asave()
 
     # Act
     result = await model.count.increase(increase_amount)
@@ -187,9 +187,9 @@ async def test_redis_int_increase_functionality_sanity(
 async def test_redis_int_increase_default_amount_sanity():
     # Arrange
     model = IntModel()
-    await model.save()
+    await model.asave()
     model.count = 10
-    await model.count.save()
+    await model.count.asave()
 
     # Act
     result = await model.count.increase()
@@ -206,7 +206,7 @@ async def test_redis_int_increase_default_amount_sanity():
 async def test_redis_int_increase_on_non_existent_key_edge_case():
     # Arrange
     model = IntModel()
-    await model.save()
+    await model.asave()
 
     # Act
     result = await model.count.increase(5)
@@ -223,7 +223,7 @@ async def test_redis_int_increase_on_non_existent_key_edge_case():
 async def test_redis_int_increase_multiple_times_sanity():
     # Arrange
     model = IntModel(count=0)
-    await model.save()
+    await model.asave()
 
     # Act
     result1 = await model.count.increase(10)

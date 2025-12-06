@@ -29,7 +29,7 @@ async def test_redis_enum_model_save_and_retrieve_sanity(
     task = TaskModel(name="test_task", status=status, priority=priority)
 
     # Act
-    await task.save()
+    await task.asave()
     retrieved_task = await TaskModel.get(task.key)
 
     # Assert

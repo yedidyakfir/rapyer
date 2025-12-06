@@ -15,11 +15,11 @@ async def test_find_isolation_between_different_model_classes_sanity():
 
     # Act - Save all models
     for model in str_models:
-        await model.save()
+        await model.asave()
     for model in int_models:
-        await model.save()
+        await model.asave()
     for model in bool_models:
-        await model.save()
+        await model.asave()
 
     # Find models for each class
     found_str_models = await StrModel.afind()

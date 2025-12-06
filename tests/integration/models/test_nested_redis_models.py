@@ -15,7 +15,7 @@ from tests.models.inheritance_types import StrictMixedInheritanceModel
 async def test_nested_model_deep_list_append_sanity():
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.middle_model.inner_model.lst.aappend("deep_item")
@@ -34,7 +34,7 @@ async def test_nested_model_deep_list_append_sanity():
 async def test_nested_model_deep_list_extend_sanity():
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
     test_items = ["item1", "item2", "item3"]
 
     # Act
@@ -53,7 +53,7 @@ async def test_nested_model_deep_list_extend_sanity():
 async def test_nested_model_middle_list_operations_sanity():
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
     test_tags = ["tag1", "tag2"]
 
     # Act
@@ -74,7 +74,7 @@ async def test_nested_model_middle_list_operations_sanity():
 async def test_nested_model_middle_dict_operations_sanity():
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
     test_metadata = {"key1": "value1", "key2": "value2"}
 
     # Act
@@ -95,7 +95,7 @@ async def test_nested_model_middle_dict_operations_sanity():
 async def test_nested_model_outer_level_operations_sanity():
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
     test_user_data = {"user1": 100, "user2": 200}
     test_items = [1, 2, 3]
 
@@ -123,7 +123,7 @@ async def test_nested_model_outer_level_operations_sanity():
 async def test_nested_model_deep_list_multiple_operations_sanity(test_values):
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.middle_model.inner_model.lst.aextend(test_values)
@@ -145,7 +145,7 @@ async def test_nested_model_deep_list_multiple_operations_sanity(test_values):
 async def test_nested_model_persistence_across_instances_sanity():
     # Arrange
     outer1 = OuterModel()
-    await outer1.save()
+    await outer1.asave()
 
     # Act
     await outer1.middle_model.inner_model.lst.aappend("persistent_item")
@@ -168,7 +168,7 @@ async def test_nested_model_persistence_across_instances_sanity():
 async def test_nested_model_clear_operations_edge_case(real_redis_client):
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
 
     await outer.middle_model.inner_model.lst.aextend(["item1", "item2"])
     await outer.middle_model.metadata.aupdate(key1="value1", key2="value2")
@@ -203,7 +203,7 @@ async def test_nested_model_clear_operations_edge_case(real_redis_client):
 async def test_nested_model_mixed_operations_on_different_levels_edge_case():
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.items.aappend(10)
@@ -244,7 +244,7 @@ async def test_nested_model_load_operations_after_external_changes_edge_case(
 ):
     # Arrange
     outer = OuterModel()
-    await outer.save()
+    await outer.asave()
 
     # Act - simulate external Redis changes
     await real_redis_client.json().arrappend(
@@ -271,7 +271,7 @@ async def test_nested_model_with_initial_list_data_update_sanity():
     # Arrange
     middle_model = MiddleModel(tags=["initial_tag1", "initial_tag2"])
     outer = OuterModel(items=[100, 200], middle_model=middle_model)
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.items.aappend(300)
@@ -298,7 +298,7 @@ async def test_nested_model_with_initial_dict_data_update_sanity():
     outer = OuterModel(
         user_data={"initial_user": 50, "another_user": 75}, middle_model=middle_model
     )
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.user_data.aset_item("new_user", 125)
@@ -331,12 +331,12 @@ async def test_nested_model_with_initial_deep_data_update_sanity():
     inner_model = InnerMostModel(lst=["deep1", "deep2"], counter=10)
     middle_model = MiddleModel(inner_model=inner_model)
     outer = OuterModel(middle_model=middle_model)
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.middle_model.inner_model.lst.aextend(["deep3", "deep4"])
     outer.middle_model.inner_model.counter = 25
-    await outer.middle_model.inner_model.counter.save()
+    await outer.middle_model.inner_model.counter.asave()
 
     # Assert
     assert "deep3" in outer.middle_model.inner_model.lst
@@ -361,7 +361,7 @@ async def test_nested_model_with_mixed_initial_data_update_sanity():
     outer = OuterModel(
         items=[1, 2], user_data={"existing": 100}, middle_model=middle_model
     )
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.items.aextend([3, 4])
@@ -396,7 +396,7 @@ async def test_nested_model_with_mixed_initial_data_update_sanity():
 async def test_nested_model_with_redis_inner_model_basic_operations_sanity():
     # Arrange
     outer = OuterModelWithRedisNested()
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.container.inner_redis.tags.aappend("redis_tag")
@@ -426,11 +426,11 @@ async def test_nested_model_with_redis_inner_model_basic_operations_sanity():
 async def test_nested_model_with_redis_inner_model_counter_update_sanity():
     # Arrange
     outer = OuterModelWithRedisNested()
-    await outer.save()
+    await outer.asave()
 
     # Act
     outer.container.inner_redis.counter = 42
-    await outer.save()
+    await outer.asave()
 
     # Assert
     assert outer.container.inner_redis.counter == 42
@@ -444,7 +444,7 @@ async def test_nested_model_with_redis_inner_model_counter_update_sanity():
 async def test_nested_model_with_redis_inner_model_persistence_sanity():
     # Arrange
     outer1 = OuterModelWithRedisNested()
-    await outer1.save()
+    await outer1.asave()
 
     # Act
     await outer1.container.inner_redis.tags.aextend(["tag1", "tag2"])
@@ -475,7 +475,7 @@ async def test_nested_model_with_redis_inner_model_parameterized_operations_sani
 ):
     # Arrange
     outer = OuterModelWithRedisNested()
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.container.inner_redis.tags.aextend(tag_sets)
@@ -495,7 +495,7 @@ async def test_nested_model_with_redis_inner_model_parameterized_operations_sani
 async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case():
     # Arrange
     outer = OuterModelWithRedisNested()
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.container.inner_redis.tags.aappend("first_tag")
@@ -503,7 +503,7 @@ async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case():
     await outer.outer_data.aextend([10, 20])
     outer.container.inner_redis.counter = 15
     outer.container.description = "updated"
-    await outer.save()
+    await outer.asave()
 
     # Assert
     assert "first_tag" in outer.container.inner_redis.tags
@@ -530,7 +530,7 @@ async def test_nested_model_with_redis_inner_model_clear_operations_edge_case(
 ):
     # Arrange
     outer = OuterModelWithRedisNested()
-    await outer.save()
+    await outer.asave()
 
     await outer.container.inner_redis.tags.aextend(["tag1", "tag2"])
     await outer.container.inner_redis.metadata.aupdate(key1="value1", key2="value2")
@@ -569,7 +569,7 @@ async def test_nested_model_with_redis_inner_model_with_initial_data_sanity():
     )
     container = ContainerModel(inner_redis=inner_redis, description="test_container")
     outer = OuterModelWithRedisNested(container=container, outer_data=[100])
-    await outer.save()
+    await outer.asave()
 
     # Act
     await outer.container.inner_redis.tags.aappend("new_tag")
@@ -611,7 +611,7 @@ async def test_nested_model_create_inner_save_load_sanity():
     outer.middle_model = new_middle
     outer.user_data = {"user1": 100, "user2": 200}
     outer.items = [10, 20, 30]
-    await outer.save()
+    await outer.asave()
 
     # Assert
     loaded_outer = await OuterModel.get(outer.key)
@@ -632,7 +632,7 @@ async def test_strict_mixed_inheritance_non_pydantic_fields_not_persisted_sanity
     model = StrictMixedInheritanceModel(redis_data="custom_data", number=456)
 
     # Act
-    await model.save()
+    await model.asave()
 
     # Assert
     # Check that non-pydantic fields exist in memory

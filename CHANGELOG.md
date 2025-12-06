@@ -82,7 +82,7 @@ This release introduces **native BaseModel compatibility**, making Redis types w
 
 - **Native Redis Type Integration**: Redis types now work directly with BaseModel - no need to initialize with `""`, `0`, etc.
 - **Direct Field Assignment**: Use simple assignment like `name: RedisStr = ""` instead of `name: RedisStr = ""`
-- **Enhanced Nested Operations**: Support for saving inner fields directly with `model.lst[1].save()`
+- **Enhanced Nested Operations**: Support for saving inner fields directly with `model.lst[1].asave()`
 - **Simplified Type Declarations**: All Redis types (RedisStr, RedisInt, RedisList, RedisDict, RedisBytes) now support native Python value assignment
 
 ### 🔄 Changed

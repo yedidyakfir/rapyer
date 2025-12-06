@@ -57,11 +57,11 @@ async def test_redis_dict__setitem__check_local_consistency_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     await user.metadata.aset_item(new_item_key, new_item_value)
-    await user.save()  # Sync with Redis
+    await user.asave()  # Sync with Redis
 
     # Assert
     fresh_user = model_class()
@@ -92,11 +92,11 @@ async def test_redis_dict__delitem__check_local_consistency_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     await user.metadata.adel_item(key_to_delete)
-    await user.save()  # Sync with Redis
+    await user.asave()  # Sync with Redis
 
     # Assert
     fresh_user = model_class()
@@ -135,11 +135,11 @@ async def test_redis_dict__update__check_local_consistency_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     await user.metadata.aupdate(**update_data)
-    await user.save()  # Sync with Redis
+    await user.asave()  # Sync with Redis
 
     # Assert
     fresh_user = model_class()
@@ -169,11 +169,11 @@ async def test_redis_dict__clear__check_local_consistency_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     await user.metadata.aclear()
-    await user.save()  # Sync with Redis
+    await user.asave()  # Sync with Redis
 
     # Assert
     fresh_user = model_class()
@@ -206,7 +206,7 @@ async def test_redis_dict__load__check_redis_load_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
     # Use another user instance to set a value and verify load works
     other_user = model_class()
     other_user.pk = user.pk
@@ -253,7 +253,7 @@ async def test_redis_dict__pop__check_redis_pop_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     popped_value = await user.metadata.apop(key_to_pop)
@@ -286,7 +286,7 @@ async def test_redis_dict__pop_with_default__check_default_return_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     result = await user.metadata.apop("nonexistent", default_value)
@@ -317,7 +317,7 @@ async def test_redis_dict__popitem__check_redis_popitem_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     popped_value = await user.metadata.apopitem()
@@ -354,7 +354,7 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
 ):
     # Arrange
     user = model_class(metadata=initial_data)
-    await user.save()
+    await user.asave()
 
     # Act
     if model_class == StrDictModel:
@@ -373,7 +373,7 @@ async def test_redis_dict__update_with_kwargs__check_local_consistency_sanity(
         await user.metadata.aupdate(key2=42, key3=[1, 2, 3])
     elif model_class == BaseDictMetadataModel:
         await user.metadata.aupdate(key2="value2", key3="value3")
-    await user.save()  # Sync with Redis
+    await user.asave()  # Sync with Redis
 
     # Assert
     fresh_user = model_class()
@@ -450,7 +450,7 @@ async def test_redis_dict__popitem_empty_dict__check_key_error_sanity(
 ):
     # Arrange
     user = model_class(metadata={})
-    await user.save()
+    await user.asave()
 
     # Act & Assert
     with pytest.raises(KeyError, match="popitem\\(\\): dictionary is empty"):
@@ -507,7 +507,7 @@ async def test_redis_dict__apop_empty_redis__check_default_returned_sanity(
 ):
     # Arrange
     user = model_class()
-    await user.save()
+    await user.asave()
 
     # Act
     result = await user.metadata.apop("nonexistent_key", default_value)
@@ -534,7 +534,7 @@ async def test_redis_dict__apop_empty_redis__check_no_default_sanity(
 ):
     # Arrange
     user = model_class()
-    await user.save()
+    await user.asave()
 
     # Act
     result = await user.metadata.apop("nonexistent_key", default=None)

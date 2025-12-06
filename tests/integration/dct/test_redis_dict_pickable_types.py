@@ -34,7 +34,7 @@ async def test_redis_dict_pickable_types_save_load_sanity(
     )
 
     # Act
-    await model.save()
+    await model.asave()
     loaded_model = await DictPickableTypesModel.get(model.key)
 
     # Assert

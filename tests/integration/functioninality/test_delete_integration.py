@@ -10,7 +10,7 @@ async def test_delete_integration__save_verify_exists_delete_verify_removed_sani
 ):
     # Arrange
     user = UserModel(tags=["test_tag_1", "test_tag_2"])
-    await user.save()
+    await user.asave()
 
     # Verify model exists in Redis
     key_exists_before = await real_redis_client.exists(user.key)
@@ -60,7 +60,7 @@ async def test_delete_integration__try_delete_same_key_twice_first_true_second_f
 ):
     # Arrange
     user = UserModel(tags=["test_tag"])
-    await user.save()
+    await user.asave()
 
     # Verify model exists
     assert await real_redis_client.exists(user.key) == 1
@@ -85,7 +85,7 @@ async def test_delete_integration__call_delete_on_inner_model_raises_runtime_err
 ):
     # Arrange
     outer_model = OuterModelWithRedisNested()
-    await outer_model.save()
+    await outer_model.asave()
 
     # Access the inner redis model which should have field_name set
     inner_redis_model = outer_model.container.inner_redis
