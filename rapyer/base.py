@@ -26,6 +26,7 @@ from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
 from rapyer.typing_support import Self, Unpack
+from rapyer.typing_support import deprecated
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
@@ -199,6 +200,12 @@ class AtomicRedisModel(BaseModel):
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
+
+    @deprecated(
+        f"save function is deprecated and will become sync function in rapyer 1.2.0, use asave() instead"
+    )
+    async def save(self):
+        return await self.asave()
 
     async def asave(self) -> Self:
         model_dump = self.redis_dump()

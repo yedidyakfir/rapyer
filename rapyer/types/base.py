@@ -7,6 +7,8 @@ from typing import get_args, Any, TypeVar, Generic
 from pydantic import GetCoreSchemaHandler, TypeAdapter
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, CoreSchema, SerializationInfo
+from rapyer.typing_support import deprecated
+
 from rapyer.typing_support import Self
 
 from rapyer.context import _context_var
@@ -62,6 +64,12 @@ class RedisType(ABC):
 
     def json_field_path(self, field_name: str):
         return f"${self.sub_field_path(field_name)}"
+
+    @deprecated(
+        f"save function is deprecated and will become sync function in rapyer 1.2.0, use asave() instead"
+    )
+    async def save(self):
+        return await self.asave()
 
     async def asave(self) -> Self:
         model_dump = self._adapter.dump_python(
