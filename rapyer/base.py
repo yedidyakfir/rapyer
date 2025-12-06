@@ -271,6 +271,13 @@ class AtomicRedisModel(BaseModel):
             await pipe.execute()
 
     @classmethod
+    @deprecated(
+        "get() classmethod is deprecated and will be removed in rapyer 1.2.0, use aget instead"
+    )
+    async def get(cls, key: str) -> Self:
+        return await cls.aget(key)
+
+    @classmethod
     async def aget(cls, key: str) -> Self:
         if cls._key_field_name and ":" not in key:
             key = f"{cls.class_key_initials()}:{key}"
