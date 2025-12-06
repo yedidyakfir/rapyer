@@ -74,7 +74,7 @@ success = await user.delete()
 **Description:** Creates a duplicate of the current model with a new primary key and saves it to Redis.
 
 ```python
-user_copy = await user.duplicate()
+user_copy = await user.aduplicate()
 ```
 
 #### `duplicate_many(num)`
@@ -85,7 +85,7 @@ user_copy = await user.duplicate()
 **Description:** Creates multiple duplicates of the current model.
 
 ```python
-user_copies = await user.duplicate_many(5)  # Creates 5 duplicates
+user_copies = await user.aduplicate_many(5)  # Creates 5 duplicates
 ```
 
 #### `update(**kwargs)`

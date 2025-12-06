@@ -220,7 +220,13 @@ class AtomicRedisModel(BaseModel):
     def redis_dump_json(self):
         return self.model_dump_json(context={REDIS_DUMP_FLAG_NAME: True})
 
+    @deprecated(
+        "duplicate function is deprecated and will be removed in rapyer 1.2.0, use aduplicate instead"
+    )
     async def duplicate(self) -> Self:
+        return await self.aduplicate()
+
+    async def aduplicate(self) -> Self:
         if self.is_inner_model():
             raise RuntimeError("Can only duplicate from top level model")
 
@@ -228,7 +234,13 @@ class AtomicRedisModel(BaseModel):
         await duplicated.asave()
         return duplicated
 
+    @deprecated(
+        "duplicate_many function is deprecated and will be removed in rapyer 1.2.0, use aduplicate_many instead"
+    )
     async def duplicate_many(self, num: int) -> list[Self]:
+        return await self.aduplicate_many(num)
+
+    async def aduplicate_many(self, num: int) -> list[Self]:
         if self.is_inner_model():
             raise RuntimeError("Can only duplicate from top level model")
 
