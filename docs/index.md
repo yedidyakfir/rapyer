@@ -67,7 +67,7 @@ async def main():
     await user.metadata.aupdate(team="backend", level="senior")
 
     # Load and verify
-    loaded = await User.get(user.key)
+    loaded = await User.aget(user.key)
     print(f"User: {loaded.name}, Tags: {loaded.tags}")
 
 

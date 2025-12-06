@@ -23,11 +23,11 @@ async def test_pipeline_context_manager__dict_update_operations__check_atomic_ba
         await redis_model.metadata.aupdate(key3="value3", key4="value4")
 
         # Check that none of the operations have been applied to Redis yet
-        loaded_model = await PipelineTestModel.get(model.key)
+        loaded_model = await PipelineTestModel.aget(model.key)
         assert loaded_model.metadata == original_metadata
 
     # Assert - All dict operations should be applied atomically
-    final_model = await PipelineTestModel.get(model.key)
+    final_model = await PipelineTestModel.aget(model.key)
     assert final_model.metadata == expected_metadata
 
 
@@ -43,18 +43,18 @@ async def test_pipeline_context_manager__multiple_dict_fields__check_atomic_exec
         await redis_model.config.aupdate(timeout=30, retries=3)
 
         # Check that none of the operations have been applied to Redis yet
-        loaded_model_1 = await PipelineTestModel.get(model.key)
+        loaded_model_1 = await PipelineTestModel.aget(model.key)
         assert loaded_model_1.metadata == {"env": "dev"}
 
         await redis_model.metadata.aupdate(region="us-east")
 
         # Check again that changes still haven't been applied
-        loaded_model_2 = await PipelineTestModel.get(model.key)
+        loaded_model_2 = await PipelineTestModel.aget(model.key)
         assert loaded_model_2.metadata == {"env": "dev"}
         assert loaded_model_2.config == {"port": 8080}
 
     # Assert - All changes should be applied atomically
-    final_model = await PipelineTestModel.get(model.key)
+    final_model = await PipelineTestModel.aget(model.key)
     assert final_model.metadata == {
         "env": "dev",
         "status": "active",
@@ -69,7 +69,7 @@ async def test_pipeline_context_manager__exception_during_pipeline__check_no_cha
     # Arrange
     model = PipelineTestModel(metadata={"key": "original"})
     await model.asave()
-    original_data = await PipelineTestModel.get(model.key)
+    original_data = await PipelineTestModel.aget(model.key)
 
     # Act & Assert
     with pytest.raises(ValueError, match="Test exception"):
@@ -78,7 +78,7 @@ async def test_pipeline_context_manager__exception_during_pipeline__check_no_cha
             raise ValueError("Test exception")
 
     # Assert - No changes should be applied when an exception occurs
-    final_model = await PipelineTestModel.get(model.key)
+    final_model = await PipelineTestModel.aget(model.key)
     assert final_model.metadata == original_data.metadata
 
 
@@ -87,14 +87,14 @@ async def test_pipeline_context_manager__empty_pipeline__check_no_operations_edg
     # Arrange
     model = PipelineTestModel(metadata={"key": "unchanged"})
     await model.asave()
-    original_data = await PipelineTestModel.get(model.key)
+    original_data = await PipelineTestModel.aget(model.key)
 
     # Act
     async with model.pipeline() as redis_model:
         pass  # No operations
 
     # Assert - Data should remain unchanged
-    final_model = await PipelineTestModel.get(model.key)
+    final_model = await PipelineTestModel.aget(model.key)
     assert final_model.metadata == original_data.metadata
 
 
@@ -110,7 +110,7 @@ async def test_pipeline_context_manager__incremental_updates_atomic__check_inter
         await redis_model.metadata.aupdate(stage="processing", started_at="2023-01-01")
 
         # Check Redis state - should still be original
-        loaded_model_1 = await PipelineTestModel.get(model.key)
+        loaded_model_1 = await PipelineTestModel.aget(model.key)
         assert loaded_model_1.metadata == {"stage": "init"}
         assert loaded_model_1.config == {"step": 0}
 
@@ -118,7 +118,7 @@ async def test_pipeline_context_manager__incremental_updates_atomic__check_inter
         await redis_model.config.aupdate(step=1, timeout=30)
 
         # Check Redis state again - should still be original
-        loaded_model_2 = await PipelineTestModel.get(model.key)
+        loaded_model_2 = await PipelineTestModel.aget(model.key)
         assert loaded_model_2.metadata == {"stage": "init"}
         assert loaded_model_2.config == {"step": 0}
 
@@ -126,7 +126,7 @@ async def test_pipeline_context_manager__incremental_updates_atomic__check_inter
         await redis_model.metadata.aupdate(stage="completed")
 
     # Assert - All updates should be applied atomically
-    final_model = await PipelineTestModel.get(model.key)
+    final_model = await PipelineTestModel.aget(model.key)
     assert final_model.metadata == {"stage": "completed", "started_at": "2023-01-01"}
     assert final_model.config == {"step": 1, "timeout": 30}
 
@@ -151,7 +151,7 @@ async def test_pipeline_context_manager__pipeline_context_cleanup__check_context
     assert _context_var.get() is None
 
     # Verify operation was executed
-    final_model = await PipelineTestModel.get(model.key)
+    final_model = await PipelineTestModel.aget(model.key)
     assert final_model.metadata == {"test": "value", "updated": "true"}
 
 
@@ -166,11 +166,11 @@ async def test_pipeline_list_aappend__check_atomicity_sanity():
         await redis_model.tags.aappend("new_tag")
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.tags == ["initial"]
 
     # Assert - Check if a change was applied after a pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.tags == ["initial", "new_tag"]
 
 
@@ -185,11 +185,11 @@ async def test_pipeline_list_aextend__check_atomicity_sanity():
         await redis_model.tags.aextend(["tag1", "tag2"])
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.tags == ["initial"]
 
     # Assert - Check if a change was applied after a pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.tags == ["initial", "tag1", "tag2"]
 
 
@@ -204,11 +204,11 @@ async def test_pipeline_list_ainsert__check_atomicity_sanity():
         await redis_model.tags.ainsert(1, "middle")
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.tags == ["first", "last"]
 
     # Assert - Check if a change was applied after a pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.tags == ["first", "middle", "last"]
 
 
@@ -223,11 +223,11 @@ async def test_pipeline_list_aclear__check_atomicity_sanity():
         await redis_model.tags.aclear()
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.tags == ["tag1", "tag2"]
 
     # Assert - Check if change was applied after pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.tags == []
 
 
@@ -242,11 +242,11 @@ async def test_pipeline_dict_aset_item__check_atomicity_sanity():
         await redis_model.metadata.aset_item("new_key", "new_value")
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.metadata == {"existing": "value"}
 
     # Assert - Check if change was applied after pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.metadata == {"existing": "value", "new_key": "new_value"}
 
 
@@ -261,11 +261,11 @@ async def test_pipeline_dict_adel_item__check_atomicity_sanity():
         await redis_model.metadata.adel_item("key1")
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.metadata == {"key1": "value1", "key2": "value2"}
 
     # Assert - Check if a change was applied after a pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.metadata == {"key2": "value2"}
 
 
@@ -280,11 +280,11 @@ async def test_pipeline_dict_aupdate__check_atomicity_sanity():
         await redis_model.metadata.aupdate(key1="value1", key2="value2")
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.metadata == {"existing": "value"}
 
     # Assert - Check if a change was applied after a pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.metadata == {
         "existing": "value",
         "key1": "value1",
@@ -303,11 +303,11 @@ async def test_pipeline_dict_aclear__check_atomicity_sanity():
         await redis_model.metadata.aclear()
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.metadata == {"key1": "value1", "key2": "value2"}
 
     # Assert - Check if a change was applied after pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.metadata == {}
 
 
@@ -323,11 +323,11 @@ async def test_pipeline_string_set__check_atomicity_sanity():
         await redis_model.name.asave()
 
         # Check if the change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.name == "original"
 
     # Assert - Check if a change was applied after a pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.name == "updated"
 
 
@@ -343,11 +343,11 @@ async def test_pipeline_int_set__check_atomicity_sanity():
         await redis_model.counter.asave()
 
         # Check if a change is not applied yet (atomicity test)
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.counter == 10
 
     # Assert - Check if a change was applied after a pipeline
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.counter == 99
 
 
@@ -371,14 +371,14 @@ async def test_pipeline_multiple_operations__check_combined_atomicity_sanity():
         await redis_model.counter.asave()
 
         # Check intermediate state - should be unchanged
-        loaded_model = await ComprehensiveTestModel.get(model.key)
+        loaded_model = await ComprehensiveTestModel.aget(model.key)
         assert loaded_model.tags == ["tag1"]
         assert loaded_model.metadata == {"key1": "value1"}
         assert loaded_model.name == "original"
         assert loaded_model.counter == 0
 
     # Assert - All changes should be applied atomically
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.tags == ["tag1", "tag2", "tag3", "tag4"]
     assert final_model.metadata == {
         "key1": "value1",
@@ -395,7 +395,7 @@ async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case()
     # Arrange
     model = ComprehensiveTestModel(tags=["original"], metadata={"key": "original"})
     await model.asave()
-    original_state = await ComprehensiveTestModel.get(model.key)
+    original_state = await ComprehensiveTestModel.aget(model.key)
 
     # Act & Assert - Pipeline should roll back on exception
     with pytest.raises(ValueError, match="Test exception"):
@@ -405,7 +405,7 @@ async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case()
             raise ValueError("Test exception")
 
     # Assert - No changes should be applied when an exception occurs
-    final_model = await ComprehensiveTestModel.get(model.key)
+    final_model = await ComprehensiveTestModel.aget(model.key)
     assert final_model.tags == original_state.tags
     assert final_model.metadata == original_state.metadata
 

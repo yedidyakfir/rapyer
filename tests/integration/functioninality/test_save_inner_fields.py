@@ -26,7 +26,7 @@ async def test_save_inner_list_field_only_sanity():
     await model.items.asave()
 
     # Assert
-    retrieved_model = await SimpleListModel.get(model.key)
+    retrieved_model = await SimpleListModel.aget(model.key)
     assert retrieved_model.items == original_items + updated_items
 
 
@@ -58,7 +58,7 @@ async def test_save_inner_list_preserves_other_fields_sanity():
     await model.tags.asave()
 
     # Assert
-    retrieved_model = await ComprehensiveTestModel.get(model.key)
+    retrieved_model = await ComprehensiveTestModel.aget(model.key)
     assert retrieved_model.tags == updated_tags
     assert retrieved_model.name == original_name  # Should remain unchanged
     assert retrieved_model.counter == original_counter  # Should remain unchanged
@@ -94,7 +94,7 @@ async def test_save_inner_dict_preserves_other_fields_sanity():
     await model.metadata.asave()
 
     # Assert
-    retrieved_model = await ComprehensiveTestModel.get(model.key)
+    retrieved_model = await ComprehensiveTestModel.aget(model.key)
     assert retrieved_model.metadata == updated_metadata
     assert retrieved_model.name == original_name  # Should remain unchanged
     assert retrieved_model.counter == original_counter  # Should remain unchanged
@@ -121,7 +121,7 @@ async def test_save_inner_dict_merge_operator_sanity():
     await model.data.asave()
 
     # Assert
-    retrieved_model = await SimpleDictModel.get(model.key)
+    retrieved_model = await SimpleDictModel.aget(model.key)
     assert retrieved_model.data == expected_result
 
 
@@ -139,7 +139,7 @@ async def test_save_inner_dict_setitem_operation_sanity():
     await model.data.asave()
 
     # Assert
-    retrieved_model = await SimpleDictModel.get(model.key)
+    retrieved_model = await SimpleDictModel.aget(model.key)
     expected_result = {
         "key1": "value1",
         "key2": "updated_value2",
@@ -161,7 +161,7 @@ async def test_save_inner_dict_pop_operation_sanity():
     await model.data.asave()
 
     # Assert
-    retrieved_model = await SimpleDictModel.get(model.key)
+    retrieved_model = await SimpleDictModel.aget(model.key)
     expected_result = {"key1": "value1", "key3": "value3"}
     assert retrieved_model.data == expected_result
     assert popped_value == "value2"
@@ -185,7 +185,7 @@ async def test_save_integer_field_add_operation_sanity():
     await model.count.asave()
 
     # Assert
-    retrieved_model = await IntModel.get(model.key)
+    retrieved_model = await IntModel.aget(model.key)
     assert retrieved_model.count == expected_result
     assert retrieved_model.score == 100  # Should remain unchanged
 
@@ -208,7 +208,7 @@ async def test_save_integer_field_subtract_operation_sanity():
     await model.count.asave()
 
     # Assert
-    retrieved_model = await IntModel.get(model.key)
+    retrieved_model = await IntModel.aget(model.key)
     assert retrieved_model.count == expected_result
     assert retrieved_model.score == 100  # Should remain unchanged
 
@@ -231,7 +231,7 @@ async def test_save_integer_field_multiply_operation_sanity():
     await model.count.asave()
 
     # Assert
-    retrieved_model = await IntModel.get(model.key)
+    retrieved_model = await IntModel.aget(model.key)
     assert retrieved_model.count == expected_result
     assert retrieved_model.score == 100  # Should remain unchanged
 
@@ -254,7 +254,7 @@ async def test_save_integer_field_floor_divide_operation_sanity():
     await model.count.asave()
 
     # Assert
-    retrieved_model = await IntModel.get(model.key)
+    retrieved_model = await IntModel.aget(model.key)
     assert retrieved_model.count == expected_result
     assert retrieved_model.score == 100  # Should remain unchanged
 
@@ -289,7 +289,7 @@ async def test_save_nested_list_item_sanity():
     await model.list_of_dicts.asave()
 
     # Assert
-    retrieved_model = await ComplexNestedModel.get(model.key)
+    retrieved_model = await ComplexNestedModel.aget(model.key)
     expected_list_of_dicts = [updated_first_dict, {"key2": "val2"}]
     assert retrieved_model.list_of_dicts == expected_list_of_dicts
     assert retrieved_model.nested_dict == original_nested_dict
@@ -317,7 +317,7 @@ async def test_save_nested_dict_key_sanity():
     await model.nested_dict.asave()
 
     # Assert
-    retrieved_model = await NestedDictModel.get(model.key)
+    retrieved_model = await NestedDictModel.aget(model.key)
     assert retrieved_model.nested_dict == updated_nested_dict
 
 
@@ -347,7 +347,7 @@ async def test_save_nested_dict_list_item_sanity():
     await model.dict_of_lists.asave()
 
     # Assert
-    retrieved_model = await ComplexNestedModel.get(model.key)
+    retrieved_model = await ComplexNestedModel.aget(model.key)
     assert retrieved_model.dict_of_lists == updated_dict_of_lists
     assert retrieved_model.nested_list == [["a"]]
     assert retrieved_model.list_of_dicts == [{"k1": "v1"}]
@@ -374,7 +374,7 @@ async def test_save_deeply_nested_list_access_sanity():
     await model.items.asave()
 
     # Assert
-    retrieved_model = await DictListModel.get(model.key)
+    retrieved_model = await DictListModel.aget(model.key)
     assert retrieved_model.items == updated_list_of_dicts
 
 
@@ -402,7 +402,7 @@ async def test_save_nested_inner_model_field_only_sanity():
     await model.middle_model.inner_model.lst.asave()
 
     # Assert
-    retrieved_model = await OuterModel.get(model.key)
+    retrieved_model = await OuterModel.aget(model.key)
     assert (
         retrieved_model.middle_model.inner_model.lst
         == original_inner_list + updated_inner_list
@@ -447,7 +447,7 @@ async def test_save_integer_operations_parametrized_sanity(
     await model.count.asave()
 
     # Assert
-    retrieved_model = await IntModel.get(model.key)
+    retrieved_model = await IntModel.aget(model.key)
     assert retrieved_model.count == expected
     assert retrieved_model.score == 100  # Should remain unchanged
 
@@ -486,7 +486,7 @@ async def test_save_dict_operations_parametrized_sanity(
     await model.data.asave()
 
     # Assert
-    retrieved_model = await SimpleDictModel.get(model.key)
+    retrieved_model = await SimpleDictModel.aget(model.key)
     assert retrieved_model.data == expected
 
 
@@ -512,5 +512,5 @@ async def test_save_dict_field_parametrized_sanity(updated_data):
     await model.data.asave()
 
     # Assert
-    retrieved_model = await SimpleDictModel.get(model.key)
+    retrieved_model = await SimpleDictModel.aget(model.key)
     assert retrieved_model.data == updated_data

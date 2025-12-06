@@ -15,11 +15,11 @@ class TestPipelineStringField:
             redis_model.str_field = "new_value"
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.str_field == "initial"
 
         # Assert - direct assignment without save() is not committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         # Assignment without save() doesn't persist
         assert final_model.str_field == "initial"
 
@@ -36,11 +36,11 @@ class TestPipelineStringField:
             redis_model.str_field += "_suffix"
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.str_field == "base"
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.str_field == "base_suffix"
 
     @pytest.mark.asyncio
@@ -57,11 +57,11 @@ class TestPipelineStringField:
             redis_model.str_field += "_second"
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.str_field == "start"
 
         # Assert - all accumulated changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.str_field == "start_first_second"
 
 
@@ -77,11 +77,11 @@ class TestPipelineIntegerField:
             redis_model.int_field = 50
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.int_field == 10
 
         # Assert - direct assignment without save() is not committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.int_field == 10  # Assignment without save() doesn't persist
 
     @pytest.mark.asyncio
@@ -97,11 +97,11 @@ class TestPipelineIntegerField:
             redis_model.int_field += 25
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.int_field == 100
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.int_field == 125
 
     @pytest.mark.asyncio
@@ -118,11 +118,11 @@ class TestPipelineIntegerField:
             redis_model.int_field += 20
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.int_field == 50
 
         # Assert - all accumulated changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.int_field == 80
 
 
@@ -140,11 +140,11 @@ class TestPipelineListField:
             redis_model.list_field.append("item1")
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.list_field == []
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.list_field == ["item1"]
 
     @pytest.mark.asyncio
@@ -160,11 +160,11 @@ class TestPipelineListField:
             await redis_model.list_field.aappend("async_item")
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.list_field == []
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.list_field == ["async_item"]
 
     @pytest.mark.asyncio
@@ -180,11 +180,11 @@ class TestPipelineListField:
             redis_model.list_field.extend(["item1", "item2"])
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.list_field == []
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.list_field == ["item1", "item2"]
 
     @pytest.mark.asyncio
@@ -200,11 +200,11 @@ class TestPipelineListField:
             await redis_model.list_field.aextend(["async_item1", "async_item2"])
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.list_field == []
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.list_field == ["async_item1", "async_item2"]
 
     @pytest.mark.asyncio
@@ -222,11 +222,11 @@ class TestPipelineListField:
             redis_model.list_field.extend(["extend1", "extend2"])
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.list_field == []
 
         # Assert - all changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert "sync_item" in final_model.list_field
         assert "async_item" in final_model.list_field
         assert "extend1" in final_model.list_field
@@ -247,11 +247,11 @@ class TestPipelineDictField:
             redis_model.dict_field.update({"key1": "value1", "key2": "value2"})
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.dict_field == {}
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.dict_field == {"key1": "value1", "key2": "value2"}
 
     @pytest.mark.asyncio
@@ -269,11 +269,11 @@ class TestPipelineDictField:
             )
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.dict_field == {}
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.dict_field == {
             "async_key1": "async_value1",
             "async_key2": "async_value2",
@@ -292,11 +292,11 @@ class TestPipelineDictField:
             redis_model.dict_field["direct_key"] = "direct_value"
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.dict_field == {}
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.dict_field == {"direct_key": "direct_value"}
 
     @pytest.mark.asyncio
@@ -312,11 +312,11 @@ class TestPipelineDictField:
             await redis_model.dict_field.aset_item("async_key", "async_value")
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.dict_field == {}
 
         # Assert - changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.dict_field == {"async_key": "async_value"}
 
     @pytest.mark.asyncio
@@ -335,11 +335,11 @@ class TestPipelineDictField:
             await redis_model.dict_field.aupdate(another_key="another_value")
 
             # Assert - changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.dict_field == {}
 
         # Assert - all changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.dict_field["sync_key"] == "sync_value"
         assert final_model.dict_field["async_key"] == "async_value"
         assert final_model.dict_field["direct_key"] == "direct_value"
@@ -358,11 +358,11 @@ class TestPipelineBoolField:
             redis_model.bool_field = True
 
             # Assert - boolean changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.bool_field is False
 
         # Assert - boolean assignment without save() is not committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert (
             final_model.bool_field is False
         )  # Assignment without save() doesn't persist
@@ -394,14 +394,14 @@ class TestPipelineCrossType:
             redis_model.dict_field.update({"update_key": "update_value"})
 
             # Assert - all changes not visible in Redis during pipeline
-            loaded_during_pipeline = await AllTypesModel.get(model.key)
+            loaded_during_pipeline = await AllTypesModel.aget(model.key)
             assert loaded_during_pipeline.str_field == "start"
             assert loaded_during_pipeline.int_field == 10
             assert loaded_during_pipeline.list_field == []
             assert loaded_during_pipeline.dict_field == {}
 
         # Assert - all changes committed after pipeline
-        final_model = await AllTypesModel.get(model.key)
+        final_model = await AllTypesModel.aget(model.key)
         assert final_model.str_field == "start_modified"
         assert final_model.int_field == 25
         assert "list_item" in final_model.list_field

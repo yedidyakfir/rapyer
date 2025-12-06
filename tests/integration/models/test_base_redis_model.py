@@ -57,7 +57,7 @@ async def test_base_redis_model__list_clear__check_redis_clear():
     await user.tags.aclear()
 
     # Assert
-    loaded_user = await UserModel.get(user.key)
+    loaded_user = await UserModel.aget(user.key)
     assert loaded_user.tags == []
 
 
@@ -94,7 +94,7 @@ async def test_base_redis_model__delete__check_redis_delete_sanity(real_redis_cl
     # Arrange
     user = UserModel(tags=["tag1", "tag2"])
     await user.asave()
-    loaded_user = await UserModel.get(user.key)
+    loaded_user = await UserModel.aget(user.key)
 
     # Act
     await loaded_user.delete()

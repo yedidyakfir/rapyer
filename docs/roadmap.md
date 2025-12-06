@@ -102,14 +102,15 @@ async with user.pipeline() as p:
 - [ ] **Performance Optimization**: Efficient Redis operations for nested field access
 
 ### Example Usage
+
 ```python
 # Extract specific nested field
-value = await model.field_lst[0].field_int.get(redis_id)
+value = await model.field_lst[0].field_int.aget(redis_id)
 
 # Multiple nested field extractions
 values = await model.extract_fields([
     "field_lst[0].field_int",
-    "field_lst[1].field_str", 
+    "field_lst[1].field_str",
     "nested_dict.sub_field"
 ], redis_id)
 ```
@@ -162,14 +163,16 @@ await user.asave()
 - [ ] **Serialization Strategy**: Pluggable serialization for complex priority/value types
 
 ### Example Usage
+
 ```python
 class TaskQueue(AtomicRedisModel):
     pending_tasks: RedisPriorityQueue[Task, int]  # Task objects with int priority
     request_counter: RedisCounter
     user_filter: RedisBloomFilter[str]  # String membership testing
-    
+
     class Config:
         priority_queue_order = "min"  # or "max" for max-heap behavior
+
 
 # Priority queue operations
 await queue.pending_tasks.push(task, priority=5)
@@ -177,7 +180,7 @@ high_priority_task = await queue.pending_tasks.pop()  # Returns highest priority
 
 # Counter operations  
 await queue.request_counter.increment(5)
-current_count = await queue.request_counter.get()
+current_count = await queue.request_counter.aget()
 
 # Bloom filter operations
 await queue.user_filter.add("user123")

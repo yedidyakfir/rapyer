@@ -16,7 +16,7 @@ async def test_redis_model_get_functionality():
     await original_model.asave()
 
     # Act
-    retrieved_model = await RichModel.get(original_model.key)
+    retrieved_model = await RichModel.aget(original_model.key)
 
     # Assert
     assert retrieved_model.name == original_model.name
@@ -38,7 +38,7 @@ async def test_redis_model_lock_with_concurrent_access_functionality():
 
     async def lock_and_modify(model_key: str, delay_seconds: int):
         # Get a fresh model instance
-        fresh_model = await RichModel.get(model_key)
+        fresh_model = await RichModel.aget(model_key)
 
         async with fresh_model.lock(save_at_end=True) as locked_model:
             current_time = datetime.now().isoformat()
@@ -85,7 +85,7 @@ async def test_redis_model_lock_from_key_functionality():
         locked_model.date1 = "modified_date"
 
     # Assert
-    retrieved_model = await RichModel.get(model.key)
+    retrieved_model = await RichModel.aget(model.key)
     assert retrieved_model.name == "modified_name"
     assert retrieved_model.age == 35
     assert retrieved_model.date1 == "modified_date"
@@ -105,7 +105,7 @@ async def test_redis_model_lock_from_key_with_action_functionality():
         locked_model.name = "action_modified"
 
     # Assert
-    retrieved_model = await RichModel.get(model.key)
+    retrieved_model = await RichModel.aget(model.key)
     assert retrieved_model.name == "action_modified"
     assert "added_tag" in retrieved_model.tags
 
@@ -170,7 +170,7 @@ async def test_redis_model_lock_with_save_at_end_true_saves_changes_functionalit
         locked_model.date1 = "2023-12-31"
 
     # Assert
-    retrieved_model = await RichModel.get(model.key)
+    retrieved_model = await RichModel.aget(model.key)
     assert retrieved_model.name == "modified_name"
     assert retrieved_model.age == 30
     assert retrieved_model.tags == ["initial", "new_tag"]

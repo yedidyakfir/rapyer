@@ -15,7 +15,7 @@ async def test_store_and_load_user_with_key_annotation_sanity():
 
     # Act
     await original_user.asave()
-    loaded_user = await UserWithKeyModel.get(original_user.key)
+    loaded_user = await UserWithKeyModel.aget(original_user.key)
 
     # Assert
     assert loaded_user == original_user
@@ -35,7 +35,7 @@ async def test_store_and_load_event_with_datetime_key_annotation_sanity():
 
     # Act
     await original_event.asave()
-    loaded_event = await EventWithDatetimeKeyModel.get(original_event.key)
+    loaded_event = await EventWithDatetimeKeyModel.aget(original_event.key)
 
     # Assert
     assert loaded_event == original_event
@@ -52,7 +52,7 @@ async def test_extract_saved_model_using_key_field_value_directly_sanity():
 
     # Act
     await original_user.asave()
-    loaded_user = await UserWithKeyModel.get(user_id)
+    loaded_user = await UserWithKeyModel.aget(user_id)
 
     # Assert
     assert loaded_user == original_user

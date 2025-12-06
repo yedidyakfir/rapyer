@@ -71,7 +71,7 @@ async def main():
     await user.metadata.aupdate(role="developer", level="senior")
 
     # Load user from Redis
-    loaded_user = await User.get(user.key)
+    loaded_user = await User.aget(user.key)
     print(f"User: {loaded_user.name}, Tags: {loaded_user.tags}")
 
     # Atomic operations with locks for complex updates

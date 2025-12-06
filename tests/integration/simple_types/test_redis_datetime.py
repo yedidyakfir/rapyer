@@ -199,7 +199,7 @@ async def test_redis_datetime_model_save_load_sanity(test_datetime):
     await model.asave()
 
     # Act
-    loaded_model = await DatetimeModel.get(model.key)
+    loaded_model = await DatetimeModel.aget(model.key)
 
     # Assert
     assert loaded_model.created_at.timestamp() == test_datetime.timestamp()

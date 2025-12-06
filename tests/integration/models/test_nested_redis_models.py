@@ -435,7 +435,7 @@ async def test_nested_model_with_redis_inner_model_counter_update_sanity():
     # Assert
     assert outer.container.inner_redis.counter == 42
 
-    new_outer = await OuterModelWithRedisNested.get(outer.key)
+    new_outer = await OuterModelWithRedisNested.aget(outer.key)
 
     assert new_outer.container.inner_redis.counter == 42
 
@@ -515,7 +515,7 @@ async def test_nested_model_with_redis_inner_model_mixed_operations_edge_case():
     outer.container.inner_redis.tags.clear()
     outer.container.inner_redis.metadata.clear()
     outer.outer_data.clear()
-    outer = await OuterModelWithRedisNested.get(outer.key)
+    outer = await OuterModelWithRedisNested.aget(outer.key)
 
     assert outer.container.inner_redis.tags == ["first_tag"]
     assert outer.container.inner_redis.metadata == {"status": "active"}
@@ -587,7 +587,7 @@ async def test_nested_model_with_redis_inner_model_with_initial_data_sanity():
     outer.container.inner_redis.tags.clear()
     outer.container.inner_redis.metadata.clear()
     outer.outer_data.clear()
-    outer = await OuterModelWithRedisNested.get(outer.key)
+    outer = await OuterModelWithRedisNested.aget(outer.key)
 
     assert outer.container.inner_redis.tags == ["initial_tag", "new_tag"]
     assert outer.container.inner_redis.metadata == {"env": "test", "version": "1.0"}
@@ -614,7 +614,7 @@ async def test_nested_model_create_inner_save_load_sanity():
     await outer.asave()
 
     # Assert
-    loaded_outer = await OuterModel.get(outer.key)
+    loaded_outer = await OuterModel.aget(outer.key)
 
     assert loaded_outer.middle_model.inner_model.lst == ["item1", "item2"]
     assert loaded_outer.middle_model.inner_model.counter == 42

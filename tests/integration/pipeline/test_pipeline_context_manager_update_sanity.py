@@ -11,7 +11,7 @@ async def test_pipeline_context_manager_updates_model_with_new_data_sanity():
     await original_model.asave()
 
     # Act
-    new_model = await PipelineTestModel.get(original_model.key)
+    new_model = await PipelineTestModel.aget(original_model.key)
     new_model.name = "updated_name"
     new_model.value = 100
     new_model.tags.append("tag2")

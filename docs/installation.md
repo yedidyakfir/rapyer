@@ -136,7 +136,7 @@ async def test_setup():
         await model.asave()
 
         # Retrieve the model
-        retrieved = await TestModel.get(model.key)
+        retrieved = await TestModel.aget(model.key)
         print(f"Success! Retrieved: {retrieved.message}")
 
         # Cleanup

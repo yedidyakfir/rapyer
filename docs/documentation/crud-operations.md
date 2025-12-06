@@ -91,11 +91,11 @@ async def main():
     user_key = user.key
 
     # Retrieve the user by key
-    loaded_user = await User.get(user_key)
+    loaded_user = await User.aget(user_key)
     print(f"Loaded user: {loaded_user.name}, Age: {loaded_user.age}")
 
     # Handle non-existent keys
-    missing_user = await User.get("non-existent-key")
+    missing_user = await User.aget("non-existent-key")
     if missing_user is None:
         print("User not found")
 
@@ -186,12 +186,12 @@ async def performance_example():
     user_keys = await User.afind_keys()
     users = []
     for key in user_keys:  # Multiple network round-trips
-        user = await User.get(key)
+        user = await User.aget(key)
         users.append(user)
-    
+
     # ✅ Efficient batch retrieval
     users = await User.afind()  # Single network round-trip
-    
+
     print(f"Retrieved {len(users)} users efficiently")
 ```
 
@@ -206,14 +206,15 @@ async def main():
     # Get just the keys
     user_keys = await User.afind_keys()
     print(f"User keys: {user_keys}")
-    
+
     # Get all user instances
     users = await User.afind()
     print(f"Loaded {len(users)} users")
-    
+
     # Get specific user by key
-    specific_user = await User.get(user_keys[0])
+    specific_user = await User.aget(user_keys[0])
     print(f"Specific user: {specific_user.name}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -239,7 +240,7 @@ async def main():
     await user.asave()
 
     # Verify the update
-    updated_user = await User.get(user.key)
+    updated_user = await User.aget(user.key)
     print(f"Updated age: {updated_user.age}, email: {updated_user.email}")
 
 
@@ -265,7 +266,7 @@ async def main():
     await user.preferences.aupdate(language="fr")
 
     # Verify updates
-    updated_user = await User.get(user.key)
+    updated_user = await User.aget(user.key)
     print(f"Updated user: {updated_user.name}, Age: {updated_user.age}")
     print(f"Tags: {updated_user.tags}, Preferences: {updated_user.preferences}")
 
@@ -292,7 +293,7 @@ async def main():
     print(f"Deleted user with key: {user_key}")
 
     # Verify deletion
-    deleted_user = await User.get(user_key)
+    deleted_user = await User.aget(user_key)
     if deleted_user is None:
         print("User successfully deleted")
 
@@ -365,7 +366,7 @@ async def main():
     # Load all users manually (less efficient approach)
     users = []
     for key in user_keys:
-        user = await User.get(key)
+        user = await User.aget(key)
         users.append(user)
 
     for user in users:
@@ -422,7 +423,7 @@ async def crud_example():
     print(f"Created user: {user.key}")
 
     # READ
-    loaded_user = await User.get(user.key)
+    loaded_user = await User.aget(user.key)
     print(f"Retrieved: {loaded_user.name}, {loaded_user.age}")
 
     # UPDATE
@@ -433,7 +434,7 @@ async def crud_example():
     print("Updated user")
 
     # Verify update
-    updated_user = await User.get(user.key)
+    updated_user = await User.aget(user.key)
     print(f"After update: Age={updated_user.age}, Tags={updated_user.tags}")
 
     # DELETE
@@ -441,7 +442,7 @@ async def crud_example():
     print("Deleted user")
 
     # Verify deletion
-    deleted_user = await User.get(user.key)
+    deleted_user = await User.aget(user.key)
     print(f"After deletion: {deleted_user}")  # Should be None
 
 

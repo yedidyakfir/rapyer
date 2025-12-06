@@ -10,7 +10,7 @@ async def test_generic_list_model_with_string_values__save_and_get__check_data_p
 
     # Act
     await model.asave()
-    loaded_model = await GenericListModel[str].get(model.key)
+    loaded_model = await GenericListModel[str].aget(model.key)
 
     # Assert
     assert loaded_model == model
@@ -23,7 +23,7 @@ async def test_generic_list_model_with_int_values__save_and_get__check_data_pers
 
     # Act
     await model.asave()
-    loaded_model = await GenericListModel[int].get(model.key)
+    loaded_model = await GenericListModel[int].aget(model.key)
 
     # Assert
     assert loaded_model == model
@@ -39,7 +39,7 @@ async def test_generic_dict_model_with_string_values__save_and_get__check_data_p
 
     # Act
     await model.asave()
-    loaded_model = await GenericDictModel[str].get(model.key)
+    loaded_model = await GenericDictModel[str].aget(model.key)
 
     # Assert
     assert loaded_model == model
@@ -55,7 +55,7 @@ async def test_generic_list_model__ainsert_operation__check_redis_insert():
     await model.items.ainsert(1, "second")
 
     # Assert
-    loaded_model = await GenericListModel[str].get(model.key)
+    loaded_model = await GenericListModel[str].aget(model.key)
     assert loaded_model.items == ["first", "second", "third"]
 
 
@@ -69,7 +69,7 @@ async def test_generic_list_model__aappend_operation__check_redis_append():
     await model.items.aappend("item3")
 
     # Assert
-    loaded_model = await GenericListModel[str].get(model.key)
+    loaded_model = await GenericListModel[str].aget(model.key)
     assert loaded_model.items == ["item1", "item2", "item3"]
 
 
@@ -83,7 +83,7 @@ async def test_generic_list_model__aextend_operation__check_redis_extend():
     await model.items.aextend(["item2", "item3"])
 
     # Assert
-    loaded_model = await GenericListModel[str].get(model.key)
+    loaded_model = await GenericListModel[str].aget(model.key)
     assert set(loaded_model.items) == {"item1", "item2", "item3"}
     assert len(loaded_model.items) == 3
 
@@ -98,7 +98,7 @@ async def test_generic_list_model__aclear_operation__check_redis_clear():
     await model.items.aclear()
 
     # Assert
-    loaded_model = await GenericListModel[str].get(model.key)
+    loaded_model = await GenericListModel[str].aget(model.key)
     assert loaded_model.items == []
 
 
@@ -114,7 +114,7 @@ async def test_generic_list_model_parameterized__save_and_load__check_data_types
 
     # Act
     await model.asave()
-    loaded_model = await GenericListModel.get(model.key)
+    loaded_model = await GenericListModel.aget(model.key)
 
     # Assert
     assert loaded_model.items == test_data
@@ -138,7 +138,7 @@ async def test_generic_dict_model_parameterized__save_and_load__check_data_types
 
     # Act
     await model.asave()
-    loaded_model = await GenericDictModel.get(model.key)
+    loaded_model = await GenericDictModel.aget(model.key)
 
     # Assert
     assert loaded_model.data == test_data

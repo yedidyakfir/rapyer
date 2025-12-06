@@ -392,11 +392,12 @@ async def safe_account_operation(account_key: str, amount: int):
 | **Use when** | Multiple related changes | Need current values for decisions |
 
 ### Pipeline Example (Good for batch operations)
+
 ```python
 async with user.pipeline():
     user.score += 100
     user.achievements.append("New Achievement")
-    user.stats["games_played"] = user.stats.get("games_played", 0) + 1
+    user.stats["games_played"] = user.stats.aget("games_played", 0) + 1
 ```
 
 ### Lock Example (Good for complex logic)

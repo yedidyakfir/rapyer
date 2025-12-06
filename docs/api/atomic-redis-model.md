@@ -129,7 +129,7 @@ if user.is_inner_model():
 **Description:** Retrieves a model instance from Redis by its key.
 
 ```python
-user = await User.get("User:abc-123")
+user = await User.aget("User:abc-123")
 ```
 
 #### `delete_by_key(key)`
@@ -324,7 +324,7 @@ Raised when attempting to get or load a model that doesn't exist in Redis:
 from rapyer.errors import KeyNotFound
 
 try:
-    user = await User.get("User:nonexistent")
+    user = await User.aget("User:nonexistent")
 except KeyNotFound:
     print("User not found in Redis")
 ```
@@ -349,7 +349,7 @@ user = User(name="John", email="john@example.com", age=30)
 await user.asave()
 
 # Retrieve
-retrieved_user = await User.get(user.key)
+retrieved_user = await User.aget(user.key)
 
 # Update atomically
 await user.aupdate(age=31, tags=["python", "redis"])

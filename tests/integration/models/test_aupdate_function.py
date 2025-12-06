@@ -50,7 +50,7 @@ async def test_aupdate_function__update_multiple_fields__values_updated_and_unch
     await instance.aupdate(**update_values)
 
     # Assert
-    loaded_instance = await AdminUserModel.get(instance.key)
+    loaded_instance = await AdminUserModel.aget(instance.key)
     # Check updated fields
     for field_name, expected_value in update_values.items():
         assert getattr(loaded_instance, field_name) == expected_value
@@ -83,7 +83,7 @@ async def test_aupdate_function__nested_field_operations__values_persisted_and_o
     await instance.aupdate(**update_values)
 
     # Assert
-    loaded_instance = await AdminUserModel.get(instance.key)
+    loaded_instance = await AdminUserModel.aget(instance.key)
     # Check updated fields
     for field_name, expected_value in update_values.items():
         assert getattr(loaded_instance, field_name) == expected_value
@@ -116,7 +116,7 @@ async def test_aupdate_function__update_field_to_none__value_updated_and_other_f
     await instance.aupdate(**update_values)
 
     # Assert
-    loaded_instance = await AdminUserModel.get(instance.key)
+    loaded_instance = await AdminUserModel.aget(instance.key)
     # Check the updated field is None
     assert getattr(loaded_instance, field_name) is None
     # Check unchanged fields
@@ -138,7 +138,7 @@ async def test_aupdate_function__update_non_redis_supported_types__values_serial
     await instance.aupdate(model_type=RedisStr, python_type=int)
 
     # Assert
-    loaded_instance = await ModelWithUnserializableFields.get(instance.key)
+    loaded_instance = await ModelWithUnserializableFields.aget(instance.key)
     # Check updated field - sets and types should be preserved through serialization
     assert loaded_instance.model_type == RedisStr
     assert loaded_instance.python_type == int
@@ -161,7 +161,7 @@ async def test_aupdate_function__update_nested_model__nested_values_updated_and_
     )
 
     # Assert
-    loaded_instance = await OuterModelWithRedisNested.get(instance.key)
+    loaded_instance = await OuterModelWithRedisNested.aget(instance.key)
     # Check the updated inner redis model fields
     assert loaded_instance.container.inner_redis.tags == ["updated1", "updated2"]
     assert loaded_instance.container.inner_redis.counter == 15

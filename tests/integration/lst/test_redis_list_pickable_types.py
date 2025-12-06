@@ -31,7 +31,7 @@ async def test_redis_list_pickable_types_save_load_sanity(
 
     # Act
     await model.asave()
-    loaded_model = await ListPickableTypesModel.get(model.key)
+    loaded_model = await ListPickableTypesModel.aget(model.key)
 
     # Assert
     assert model == loaded_model

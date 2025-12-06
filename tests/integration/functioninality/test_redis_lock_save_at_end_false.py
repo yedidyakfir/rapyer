@@ -19,7 +19,7 @@ async def test_lock_model_changes_not_saved_with_save_at_end_false_sanity():
         locked_model.active = False
 
     # Assert
-    retrieved_model = await LockTestModel.get(original_model.key)
+    retrieved_model = await LockTestModel.aget(original_model.key)
     assert retrieved_model.name == "original"
     assert retrieved_model.age == 25
     assert retrieved_model.tags == ["tag1"]
@@ -40,7 +40,7 @@ async def test_lock_redis_operations_still_work_with_save_at_end_false_sanity():
         await locked_model.tags.aappend("tag3")
 
     # Assert
-    retrieved_model = await LockTestModel.get(original_model.key)
+    retrieved_model = await LockTestModel.aget(original_model.key)
     assert "tag2" in retrieved_model.tags
     assert "tag3" in retrieved_model.tags
 
@@ -53,7 +53,7 @@ async def test_lock_model_deletion_persists_with_save_at_end_false_sanity():
     model_key = model.key
 
     # Verify model exists
-    retrieved_model = await LockTestModel.get(model_key)
+    retrieved_model = await LockTestModel.aget(model_key)
     assert retrieved_model.name == "to_delete"
 
     # Act
@@ -62,7 +62,7 @@ async def test_lock_model_deletion_persists_with_save_at_end_false_sanity():
 
     # Assert
     with pytest.raises(Exception):
-        await LockTestModel.get(model_key)
+        await LockTestModel.aget(model_key)
 
 
 @pytest.mark.asyncio
@@ -83,7 +83,7 @@ async def test_lock_model_field_modifications_vs_redis_operations_with_save_at_e
         await locked_model.tags.aappend("redis_added")
 
     # Assert
-    retrieved_model = await LockTestModel.get(model.key)
+    retrieved_model = await LockTestModel.aget(model.key)
     assert retrieved_model.name == "test"
     assert retrieved_model.age == 20
     assert "redis_added" in retrieved_model.tags

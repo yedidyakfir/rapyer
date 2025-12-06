@@ -271,7 +271,7 @@ class AtomicRedisModel(BaseModel):
             await pipe.execute()
 
     @classmethod
-    async def get(cls, key: str) -> Self:
+    async def aget(cls, key: str) -> Self:
         if cls._key_field_name and ":" not in key:
             key = f"{cls.class_key_initials()}:{key}"
         model_dump = await cls.Meta.redis.json().get(key, "$")
@@ -339,7 +339,7 @@ class AtomicRedisModel(BaseModel):
         cls, key: str, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
-            redis_model = await cls.get(key)
+            redis_model = await cls.aget(key)
             yield redis_model
             if save_at_end:
                 await redis_model.asave()
@@ -361,7 +361,7 @@ class AtomicRedisModel(BaseModel):
     ) -> AsyncGenerator[Self, None]:
         async with self.Meta.redis.pipeline() as pipe:
             try:
-                redis_model = await self.__class__.get(self.key)
+                redis_model = await self.__class__.aget(self.key)
                 unset_fields = {
                     k: redis_model.__dict__[k] for k in redis_model.model_fields_set
                 }
@@ -420,7 +420,7 @@ async def get(redis_key: str) -> AtomicRedisModel:
     redis_model_mapping = {klass.__name__: klass for klass in REDIS_MODELS}
     class_name = redis_key.split(":")[0]
     klass = redis_model_mapping.get(class_name)
-    return await klass.get(redis_key)
+    return await klass.aget(redis_key)
 
 
 def find_redis_models() -> list[type[AtomicRedisModel]]:
