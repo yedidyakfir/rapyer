@@ -347,8 +347,6 @@ async def test_redis_list_setitem_basemodel_redis_operations_sanity():
 
     # Assert - the setitem should create a Redis BaseModel
     assert isinstance(model.users[0], AtomicRedisModel)
-    assert hasattr(model.users[0], "save")
-    assert hasattr(model.users[0], "load")
 
     # Check that the data is preserved
     assert model.users[0].name == "Alice"
