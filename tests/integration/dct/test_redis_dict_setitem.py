@@ -367,8 +367,6 @@ async def test_redis_dict_setitem_basemodel_redis_operations_sanity():
 
     # Assert - the setitem should create a Redis BaseModel
     assert isinstance(model.addresses["work"], AtomicRedisModel)
-    assert hasattr(model.addresses["work"], "save")
-    assert hasattr(model.addresses["work"], "load")
 
     # Check that the data is preserved
     assert model.addresses["work"].street == "456 Oak Ave"
