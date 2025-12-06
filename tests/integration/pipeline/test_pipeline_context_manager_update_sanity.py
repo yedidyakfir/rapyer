@@ -8,14 +8,14 @@ from tests.models.functionality_types import LockUpdateTestModel as PipelineTest
 async def test_pipeline_context_manager_updates_model_with_new_data_sanity():
     # Arrange
     original_model = PipelineTestModel(name="test", value=42, tags=["tag1"])
-    await original_model.save()
+    await original_model.asave()
 
     # Act
     new_model = await PipelineTestModel.get(original_model.key)
     new_model.name = "updated_name"
     new_model.value = 100
     new_model.tags.append("tag2")
-    await new_model.save()
+    await new_model.asave()
 
     # Assert
     async with original_model.pipeline() as pipelined_model:

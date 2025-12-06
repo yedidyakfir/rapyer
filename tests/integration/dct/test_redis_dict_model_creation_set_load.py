@@ -27,7 +27,7 @@ async def test_redis_dict_model_creation_with_initial_value_and_set_load_sanity(
     assert model.data.json_path == "$.data"
 
     # Act - Save and test load operations
-    await model.save()
+    await model.asave()
 
     # Assert - Load and verify
     model.data = await model.data.load()
@@ -51,7 +51,7 @@ async def test_redis_dict_model_creation_with_dict_operations_sanity():
     assert isinstance(model.data["initial"], RedisStr)
 
     # Act - Save and perform dict operations
-    await model.save()
+    await model.asave()
     await model.data.aset_item("new_key", "new_value")
     await model.data.aupdate(extra="data")
 

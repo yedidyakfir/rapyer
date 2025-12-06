@@ -200,7 +200,7 @@ class AtomicRedisModel(BaseModel):
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
 
-    async def save(self) -> Self:
+    async def asave(self) -> Self:
         model_dump = self.redis_dump()
         await self.Meta.redis.json().set(self.key, self.json_path, model_dump)
         if self.Meta.ttl is not None:
@@ -218,7 +218,7 @@ class AtomicRedisModel(BaseModel):
             raise RuntimeError("Can only duplicate from top level model")
 
         duplicated = self.__class__(**self.model_dump())
-        await duplicated.save()
+        await duplicated.asave()
         return duplicated
 
     async def duplicate_many(self, num: int) -> list[Self]:
@@ -226,7 +226,7 @@ class AtomicRedisModel(BaseModel):
             raise RuntimeError("Can only duplicate from top level model")
 
         duplicated_models = [self.__class__(**self.model_dump()) for _ in range(num)]
-        await asyncio.gather(*[model.save() for model in duplicated_models])
+        await asyncio.gather(*[model.asave() for model in duplicated_models])
         return duplicated_models
 
     def update(self, **kwargs):
@@ -323,7 +323,7 @@ class AtomicRedisModel(BaseModel):
             redis_model = await cls.get(key)
             yield redis_model
             if save_at_end:
-                await redis_model.save()
+                await redis_model.asave()
 
     @contextlib.asynccontextmanager
     async def lock(

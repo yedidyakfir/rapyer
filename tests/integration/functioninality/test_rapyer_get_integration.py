@@ -236,7 +236,7 @@ from tests.models.simple_types import (
 @pytest.mark.asyncio
 async def test_rapyer_get_functionality_sanity(model_instance):
     # Arrange
-    await model_instance.save()
+    await model_instance.asave()
     redis_key = model_instance.key
 
     # Act

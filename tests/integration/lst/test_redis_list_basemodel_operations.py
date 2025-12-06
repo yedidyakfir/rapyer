@@ -33,7 +33,7 @@ def sample_products():
 async def test_redis_list_aappend_basemodel_operations_sanity(user_data):
     # Arrange
     model = UserListModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.users.aappend(user_data)
@@ -52,7 +52,7 @@ async def test_redis_list_aappend_basemodel_operations_sanity(user_data):
 async def test_redis_list_aextend_basemodel_operations_sanity(sample_users):
     # Arrange
     model = UserListModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.users.aextend(sample_users)
@@ -72,7 +72,7 @@ async def test_redis_list_aextend_basemodel_operations_sanity(sample_users):
 async def test_redis_list_apop_basemodel_operations_sanity(sample_users):
     # Arrange
     model = UserListModel(users=sample_users)
-    await model.save()
+    await model.asave()
 
     # Act
     popped_user = await model.users.apop()
@@ -100,7 +100,7 @@ async def test_redis_list_ainsert_basemodel_operations_sanity(
 ):
     # Arrange
     model = UserListModel(users=sample_users)
-    await model.save()
+    await model.asave()
     new_user = User(name="Inserted User", id=28, email="inserted@example.com")
 
     # Act
@@ -120,7 +120,7 @@ async def test_redis_list_ainsert_basemodel_operations_sanity(
 async def test_redis_list_aclear_basemodel_operations_sanity(sample_users):
     # Arrange
     model = UserListModel(users=sample_users)
-    await model.save()
+    await model.asave()
 
     # Act
     await model.users.aclear()
@@ -136,7 +136,7 @@ async def test_redis_list_aclear_basemodel_operations_sanity(sample_users):
 async def test_redis_list_multiple_operations_basemodel_sanity(sample_products):
     # Arrange
     model = ProductListModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.products.aextend(sample_products[:2])
@@ -175,7 +175,7 @@ async def test_redis_list_multiple_operations_basemodel_sanity(sample_products):
 async def test_redis_list_apop_empty_list_basemodel_edge_case():
     # Arrange
     model = UserListModel()
-    await model.save()
+    await model.asave()
 
     # Act
     result = await model.users.apop()
@@ -188,7 +188,7 @@ async def test_redis_list_apop_empty_list_basemodel_edge_case():
 async def test_redis_list_operations_preserve_basemodel_data_integrity_sanity():
     # Arrange
     model = UserListModel()
-    await model.save()
+    await model.asave()
     complex_user = User(
         name="Complex User", id=45, email="complex.user+test@example.com"
     )
@@ -226,7 +226,7 @@ async def test_redis_list_basemodel_operations_after_model_creation_set_load_san
         User(name="Initial User 2", id=30, email="init2@example.com"),
     ]
     model = UserListModel(users=initial_users)
-    await model.save()
+    await model.asave()
 
     # Act - Perform operations after model creation
     await model.users.aappend(

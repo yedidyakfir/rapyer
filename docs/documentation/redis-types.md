@@ -52,7 +52,7 @@ class User(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.name.save()` | Save field value to Redis |
+| **save** | `await user.name.asave()` | Save field value to Redis |
 | **load** | `await user.name.load()` | Load field value from Redis (returns value, doesn't update model) |
 
 All standard `str` methods are available (upper, lower, strip, etc.) but operate on the local copy.
@@ -78,7 +78,7 @@ class Counter(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await counter.count.save()` | Save field value to Redis |
+| **save** | `await counter.count.asave()` | Save field value to Redis |
 | **load** | `await counter.count.load()` | Load field value from Redis (returns value, doesn't update model) |
 | **increase** | `await counter.count.increase(5)` | Atomically increment by amount (default: 1) |
 
@@ -106,7 +106,7 @@ class UserProfile(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.tags.save()` | Save entire list to Redis |
+| **save** | `await user.tags.asave()` | Save entire list to Redis |
 | **load** | `await user.tags.load()` | Load entire list from Redis (returns value, doesn't update model) |
 | **append** | `await user.tags.aappend("python")` | Atomically append single item |
 | **extend** | `await user.tags.aextend(["redis", "async"])` | Atomically append multiple items |
@@ -137,7 +137,7 @@ class UserSettings(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.preferences.save()` | Save entire dict to Redis |
+| **save** | `await user.preferences.asave()` | Save entire dict to Redis |
 | **load** | `await user.preferences.load()` | Load entire dict from Redis (returns value, doesn't update model) |
 | **update** | `await user.preferences.aupdate(theme="dark")` | Atomically update multiple keys |
 | **set item** | `await user.preferences.aset_item("lang", "en")` | Atomically set single key-value |
@@ -169,7 +169,7 @@ class FileModel(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await file.content.save()` | Save bytes to Redis |
+| **save** | `await file.content.asave()` | Save bytes to Redis |
 | **load** | `await file.content.load()` | Load bytes from Redis (returns value, doesn't update model) |
 
 All standard `bytes` methods are available but operate on the local copy.
@@ -196,7 +196,7 @@ class Event(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await event.created_at.save()` | Save datetime to Redis |
+| **save** | `await event.created_at.asave()` | Save datetime to Redis |
 | **load** | `await event.created_at.load()` | Load datetime from Redis (returns value, doesn't update model) |
 
 All standard `datetime` methods are available (strftime, replace, etc.) but operate on the local copy.
@@ -231,17 +231,17 @@ Nested BaseModel instances support these atomic Redis operations:
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.address.save()` | Save only this nested model to Redis (other parent fields unchanged) |
+| **save** | `await user.address.asave()` | Save only this nested model to Redis (other parent fields unchanged) |
 | **load** | `await user.address.load()` | Load nested model from Redis (returns value, doesn't update model) |
 | **aupdate** | `await user.address.aupdate(street="New St")` | Atomically update specific fields in the nested model |
 
 !!! warning "Scoped Save Operation"
-    When you call `await user.address.save()`, **only the `address` nested model is saved to Redis**. Other fields in the parent `user` model remain unchanged in Redis, even if they were modified locally.
+    When you call `await user.address.asave()`, **only the `address` nested model is saved to Redis**. Other fields in the parent `user` model remain unchanged in Redis, even if they were modified locally.
 
 ```python
 # Atomic operations on nested models
 await user.address.aupdate(street="123 New St", city="Boston")  # Update specific fields
-await user.address.save()  # Save entire address model only
+await user.address.asave()  # Save entire address model only
 
 # All fields within nested models support their respective Redis operations
 await user.profile.preferences.aupdate(theme="dark", lang="en")  # Dict operations available

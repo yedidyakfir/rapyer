@@ -21,7 +21,7 @@ async def test_none_values_persistence_sanity(field_name):
     assert getattr(model, field_name) is None
 
     # Act
-    await model.save()
+    await model.asave()
     retrieved_model = await NoneTestModel.get(model.key)
 
     # Assert
@@ -34,7 +34,7 @@ async def test_all_none_values_model_persistence_sanity():
     model = NoneTestModel()
 
     # Act
-    await model.save()
+    await model.asave()
     retrieved_model = await NoneTestModel.get(model.key)
 
     # Assert
@@ -59,7 +59,7 @@ async def test_mixed_none_and_values_persistence_edge_case():
     )
 
     # Act
-    await model.save()
+    await model.asave()
     retrieved_model = await NoneTestModel.get(model.key)
 
     # Assert
@@ -84,7 +84,7 @@ async def test_set_value_to_none_after_initialization_edge_case():
     model.optional_string = None
     model.optional_int = None
     model.optional_list = None
-    await model.save()
+    await model.asave()
     retrieved_model = await NoneTestModel.get(model.key)
 
     # Assert

@@ -33,9 +33,10 @@ Every operation in Rapyer is designed to be atomic and safe in concurrent enviro
 
 ```python
 # All operations are atomic - no race conditions possible
-await user.tags.aappend("python")           # Atomic list append
-await user.metadata.aupdate(role="dev")     # Atomic dict update
-user.score += 10; await user.score.save()  # Atomic increment
+await user.tags.aappend("python")  # Atomic list append
+await user.metadata.aupdate(role="dev")  # Atomic dict update
+user.score += 10;
+await user.score.asave()  # Atomic increment
 ```
 
 For complex multi-field operations, Rapyer provides lock context managers and pipeline operations that ensure consistency across multiple changes.
@@ -47,16 +48,18 @@ import asyncio
 from rapyer import AtomicRedisModel
 from typing import List, Dict
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []
     metadata: Dict[str, str] = {}
 
+
 async def main():
     # Create and save
     user = User(name="Alice", age=25)
-    await user.save()
+    await user.asave()
 
     # Atomic operations
     await user.tags.aappend("developer")
@@ -66,6 +69,7 @@ async def main():
     # Load and verify
     loaded = await User.get(user.key)
     print(f"User: {loaded.name}, Tags: {loaded.tags}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

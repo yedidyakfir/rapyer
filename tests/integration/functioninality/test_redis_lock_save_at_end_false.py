@@ -7,7 +7,7 @@ from tests.models.functionality_types import LockSaveTestModel as LockTestModel
 async def test_lock_model_changes_not_saved_with_save_at_end_false_sanity():
     # Arrange
     original_model = LockTestModel(name="original", age=25, tags=["tag1"], active=True)
-    await original_model.save()
+    await original_model.asave()
 
     # Act
     async with LockTestModel.lock_from_key(
@@ -30,7 +30,7 @@ async def test_lock_model_changes_not_saved_with_save_at_end_false_sanity():
 async def test_lock_redis_operations_still_work_with_save_at_end_false_sanity():
     # Arrange
     original_model = LockTestModel(name="original", age=25, tags=["tag1"], active=True)
-    await original_model.save()
+    await original_model.asave()
 
     # Act
     async with LockTestModel.lock_from_key(
@@ -49,7 +49,7 @@ async def test_lock_redis_operations_still_work_with_save_at_end_false_sanity():
 async def test_lock_model_deletion_persists_with_save_at_end_false_sanity():
     # Arrange
     model = LockTestModel(name="to_delete", age=25)
-    await model.save()
+    await model.asave()
     model_key = model.key
 
     # Verify model exists
@@ -69,7 +69,7 @@ async def test_lock_model_deletion_persists_with_save_at_end_false_sanity():
 async def test_lock_model_field_modifications_vs_redis_operations_with_save_at_end_false_edge_case():
     # Arrange
     model = LockTestModel(name="test", age=20, tags=["initial"])
-    await model.save()
+    await model.asave()
 
     # Act
     async with LockTestModel.lock_from_key(

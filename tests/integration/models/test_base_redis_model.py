@@ -7,7 +7,7 @@ from tests.models.specialized import UserModel
 async def test_base_redis_model__list_append__check_redis_append(real_redis_client):
     # Arrange
     user = UserModel(tags=["tag1", "tag2"])
-    await user.save()
+    await user.asave()
 
     # Act
     await user.tags.aappend("tag3")
@@ -21,7 +21,7 @@ async def test_base_redis_model__list_append__check_redis_append(real_redis_clie
 async def test_base_redis_model__list_extend__check_redis_extend(real_redis_client):
     # Arrange
     user = UserModel(tags=["tag1"])
-    await user.save()
+    await user.asave()
 
     # Act
     await user.tags.aextend(["tag2", "tag3"])
@@ -37,7 +37,7 @@ async def test_base_redis_model__list_extend__check_redis_extend(real_redis_clie
 async def test_base_redis_model__list_insert__check_redis_insert(real_redis_client):
     # Arrange
     user = UserModel(tags=["tag1", "tag3"])
-    await user.save()
+    await user.asave()
 
     # Act
     await user.tags.ainsert(1, "tag2")
@@ -51,7 +51,7 @@ async def test_base_redis_model__list_insert__check_redis_insert(real_redis_clie
 async def test_base_redis_model__list_clear__check_redis_clear():
     # Arrange
     user = UserModel(tags=["tag1", "tag2", "tag3"])
-    await user.save()
+    await user.asave()
 
     # Act
     await user.tags.aclear()
@@ -67,7 +67,7 @@ async def test_base_redis_model__save__check_redis_save(real_redis_client):
     user = UserModel(tags=["tag1", "tag2"])
 
     # Act
-    await user.save()
+    await user.asave()
 
     # Assert
     actual_data = await real_redis_client.json().get(user.key, "$")
@@ -78,7 +78,7 @@ async def test_base_redis_model__save__check_redis_save(real_redis_client):
 async def test_base_redis_model__load__check_redis_load(real_redis_client):
     # Arrange
     user = UserModel(tags=["tag1", "tag2"])
-    await user.save()
+    await user.asave()
     await real_redis_client.json().arrappend(user.key, user.tags.json_path, "tag3")
 
     # Act
@@ -93,7 +93,7 @@ async def test_base_redis_model__load__check_redis_load(real_redis_client):
 async def test_base_redis_model__delete__check_redis_delete_sanity(real_redis_client):
     # Arrange
     user = UserModel(tags=["tag1", "tag2"])
-    await user.save()
+    await user.asave()
     loaded_user = await UserModel.get(user.key)
 
     # Act
@@ -110,7 +110,7 @@ async def test_base_redis_model__try_delete_existing_key__check_returns_true_san
 ):
     # Arrange
     user = UserModel(tags=["tag1", "tag2"])
-    await user.save()
+    await user.asave()
 
     # Act
     result = await UserModel.delete_by_key(user.key)

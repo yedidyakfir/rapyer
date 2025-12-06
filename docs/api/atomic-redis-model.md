@@ -47,7 +47,7 @@ print(user.key)  # "User:abc-123-def-456"
 
 ```python
 user = User(name="John", age=30)
-await user.save()
+await user.asave()
 ```
 
 #### `load()`
@@ -335,6 +335,7 @@ except KeyNotFound:
 from rapyer import AtomicRedisModel
 from typing import List, Dict
 
+
 class User(AtomicRedisModel):
     name: str
     email: str
@@ -342,9 +343,10 @@ class User(AtomicRedisModel):
     tags: List[str] = []
     settings: Dict[str, str] = {}
 
+
 # Create and save
 user = User(name="John", email="john@example.com", age=30)
-await user.save()
+await user.asave()
 
 # Retrieve
 retrieved_user = await User.get(user.key)

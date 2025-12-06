@@ -52,16 +52,18 @@ import asyncio
 from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []
     metadata: Dict[str, str] = {}
 
+
 async def main():
     # Create and save a user
     user = User(name="John", age=30)
-    await user.save()
+    await user.asave()
 
     # Atomic operations that prevent race conditions
     await user.tags.aappend("python")
@@ -77,6 +79,7 @@ async def main():
         locked_user.age += 1
         await locked_user.tags.aappend("experienced")
         # Changes saved atomically when context exits
+
 
 if __name__ == "__main__":
     asyncio.run(main())

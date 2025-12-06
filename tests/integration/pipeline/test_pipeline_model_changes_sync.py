@@ -8,7 +8,7 @@ class TestPipelineStringField:
     async def test_assignment_changes_not_persisted_without_save_edge_case(self):
         # Arrange
         model = AllTypesModel(str_field="initial")
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -29,7 +29,7 @@ class TestPipelineStringField:
     ):
         # Arrange
         model = AllTypesModel(str_field="base")
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -49,7 +49,7 @@ class TestPipelineStringField:
     ):
         # Arrange
         model = AllTypesModel(str_field="start")
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -70,7 +70,7 @@ class TestPipelineIntegerField:
     async def test_assignment_changes_not_persisted_without_save_edge_case(self):
         # Arrange
         model = AllTypesModel(int_field=10)
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -90,7 +90,7 @@ class TestPipelineIntegerField:
     ):
         # Arrange
         model = AllTypesModel(int_field=100)
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -110,7 +110,7 @@ class TestPipelineIntegerField:
     ):
         # Arrange
         model = AllTypesModel(int_field=50)
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -133,7 +133,7 @@ class TestPipelineListField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -153,7 +153,7 @@ class TestPipelineListField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -173,7 +173,7 @@ class TestPipelineListField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -193,7 +193,7 @@ class TestPipelineListField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -213,7 +213,7 @@ class TestPipelineListField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -240,7 +240,7 @@ class TestPipelineDictField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -260,7 +260,7 @@ class TestPipelineDictField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -285,7 +285,7 @@ class TestPipelineDictField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -305,7 +305,7 @@ class TestPipelineDictField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -325,7 +325,7 @@ class TestPipelineDictField:
     ):
         # Arrange
         model = AllTypesModel()
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -351,7 +351,7 @@ class TestPipelineBoolField:
     async def test_assignment_changes_not_persisted_without_save_edge_case(self):
         # Arrange
         model = AllTypesModel(bool_field=False)
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:
@@ -375,7 +375,7 @@ class TestPipelineCrossType:
     ):
         # Arrange
         model = AllTypesModel(str_field="start", int_field=10)
-        await model.save()
+        await model.asave()
 
         # Act
         async with model.pipeline() as redis_model:

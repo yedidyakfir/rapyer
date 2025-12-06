@@ -49,7 +49,7 @@ def sample_settings():
 async def test_redis_dict_setitem_int_type_checking_sanity(int_dict_model):
     # Arrange
     model = int_dict_model
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["test_key"] = 42
@@ -64,7 +64,7 @@ async def test_redis_dict_setitem_int_type_checking_sanity(int_dict_model):
 async def test_redis_dict_setitem_str_type_checking_sanity(str_dict_model):
     # Arrange
     model = str_dict_model
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["test_key"] = "test_string"
@@ -79,7 +79,7 @@ async def test_redis_dict_setitem_str_type_checking_sanity(str_dict_model):
 async def test_redis_dict_setitem_dict_type_checking_sanity(dict_dict_model):
     # Arrange
     model = dict_dict_model
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["test_key"] = {"nested_key": "nested_value"}
@@ -102,11 +102,11 @@ async def test_redis_dict_setitem_dict_type_checking_sanity(dict_dict_model):
 async def test_redis_dict_setitem_int_operations_sanity(key, test_value):
     # Arrange
     model = IntDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata[key] = test_value + 50
-    await model.metadata[key].save()
+    await model.metadata[key].asave()
 
     # Assert
     fresh_model = IntDictModel()
@@ -128,11 +128,11 @@ async def test_redis_dict_setitem_int_operations_sanity(key, test_value):
 async def test_redis_dict_setitem_str_operations_sanity(key, test_value):
     # Arrange
     model = StrDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata[key] = test_value + "_modified"
-    await model.metadata[key].save()
+    await model.metadata[key].asave()
 
     # Assert
     fresh_model = StrDictModel()
@@ -154,11 +154,11 @@ async def test_redis_dict_setitem_str_operations_sanity(key, test_value):
 async def test_redis_dict_setitem_nested_dict_operations_sanity(key, test_value):
     # Arrange
     model = DictDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata[key] = test_value
-    await model.save()  # Save current state to Redis before update
+    await model.asave()  # Save current state to Redis before update
     await model.metadata[key].aupdate(**{"new_setting": "new_value"})
 
     # Assert
@@ -174,7 +174,7 @@ async def test_redis_dict_setitem_nested_dict_operations_sanity(key, test_value)
 async def test_redis_dict_setitem_int_arithmetic_operations_sanity():
     # Arrange
     model = IntDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["number"] = 50
@@ -190,7 +190,7 @@ async def test_redis_dict_setitem_int_arithmetic_operations_sanity():
 async def test_redis_dict_setitem_str_operations_edge_case():
     # Arrange
     model = StrDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["text"] = "test"
@@ -205,7 +205,7 @@ async def test_redis_dict_setitem_str_operations_edge_case():
 async def test_redis_dict_setitem_nested_dict_key_access_edge_case():
     # Arrange
     model = DictDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["config"] = {"key1": "value1", "key2": "value2"}
@@ -220,7 +220,7 @@ async def test_redis_dict_setitem_nested_dict_key_access_edge_case():
 async def test_redis_dict_setitem_redis_field_paths_sanity():
     # Arrange
     model = IntDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["test_key"] = 42
@@ -235,7 +235,7 @@ async def test_redis_dict_setitem_redis_field_paths_sanity():
 async def test_redis_dict_setitem_multiple_keys_sanity():
     # Arrange
     model = IntDictModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.metadata["key1"] = 10
@@ -253,11 +253,11 @@ async def test_redis_dict_setitem_multiple_keys_sanity():
 async def test_redis_dict_setitem_persistence_across_instances_edge_case():
     # Arrange
     model1 = IntDictModel()
-    await model1.save()
+    await model1.asave()
 
     # Act
     model1.metadata["test_key"] = 99
-    await model1.metadata["test_key"].save()
+    await model1.metadata["test_key"].asave()
 
     # Assert
     model2 = IntDictModel()
@@ -272,18 +272,18 @@ async def test_redis_dict_setitem_with_existing_redis_operations_sanity():
     # Arrange
     model = StrDictModel()
     model.metadata = {"existing_key": "existing_value"}
-    await model.save()
+    await model.asave()
 
     # Act - use setitem to add a new key
     model.metadata["new_key"] = "new_value"
     model.metadata["new_key"] = "updated_value"
-    await model.metadata["new_key"].save()
+    await model.metadata["new_key"].asave()
 
     # Also use setitem to convert existing key to Redis type
     # Convert to Redis type via setitem
     model.metadata["existing_key"] = "existing_value"
     model.metadata["existing_key"] = "updated_existing"
-    await model.metadata["existing_key"].save()
+    await model.metadata["existing_key"].asave()
 
     # Assert
     fresh_model = StrDictModel()
@@ -298,11 +298,11 @@ async def test_redis_dict_setitem_overwrite_existing_key_sanity():
     # Arrange
     model = IntDictModel()
     model.metadata = {"key1": 10}
-    await model.save()
+    await model.asave()
 
     # Act - overwrite existing key with setitem
     model.metadata["key1"] = 150
-    await model.metadata["key1"].save()
+    await model.metadata["key1"].asave()
 
     # Assert
     fresh_model = IntDictModel()
@@ -315,7 +315,7 @@ async def test_redis_dict_setitem_overwrite_existing_key_sanity():
 async def test_redis_dict_setitem_mixed_operations_sanity():
     # Arrange
     model = StrDictModel()
-    await model.save()
+    await model.asave()
 
     # Act - mix setitem with aset_item and aupdate
     model.metadata["key1"] = "value1"  # setitem
@@ -324,7 +324,7 @@ async def test_redis_dict_setitem_mixed_operations_sanity():
 
     # Use Redis operations on setitem-created value
     model.metadata["key1"] = "modified_value1"
-    await model.metadata["key1"].save()
+    await model.metadata["key1"].asave()
 
     # Assert
     fresh_model = StrDictModel()
@@ -343,7 +343,7 @@ async def test_redis_dict_setitem_basemodel_addresses_type_checking_sanity(
 ):
     # Arrange
     model = basemodel_dict_model
-    await model.save()
+    await model.asave()
     test_value = sample_address
 
     # Act
@@ -358,7 +358,7 @@ async def test_redis_dict_setitem_basemodel_addresses_type_checking_sanity(
 async def test_redis_dict_setitem_basemodel_redis_operations_sanity():
     # Arrange
     model = BaseModelDictModel()
-    await model.save()
+    await model.asave()
 
     address = Address(street="456 Oak Ave", city="Boston", zip_code="02101")
 
@@ -384,7 +384,7 @@ async def test_redis_dict_setitem_basemodel_redis_operations_sanity():
 async def test_redis_dict_setitem_basemodel_field_paths_sanity():
     # Arrange
     model = BaseModelDictModel()
-    await model.save()
+    await model.asave()
 
     company = Company(name="StartupXYZ", employees=25, founded=2020)
 
@@ -405,7 +405,7 @@ async def test_redis_dict_setitem_basemodel_field_paths_sanity():
 async def test_redis_dict_setitem_basemodel_nested_operations_sanity():
     # Arrange
     model = BaseModelDictModel()
-    await model.save()
+    await model.asave()
 
     config = Settings(
         preferences={"theme": "light", "language": "en"},
@@ -431,7 +431,7 @@ async def test_redis_dict_setitem_basemodel_nested_operations_sanity():
 async def test_redis_dict_setitem_basemodel_multiple_keys_sanity():
     # Arrange
     model = BaseModelDictModel()
-    await model.save()
+    await model.asave()
 
     addresses = {
         "home": Address(street="111 Home St", city="Seattle", zip_code="98101"),
@@ -457,7 +457,7 @@ async def test_redis_dict_setitem_basemodel_multiple_keys_sanity():
 async def test_redis_dict_setitem_basemodel_persistence_across_instances_edge_case():
     # Arrange
     model1 = BaseModelDictModel()
-    await model1.save()
+    await model1.asave()
 
     company = Company(name="MegaCorp", employees=10000, founded=1990)
 
@@ -479,7 +479,7 @@ async def test_redis_dict_setitem_basemodel_persistence_across_instances_edge_ca
 async def test_redis_dict_setitem_basemodel_mixed_with_regular_operations_sanity():
     # Arrange
     model = BaseModelDictModel()
-    await model.save()
+    await model.asave()
 
     # Act - mix setitem with regular dict operations
     address = Address(street="555 Mixed St", city="Denver", zip_code="80201")

@@ -29,7 +29,7 @@ async def test_duplicate_basic_functionality_sanity(redis_client_fixture):
     original = TestRedisModel(
         description="original", items=[1, 2, 3], user_data={"user1": 100, "user2": 200}
     )
-    await original.save()
+    await original.asave()
 
     # Act
     duplicate = await original.duplicate()
@@ -61,7 +61,7 @@ async def test_duplicate_with_nested_models_sanity():
         user_data={"admin": 1000},
         items=[10, 20, 30],
     )
-    await original.save()
+    await original.asave()
 
     # Act
     duplicate = await original.duplicate()
@@ -87,7 +87,7 @@ async def test_duplicate_many_functionality_sanity(redis_client_fixture):
     original = TestRedisModel(
         description="original_for_many", items=[5, 10, 15], user_data={"batch": 999}
     )
-    await original.save()
+    await original.asave()
 
     # Act
     duplicates = await original.duplicate_many(3)
@@ -116,7 +116,7 @@ async def test_duplicate_many_functionality_sanity(redis_client_fixture):
 async def test_duplicate_redis_operations_on_duplicated_models_sanity():
     # Arrange
     original = TestRedisModel(items=[1, 2], user_data={"count": 10})
-    await original.save()
+    await original.asave()
 
     # Act
     duplicate = await original.duplicate()
@@ -141,7 +141,7 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity():
 async def test_duplicate_redis_operations_on_nested_models_sanity():
     # Arrange
     original = TestRedisModel()
-    await original.save()
+    await original.asave()
 
     # Act
     duplicate = await original.duplicate()
@@ -176,7 +176,7 @@ async def test_duplicate_with_redis_nested_models_sanity():
     )
     container = ContainerModel(inner_redis=inner_redis, description="redis_container")
     original = OuterModelWithRedisNested(container=container, outer_data=[100, 200])
-    await original.save()
+    await original.asave()
 
     # Act
     duplicate = await original.duplicate()
@@ -200,7 +200,7 @@ async def test_duplicate_with_redis_nested_models_sanity():
 async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
     # Arrange
     original = OuterModelWithRedisNested()
-    await original.save()
+    await original.asave()
 
     # Act
     duplicate = await original.duplicate()
@@ -237,7 +237,7 @@ async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
 async def test_cannot_duplicate_inner_model_edge_case():
     # Arrange
     original = TestRedisModel()
-    await original.save()
+    await original.asave()
 
     # Act & Assert
     # Try to duplicate inner model - should fail
@@ -252,7 +252,7 @@ async def test_cannot_duplicate_inner_model_edge_case():
 async def test_cannot_duplicate_redis_inner_model_edge_case():
     # Arrange
     original = OuterModelWithRedisNested()
-    await original.save()
+    await original.asave()
 
     # Act & Assert
     # Try to duplicate Redis inner model - should fail
@@ -270,7 +270,7 @@ async def test_duplicate_many_with_different_counts_sanity(
 ):
     # Arrange
     original = TestRedisModel(description=f"original_for_{num_duplicates}")
-    await original.save()
+    await original.asave()
 
     # Act
     duplicates = await original.duplicate_many(num_duplicates)
@@ -304,7 +304,7 @@ async def test_duplicate_preserves_all_redis_types_sanity():
         user_data={"user1": 50, "user2": 75},
         items=[10, 20, 30, 40],
     )
-    await original.save()
+    await original.asave()
 
     # Act
     duplicate = await original.duplicate()

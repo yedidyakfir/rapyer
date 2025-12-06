@@ -13,7 +13,7 @@ async def test_redis_model_get_functionality():
     original_model = RichModel(
         name="test_user", age=25, tags=["tag1", "tag2"], active=True, date1="2023-01-01"
     )
-    await original_model.save()
+    await original_model.asave()
 
     # Act
     retrieved_model = await RichModel.get(original_model.key)
@@ -31,7 +31,7 @@ async def test_redis_model_get_functionality():
 async def test_redis_model_lock_with_concurrent_access_functionality():
     # Arrange
     model = RichModel(name="lock_test", date1="initial_date")
-    await model.save()
+    await model.asave()
 
     enter_mock = Mock()
     exit_mock = Mock()
@@ -76,7 +76,7 @@ async def test_redis_model_lock_with_concurrent_access_functionality():
 async def test_redis_model_lock_from_key_functionality():
     # Arrange
     model = RichModel(name="lock_from_key_test", age=30, date1="initial_date")
-    await model.save()
+    await model.asave()
 
     # Act
     async with RichModel.lock_from_key(model.key, save_at_end=True) as locked_model:
@@ -95,7 +95,7 @@ async def test_redis_model_lock_from_key_functionality():
 async def test_redis_model_lock_from_key_with_action_functionality():
     # Arrange
     model = RichModel(name="lock_action_test", tags=["initial"])
-    await model.save()
+    await model.asave()
 
     # Act
     async with RichModel.lock_from_key(
@@ -114,7 +114,7 @@ async def test_redis_model_lock_from_key_with_action_functionality():
 async def test_redis_model_lock_from_key_with_concurrent_access_functionality():
     # Arrange
     model = RichModel(name="concurrent_lock_from_key", date1="initial_date")
-    await model.save()
+    await model.asave()
 
     enter_mock = Mock()
     exit_mock = Mock()
@@ -160,7 +160,7 @@ async def test_redis_model_lock_with_save_at_end_true_saves_changes_functionalit
     model = RichModel(
         name="save_at_end_test", age=25, tags=["initial"], date1="2023-01-01"
     )
-    await model.save()
+    await model.asave()
 
     # Act
     async with RichModel.lock_from_key(model.key, save_at_end=True) as locked_model:

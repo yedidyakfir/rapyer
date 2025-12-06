@@ -120,30 +120,34 @@ redis_client = redis.Redis(
     decode_responses=True
 )
 
+
 class TestModel(AtomicRedisModel):
     message: str
 
+
 # Set Redis client after class declaration
 TestModel.Meta.redis = redis_client
+
 
 async def test_setup():
     try:
         # Test basic operations
         model = TestModel(message="Hello, Rapyer!")
-        await model.save()
-        
+        await model.asave()
+
         # Retrieve the model
         retrieved = await TestModel.get(model.key)
         print(f"Success! Retrieved: {retrieved.message}")
-        
+
         # Cleanup
         await model.delete()
         print("Setup verification complete!")
-        
+
     except Exception as e:
         print(f"Setup error: {e}")
     finally:
         await redis_client.aclose()
+
 
 if __name__ == "__main__":
     asyncio.run(test_setup())

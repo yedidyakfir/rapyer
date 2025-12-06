@@ -8,7 +8,7 @@ from tests.models.collection_types import MixedTypesModel
 async def test_bytes_list_append_functionality(test_bytes):
     # Arrange
     model = MixedTypesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.bytes_list.aappend(test_bytes)
@@ -29,7 +29,7 @@ async def test_bytes_list_append_functionality(test_bytes):
 async def test_int_list_extend_functionality(test_ints):
     # Arrange
     model = MixedTypesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.int_list.aextend(test_ints)
@@ -52,7 +52,7 @@ async def test_int_list_extend_functionality(test_ints):
 async def test_bool_list_operations_functionality(bool_values):
     # Arrange
     model = MixedTypesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.bool_list.aextend(bool_values)
@@ -74,7 +74,7 @@ async def test_mixed_list_with_different_types_functionality():
     # Arrange
     model = MixedTypesModel()
     mixed_values = ["string", 42, True, b"bytes", 3.14]
-    await model.save()
+    await model.asave()
 
     # Act
     await model.mixed_list.aextend(mixed_values)
@@ -106,7 +106,7 @@ async def test_mixed_list_with_different_types_functionality():
 async def test_bytes_dict_operations_functionality(test_data):
     # Arrange
     model = MixedTypesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.bytes_dict.aupdate(**test_data)
@@ -131,11 +131,11 @@ async def test_bytes_dict_operations_functionality(test_data):
 async def test_int_dict_operations_functionality(int_data):
     # Arrange
     model = MixedTypesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.int_dict.aupdate(**int_data)
-    await model.save()
+    await model.asave()
     popped_value = await model.int_dict.apop(list(int_data.keys())[0])
 
     # Assert
@@ -160,11 +160,11 @@ async def test_int_dict_operations_functionality(int_data):
 async def test_bool_dict_operations_functionality(bool_data):
     # Arrange
     model = MixedTypesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.bool_dict.aupdate(**bool_data)
-    await model.save()
+    await model.asave()
 
     # Assert
     assert len(model.bool_dict) == len(bool_data)
@@ -192,11 +192,11 @@ async def test_mixed_dict_with_various_types_functionality():
         "bytes_key": b"bytes_value",
         "float_key": 3.14,
     }
-    await model.save()
+    await model.asave()
 
     # Act
     await model.mixed_dict.aupdate(**mixed_data)
-    await model.save()
+    await model.asave()
     await model.mixed_dict.apop("int_key")
 
     # Assert
@@ -217,7 +217,7 @@ async def test_list_clear_with_mixed_types_functionality(real_redis_client):
     # Arrange
     model = MixedTypesModel()
     mixed_values = ["string", 42, True, b"bytes"]
-    await model.save()
+    await model.asave()
 
     # Act
     await model.mixed_list.aextend(mixed_values)
@@ -235,13 +235,13 @@ async def test_dict_clear_with_mixed_types_functionality():
     # Arrange
     model = MixedTypesModel()
     mixed_data = {"str": "value", "int": 42, "bool": True}
-    await model.save()
+    await model.asave()
 
     # Act
     await model.mixed_dict.aupdate(**mixed_data)
-    await model.save()
+    await model.asave()
     await model.mixed_dict.aclear()
-    await model.save()
+    await model.asave()
 
     # Assert
     assert len(model.mixed_dict) == 0
@@ -260,7 +260,7 @@ async def test_list_persistence_across_instances_edge_case(list_type, test_value
     # Arrange
     model1 = MixedTypesModel()
     target_list = getattr(model1, list_type)
-    await model1.save()
+    await model1.asave()
 
     # Act
     await target_list.aextend(test_values)
@@ -288,11 +288,11 @@ async def test_dict_persistence_across_instances_edge_case(dict_type, test_data)
     # Arrange
     model1 = MixedTypesModel()
     target_dict = getattr(model1, dict_type)
-    await model1.save()
+    await model1.asave()
 
     # Act
     await target_dict.aupdate(**test_data)
-    await model1.save()
+    await model1.asave()
 
     model2 = MixedTypesModel()
     model2.pk = model1.pk
@@ -309,7 +309,7 @@ async def test_bytes_list_with_special_characters_edge_case():
     # Arrange
     model = MixedTypesModel()
     special_bytes = [b"\x00\x01\x02\x03", b"\xff\xfe\xfd", b""]
-    await model.save()
+    await model.asave()
 
     # Act
     await model.bytes_list.aextend(special_bytes)
@@ -329,14 +329,14 @@ async def test_bytes_list_with_special_characters_edge_case():
 async def test_mixed_operations_on_same_model_functionality():
     # Arrange
     model = MixedTypesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     await model.str_list.aappend("string")
     await model.int_list.aappend(42)
     await model.bool_dict.aset_item("active", True)
     await model.mixed_dict.aset_item("complex", {"nested": "data"})
-    await model.save()
+    await model.asave()
 
     # Assert
     assert "string" in model.str_list

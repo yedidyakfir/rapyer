@@ -31,7 +31,7 @@ async def test_redis_list_model_creation_with_initial_value_and_set_load_sanity(
         assert model.items[i].json_path == f"$.items[{i}]"
 
     # Act - Save and test load operations
-    await model.save()
+    await model.asave()
 
     # Assert - Load and verify
     loaded_value = await model.items.load()
@@ -56,7 +56,7 @@ async def test_redis_list_model_creation_with_list_operations_sanity():
     assert model.items[0].json_path == "$.items[0]"
 
     # Act - Save and perform list operations
-    await model.save()
+    await model.asave()
     await model.items.aappend("new_item")
     await model.items.aextend(["item2", "item3"])
 

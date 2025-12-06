@@ -40,34 +40,38 @@ import asyncio
 import rapyer
 from rapyer import AtomicRedisModel
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
     email: str
+
 
 class Product(AtomicRedisModel):
     name: str
     price: float
     in_stock: bool
 
+
 async def main():
     # Create and save different model types
     user = User(name="Alice", age=30, email="alice@example.com")
     product = Product(name="Laptop", price=999.99, in_stock=True)
-    
-    await user.save()
-    await product.save()
-    
+
+    await user.asave()
+    await product.asave()
+
     # Retrieve using global get function
     retrieved_user = await rapyer.get(user.key)
     retrieved_product = await rapyer.get(product.key)
-    
+
     print(f"User: {retrieved_user.name}, Age: {retrieved_user.age}")
     print(f"Product: {retrieved_product.name}, Price: {retrieved_product.price}")
-    
+
     # The function automatically returns the correct model type
     print(f"User type: {type(retrieved_user).__name__}")
     print(f"Product type: {type(retrieved_product).__name__}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -126,15 +130,18 @@ This method is efficient for retrieving multiple instances as it uses Redis's bu
 import asyncio
 from rapyer import AtomicRedisModel
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
     email: str
 
+
 class Product(AtomicRedisModel):
     name: str
     price: float
     in_stock: bool
+
 
 async def main():
     # Create and save multiple users
@@ -143,29 +150,30 @@ async def main():
         User(name="Bob", age=25, email="bob@example.com"),
         User(name="Charlie", age=35, email="charlie@example.com")
     ]
-    
+
     products = [
         Product(name="Laptop", price=999.99, in_stock=True),
         Product(name="Mouse", price=29.99, in_stock=False)
     ]
-    
+
     # Save all instances
     for user in users:
-        await user.save()
+        await user.asave()
     for product in products:
-        await product.save()
-    
+        await product.asave()
+
     # Find all users and products
     all_users = await User.afind()
     all_products = await Product.afind()
-    
+
     print(f"Found {len(all_users)} users:")
     for user in all_users:
         print(f"  - {user.name} ({user.age})")
-    
+
     print(f"Found {len(all_products)} products:")
     for product in all_products:
         print(f"  - {product.name}: ${product.price}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
