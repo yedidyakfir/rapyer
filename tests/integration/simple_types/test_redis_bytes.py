@@ -27,7 +27,7 @@ async def test_redis_bytes_set_functionality_sanity(test_values):
     # Assert
     fresh_model = BytesModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.data.load()
+    loaded_value = await fresh_model.data.aload()
     assert loaded_value == test_values
 
 
@@ -45,7 +45,7 @@ async def test_redis_bytes_load_functionality_sanity(test_values):
     # Act
     fresh_model = BytesModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.data.load()
+    loaded_value = await fresh_model.data.aload()
 
     # Assert
     assert loaded_value == test_values
@@ -58,7 +58,7 @@ async def test_redis_bytes_load_with_none_value_edge_case():
     await model.asave()
 
     # Act
-    loaded_value = await model.data.load()
+    loaded_value = await model.data.aload()
 
     # Assert
     assert loaded_value == b""
@@ -84,7 +84,7 @@ async def test_redis_bytes_load_type_conversion_edge_case(redis_values):
     # Act
     fresh_model = BytesModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.data.load()
+    loaded_value = await fresh_model.data.aload()
 
     # Assert
     assert loaded_value == expected

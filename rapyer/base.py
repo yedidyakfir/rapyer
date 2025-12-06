@@ -290,7 +290,13 @@ class AtomicRedisModel(BaseModel):
         instance.key = key
         return instance
 
-    async def load(self) -> Self:
+    @deprecated(
+        "load function is deprecated and will be removed in rapyer 1.2.0, use aload() instead"
+    )
+    async def load(self):
+        return await self.aload()
+
+    async def aload(self) -> Self:
         model_dump = await self.Meta.redis.json().get(self.key, self.json_path)
         if not model_dump:
             raise KeyNotFound(f"{self.key} is missing in redis")

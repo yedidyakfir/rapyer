@@ -17,7 +17,7 @@ async def test_redis_int_set_functionality_sanity(test_values):
     # Assert
     fresh_model = IntModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.load()
+    loaded_value = await fresh_model.count.aload()
     assert loaded_value == test_values
 
 
@@ -33,7 +33,7 @@ async def test_redis_int_load_functionality_sanity(test_values):
     # Act
     fresh_model = IntModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.load()
+    loaded_value = await fresh_model.count.aload()
 
     # Assert
     assert loaded_value == test_values
@@ -45,7 +45,7 @@ async def test_redis_int_load_with_none_value_edge_case():
     model = IntModel()
 
     # Act
-    loaded_value = await model.count.load()
+    loaded_value = await model.count.aload()
 
     # Assert
     assert loaded_value is None
@@ -64,7 +64,7 @@ async def test_redis_int_load_type_conversion_edge_case(
     # Act
     fresh_model = IntModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.load()
+    loaded_value = await fresh_model.count.aload()
 
     # Assert
     assert loaded_value == int(redis_values)
@@ -120,7 +120,7 @@ async def test_redis_int_persistence_across_instances_edge_case():
     # Act
     model2 = IntModel()
     model2.pk = model1.pk
-    loaded_value = await model2.count.load()
+    loaded_value = await model2.count.aload()
 
     # Assert
     assert loaded_value == 100
@@ -178,7 +178,7 @@ async def test_redis_int_increase_functionality_sanity(
     # Assert
     fresh_model = IntModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.load()
+    loaded_value = await fresh_model.count.aload()
     assert loaded_value == expected
     assert result == expected
 
@@ -197,7 +197,7 @@ async def test_redis_int_increase_default_amount_sanity():
     # Assert
     fresh_model = IntModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.load()
+    loaded_value = await fresh_model.count.aload()
     assert loaded_value == 11
     assert result == 11
 
@@ -214,7 +214,7 @@ async def test_redis_int_increase_on_non_existent_key_edge_case():
     # Assert
     fresh_model = IntModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.load()
+    loaded_value = await fresh_model.count.aload()
     assert loaded_value == 5
     assert result == 5
 
@@ -233,7 +233,7 @@ async def test_redis_int_increase_multiple_times_sanity():
     # Assert
     fresh_model = IntModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.load()
+    loaded_value = await fresh_model.count.aload()
     assert result1 == 10
     assert result2 == 30
     assert result3 == 25

@@ -53,7 +53,7 @@ class User(AtomicRedisModel):
 | Operation | Method | Description |
 |-----------|---------|-------------|
 | **save** | `await user.name.asave()` | Save field value to Redis |
-| **load** | `await user.name.load()` | Load field value from Redis (returns value, doesn't update model) |
+| **load** | `await user.name.aload()` | Load field value from Redis (returns value, doesn't update model) |
 
 All standard `str` methods are available (upper, lower, strip, etc.) but operate on the local copy.
 
@@ -79,7 +79,7 @@ class Counter(AtomicRedisModel):
 | Operation | Method | Description |
 |-----------|---------|-------------|
 | **save** | `await counter.count.asave()` | Save field value to Redis |
-| **load** | `await counter.count.load()` | Load field value from Redis (returns value, doesn't update model) |
+| **load** | `await counter.count.aload()` | Load field value from Redis (returns value, doesn't update model) |
 | **increase** | `await counter.count.increase(5)` | Atomically increment by amount (default: 1) |
 
 !!! warning "Non-mutating Operation"
@@ -107,7 +107,7 @@ class UserProfile(AtomicRedisModel):
 | Operation | Method | Description |
 |-----------|---------|-------------|
 | **save** | `await user.tags.asave()` | Save entire list to Redis |
-| **load** | `await user.tags.load()` | Load entire list from Redis (returns value, doesn't update model) |
+| **load** | `await user.tags.aload()` | Load entire list from Redis (returns value, doesn't update model) |
 | **append** | `await user.tags.aappend("python")` | Atomically append single item |
 | **extend** | `await user.tags.aextend(["redis", "async"])` | Atomically append multiple items |
 | **insert** | `await user.tags.ainsert(0, "first")` | Atomically insert at index |
@@ -138,7 +138,7 @@ class UserSettings(AtomicRedisModel):
 | Operation | Method | Description |
 |-----------|---------|-------------|
 | **save** | `await user.preferences.asave()` | Save entire dict to Redis |
-| **load** | `await user.preferences.load()` | Load entire dict from Redis (returns value, doesn't update model) |
+| **load** | `await user.preferences.aload()` | Load entire dict from Redis (returns value, doesn't update model) |
 | **update** | `await user.preferences.aupdate(theme="dark")` | Atomically update multiple keys |
 | **set item** | `await user.preferences.aset_item("lang", "en")` | Atomically set single key-value |
 | **delete item** | `await user.preferences.adel_item("old_key")` | Atomically delete key |
@@ -170,7 +170,7 @@ class FileModel(AtomicRedisModel):
 | Operation | Method | Description |
 |-----------|---------|-------------|
 | **save** | `await file.content.asave()` | Save bytes to Redis |
-| **load** | `await file.content.load()` | Load bytes from Redis (returns value, doesn't update model) |
+| **load** | `await file.content.aload()` | Load bytes from Redis (returns value, doesn't update model) |
 
 All standard `bytes` methods are available but operate on the local copy.
 
@@ -197,7 +197,7 @@ class Event(AtomicRedisModel):
 | Operation | Method | Description |
 |-----------|---------|-------------|
 | **save** | `await event.created_at.asave()` | Save datetime to Redis |
-| **load** | `await event.created_at.load()` | Load datetime from Redis (returns value, doesn't update model) |
+| **load** | `await event.created_at.aload()` | Load datetime from Redis (returns value, doesn't update model) |
 
 All standard `datetime` methods are available (strftime, replace, etc.) but operate on the local copy.
 
@@ -232,7 +232,7 @@ Nested BaseModel instances support these atomic Redis operations:
 | Operation | Method | Description |
 |-----------|---------|-------------|
 | **save** | `await user.address.asave()` | Save only this nested model to Redis (other parent fields unchanged) |
-| **load** | `await user.address.load()` | Load nested model from Redis (returns value, doesn't update model) |
+| **load** | `await user.address.aload()` | Load nested model from Redis (returns value, doesn't update model) |
 | **aupdate** | `await user.address.aupdate(street="New St")` | Atomically update specific fields in the nested model |
 
 !!! warning "Scoped Save Operation"

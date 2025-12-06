@@ -80,7 +80,13 @@ class RedisType(ABC):
             await self.client.expire(self.key, self.Meta.ttl)
         return self
 
+    @deprecated(
+        "load function is deprecated and will be removed in rapyer 1.2.0, use aload() instead"
+    )
     async def load(self):
+        return await self.aload()
+
+    async def aload(self):
         redis_value = await self.client.json().get(self.key, self.field_path)
         if redis_value is None:
             return None

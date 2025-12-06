@@ -56,7 +56,7 @@ await user.asave()
 **Description:** Loads the latest data from Redis for this model instance, updating the current instance.
 
 ```python
-await user.load()  # Refreshes user with latest Redis data
+await user.aload()  # Refreshes user with latest Redis data
 ```
 
 #### `delete()`

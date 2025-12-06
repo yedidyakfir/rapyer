@@ -82,7 +82,7 @@ async def test_base_redis_model__load__check_redis_load(real_redis_client):
     await real_redis_client.json().arrappend(user.key, user.tags.json_path, "tag3")
 
     # Act
-    user.tags = await user.tags.load()
+    user.tags = await user.tags.aload()
 
     # Assert
     actual_lst = await real_redis_client.json().get(user.key, user.tags.json_path)

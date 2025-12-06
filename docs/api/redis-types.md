@@ -93,7 +93,7 @@ print(user.name.startswith("J"))  # True
 await user.name.asave()
 
 # Load latest value
-await user.name.load()
+await user.name.aload()
 ```
 
 ---
@@ -451,7 +451,7 @@ image = Image(name="profile.png", data=image_data)
 await image.asave()  # Automatically serializes bytes data
 
 # Load and work with bytes
-await image.load()
+await image.aload()
 print(len(image.data))  # Works like normal bytes
 ```
 
@@ -553,7 +553,7 @@ Redis type operations may raise:
 from rapyer.errors import KeyNotFound
 
 try:
-    await redis_list.load()
+    await redis_list.aload()
 except KeyNotFound:
     print("Field not found in Redis")
 ```

@@ -41,7 +41,7 @@ async def test_redis_list_aappend_basemodel_operations_sanity(user_data):
     # Assert
     fresh_model = UserListModel()
     fresh_model.pk = model.pk
-    loaded_users = await fresh_model.users.load()
+    loaded_users = await fresh_model.users.aload()
     assert len(loaded_users) == 1
     assert loaded_users[0].name == user_data.name
     assert loaded_users[0].id == user_data.id
@@ -60,7 +60,7 @@ async def test_redis_list_aextend_basemodel_operations_sanity(sample_users):
     # Assert
     fresh_model = UserListModel()
     fresh_model.pk = model.pk
-    loaded_users = await fresh_model.users.load()
+    loaded_users = await fresh_model.users.aload()
     assert len(loaded_users) == len(sample_users)
     for i, expected_user in enumerate(sample_users):
         assert loaded_users[i].name == expected_user.name
@@ -86,7 +86,7 @@ async def test_redis_list_apop_basemodel_operations_sanity(sample_users):
     # Verify the user was removed from Redis
     fresh_model = UserListModel()
     fresh_model.pk = model.pk
-    loaded_users = await fresh_model.users.load()
+    loaded_users = await fresh_model.users.aload()
     assert len(loaded_users) == len(sample_users) - 1
 
 
@@ -109,7 +109,7 @@ async def test_redis_list_ainsert_basemodel_operations_sanity(
     # Assert
     fresh_model = UserListModel()
     fresh_model.pk = model.pk
-    loaded_users = await fresh_model.users.load()
+    loaded_users = await fresh_model.users.aload()
     assert len(loaded_users) == len(sample_users) + 1
     assert loaded_users[insert_index].name == new_user.name
     assert loaded_users[insert_index].id == new_user.id
@@ -128,7 +128,7 @@ async def test_redis_list_aclear_basemodel_operations_sanity(sample_users):
     # Assert
     fresh_model = UserListModel()
     fresh_model.pk = model.pk
-    loaded_users = await fresh_model.users.load()
+    loaded_users = await fresh_model.users.aload()
     assert len(loaded_users) == 0
 
 
@@ -147,7 +147,7 @@ async def test_redis_list_multiple_operations_basemodel_sanity(sample_products):
     # Assert
     fresh_model = ProductListModel()
     fresh_model.pk = model.pk
-    loaded_products = await fresh_model.products.load()
+    loaded_products = await fresh_model.products.aload()
     assert len(loaded_products) == 4
 
     # Verify the first product
@@ -205,7 +205,7 @@ async def test_redis_list_operations_preserve_basemodel_data_integrity_sanity():
     # Assert
     fresh_model = UserListModel()
     fresh_model.pk = model.pk
-    loaded_users = await fresh_model.users.load()
+    loaded_users = await fresh_model.users.aload()
 
     # Verify complex user data integrity
     assert loaded_users[0].name == complex_user.name
@@ -240,7 +240,7 @@ async def test_redis_list_basemodel_operations_after_model_creation_set_load_san
     # Assert
     fresh_model = UserListModel()
     fresh_model.pk = model.pk
-    loaded_users = await fresh_model.users.load()
+    loaded_users = await fresh_model.users.aload()
 
     # Should have: Inserted User, Initial User 2, Appended User
     assert len(loaded_users) == 3

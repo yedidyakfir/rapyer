@@ -127,8 +127,8 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity():
 
     # Assert
     # Original should remain unchanged
-    original.items = await original.items.load()
-    original.user_data = await original.user_data.load()
+    original.items = await original.items.aload()
+    original.user_data = await original.user_data.aload()
     assert original.items == [1, 2]
     assert original.user_data == {"count": 10}
 
@@ -153,10 +153,10 @@ async def test_duplicate_redis_operations_on_nested_models_sanity():
 
     # Assert
     # Original should remain unchanged
-    original.middle_model.tags = await original.middle_model.tags.load()
-    original.middle_model.metadata = await original.middle_model.metadata.load()
+    original.middle_model.tags = await original.middle_model.tags.aload()
+    original.middle_model.metadata = await original.middle_model.metadata.aload()
     original.middle_model.inner_model.names = (
-        await original.middle_model.inner_model.names.load()
+        await original.middle_model.inner_model.names.aload()
     )
     assert original.middle_model.tags == []
     assert original.middle_model.metadata == {}
@@ -215,12 +215,12 @@ async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
     # Assert
     # Original should remain unchanged
     original.container.inner_redis.tags = (
-        await original.container.inner_redis.tags.load()
+        await original.container.inner_redis.tags.aload()
     )
     original.container.inner_redis.metadata = (
-        await original.container.inner_redis.metadata.load()
+        await original.container.inner_redis.metadata.aload()
     )
-    original.outer_data = await original.outer_data.load()
+    original.outer_data = await original.outer_data.aload()
     assert original.container.inner_redis.tags == []
     assert original.container.inner_redis.metadata == {}
     assert original.outer_data == []

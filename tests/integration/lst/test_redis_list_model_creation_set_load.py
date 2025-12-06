@@ -34,13 +34,13 @@ async def test_redis_list_model_creation_with_initial_value_and_set_load_sanity(
     await model.asave()
 
     # Assert - Load and verify
-    loaded_value = await model.items.load()
+    loaded_value = await model.items.aload()
     assert loaded_value == test_value
 
     # Test load from a fresh model
     fresh_model = ListModel()
     fresh_model.pk = model.pk
-    fresh_loaded_value = await fresh_model.items.load()
+    fresh_loaded_value = await fresh_model.items.aload()
     assert fresh_loaded_value == test_value
 
 
@@ -61,7 +61,7 @@ async def test_redis_list_model_creation_with_list_operations_sanity():
     await model.items.aextend(["item2", "item3"])
 
     # Assert - Load and verify operations worked
-    loaded_items = await model.items.load()
+    loaded_items = await model.items.aload()
     assert "initial" in loaded_items
     assert "new_item" in loaded_items
     assert "item2" in loaded_items

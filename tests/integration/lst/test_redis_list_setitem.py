@@ -137,7 +137,7 @@ async def test_redis_list_setitem_int_operations_sanity(index, test_value):
     # Assert
     fresh_model = IntListModel()
     fresh_model.pk = model.pk
-    fresh_model.items = await fresh_model.items.load()
+    fresh_model.items = await fresh_model.items.aload()
     # After loading, items are regular Python types, not Redis types
     assert fresh_model.items[index] == test_value + 50
 
@@ -163,7 +163,7 @@ async def test_redis_list_setitem_str_operations_sanity(index, test_value):
     # Assert
     fresh_model = StrListModel()
     fresh_model.pk = model.pk
-    fresh_model.items = await fresh_model.items.load()
+    fresh_model.items = await fresh_model.items.aload()
     # After loading, items are regular Python types, not Redis types
     assert fresh_model.items[index] == test_value + "_modified"
 
@@ -190,7 +190,7 @@ async def test_redis_list_setitem_dict_operations_sanity(index, test_value):
     # Assert
     fresh_model = DictListModel()
     fresh_model.pk = model.pk
-    fresh_model.items = await fresh_model.items.load()
+    fresh_model.items = await fresh_model.items.aload()
     # After loading, items are regular Python types, not Redis types
     expected_dict = {**test_value, "new_key": "new_value"}
     assert fresh_model.items[index] == expected_dict
@@ -289,7 +289,7 @@ async def test_redis_list_setitem_persistence_across_instances_edge_case():
     # Assert
     model2 = IntListModel()
     model2.pk = model1.pk
-    model2.items = await model2.items.load()
+    model2.items = await model2.items.aload()
     # After loading, items are regular Python types, not Redis types
     assert model2.items[1] == 99
 

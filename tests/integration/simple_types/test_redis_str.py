@@ -20,7 +20,7 @@ async def test_redis_str_set_functionality_sanity(test_values):
     # Assert
     fresh_model = StrModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.load()
+    loaded_value = await fresh_model.name.aload()
     assert loaded_value == test_values
 
 
@@ -39,7 +39,7 @@ async def test_redis_str_load_functionality_sanity(test_values):
     # Act
     fresh_model = StrModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.load()
+    loaded_value = await fresh_model.name.aload()
 
     # Assert
     assert loaded_value == test_values
@@ -51,7 +51,7 @@ async def test_redis_str_load_with_none_value_edge_case():
     model = StrModel()
 
     # Act
-    loaded_value = await model.name.load()
+    loaded_value = await model.name.aload()
 
     # Assert
     assert loaded_value is None
@@ -107,7 +107,7 @@ async def test_redis_str_persistence_across_instances_edge_case():
     # Act
     model2 = StrModel()
     model2.pk = model1.pk
-    loaded_value = await model2.name.load()
+    loaded_value = await model2.name.aload()
 
     # Assert
     assert loaded_value == "modified"
@@ -161,6 +161,6 @@ async def test_redis_str_empty_string_functionality_edge_case():
     # Assert
     fresh_model = StrModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.load()
+    loaded_value = await fresh_model.name.aload()
     assert loaded_value == ""
     assert len(model.name) == 0

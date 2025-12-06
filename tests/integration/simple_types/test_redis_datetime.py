@@ -30,7 +30,7 @@ async def test_redis_datetime_set_functionality_sanity(test_values):
     # Assert
     fresh_model = DatetimeModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.created_at.load()
+    loaded_value = await fresh_model.created_at.aload()
     assert loaded_value == test_values
 
 
@@ -46,7 +46,7 @@ async def test_redis_datetime_load_functionality_sanity(test_values):
     # Act
     fresh_model = DatetimeModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.created_at.load()
+    loaded_value = await fresh_model.created_at.aload()
 
     # Assert
     assert loaded_value == test_values
@@ -58,7 +58,7 @@ async def test_redis_datetime_load_with_none_value_edge_case():
     model = DatetimeModel()
 
     # Act
-    loaded_value = await model.created_at.load()
+    loaded_value = await model.created_at.aload()
 
     # Assert
     assert loaded_value is None
@@ -118,7 +118,7 @@ async def test_redis_datetime_persistence_across_instances_edge_case():
     # Act
     model2 = DatetimeModel()
     model2.pk = model1.pk
-    loaded_value = await model2.created_at.load()
+    loaded_value = await model2.created_at.aload()
 
     # Assert
     assert loaded_value == test_datetime
@@ -141,7 +141,7 @@ async def test_redis_datetime_list_functionality_sanity(test_dates):
     # Act
     fresh_model = DatetimeListModel()
     fresh_model.pk = model.pk
-    loaded_model = await fresh_model.load()
+    loaded_model = await fresh_model.aload()
 
     # Assert
     assert loaded_model.dates == test_dates
@@ -164,7 +164,7 @@ async def test_redis_datetime_dict_functionality_sanity(test_date_dict):
     # Act
     fresh_model = DatetimeDictModel()
     fresh_model.pk = model.pk
-    loaded_model = await fresh_model.load()
+    loaded_model = await fresh_model.aload()
 
     # Assert
     assert loaded_model.event_dates == test_date_dict
@@ -185,7 +185,7 @@ async def test_redis_datetime_isoformat_compatibility_edge_case(real_redis_clien
     # Act
     fresh_model = DatetimeModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.created_at.load()
+    loaded_value = await fresh_model.created_at.aload()
 
     # Assert
     assert loaded_value == test_datetime
