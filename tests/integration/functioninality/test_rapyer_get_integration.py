@@ -240,7 +240,7 @@ async def test_rapyer_get_functionality_sanity(model_instance):
     redis_key = model_instance.key
 
     # Act
-    retrieved_model = await rapyer.get(redis_key)
+    retrieved_model = await rapyer.aget(redis_key)
 
     # Assert
     assert retrieved_model == model_instance

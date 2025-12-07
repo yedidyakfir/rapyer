@@ -62,8 +62,8 @@ async def main():
     await product.asave()
 
     # Retrieve using global get function
-    retrieved_user = await rapyer.get(user.key)
-    retrieved_product = await rapyer.get(product.key)
+    retrieved_user = await rapyer.aget(user.key)
+    retrieved_product = await rapyer.aget(product.key)
 
     print(f"User: {retrieved_user.name}, Age: {retrieved_user.age}")
     print(f"Product: {retrieved_product.name}, Price: {retrieved_product.price}")

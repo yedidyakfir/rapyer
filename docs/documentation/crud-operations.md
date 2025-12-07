@@ -119,7 +119,7 @@ async def main():
     user_key = user.key
 
     # Retrieve using the global get function
-    loaded_model = await rapyer.get(user_key)
+    loaded_model = await rapyer.aget(user_key)
     print(f"Loaded model: {loaded_model.name}, Age: {loaded_model.age}")
     print(f"Model type: {type(loaded_model).__name__}")
 

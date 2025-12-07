@@ -473,7 +473,14 @@ class AtomicRedisModel(BaseModel):
 REDIS_MODELS: list[type[AtomicRedisModel]] = []
 
 
+@deprecated(
+    "get function is deprecated and will be removed in rapyer 1.2.0, use aget instead"
+)
 async def get(redis_key: str) -> AtomicRedisModel:
+    return await aget(redis_key)
+
+
+async def aget(redis_key: str) -> AtomicRedisModel:
     redis_model_mapping = {klass.__name__: klass for klass in REDIS_MODELS}
     class_name = redis_key.split(":")[0]
     klass = redis_model_mapping.get(class_name)
