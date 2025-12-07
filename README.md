@@ -111,7 +111,7 @@ async with user.alock("transaction") as locked_user:
 Batch multiple operations for performance:
 
 ```python
-async with user.pipeline() as pipelined_user:
+async with user.apipeline() as pipelined_user:
     await pipelined_user.tags.aappend("redis")
     await pipelined_user.metadata.aupdate(level="senior")
     # Executed as single atomic transaction
@@ -153,7 +153,7 @@ await user.scores.aappend(95)               # Native Redis operation
 |---------|-------------------------------------------------|----------|----------------|---------|
 | **🚀 Atomic Operations** | ✅ Built-in for all operations                   | ❌ Manual transactions only | ❌ Manual transactions only | ❌ Manual transactions only |
 | **🔒 Lock Context Manager** | ✅ Automatic with `async with model.alock()`     | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
-| **⚡ Pipeline Operations** | ✅ True atomic batching with `model.pipeline()`  | ⚠️ Basic pipeline support | ❌ No pipeline support | ❌ No pipeline support |
+| **⚡ Pipeline Operations** | ✅ True atomic batching with `model.apipeline()` | ⚠️ Basic pipeline support | ❌ No pipeline support | ❌ No pipeline support |
 | **🌐 Universal Type Support** | ✅ Native + automatic serialization for any type | ⚠️ HashModel vs JsonModel limitations | ⚠️ Limited complex types | ⚠️ Limited complex types |
 | **🔄 Race Condition Safe** | ✅ Built-in prevention with Lua scripts          | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
 | **📦 Redis JSON Native** | ✅ Optimized JSON operations                     | ✅ Via JsonModel only | ❌ Hash-based | ❌ Hash-based |
@@ -169,14 +169,15 @@ await user.scores.aappend(95)               # Native Redis operation
 ### 🏆 What Makes Rapyer Unique
 
 #### **True Atomic Operations Out of the Box**
+
 ```python
 # Rapyer - Atomic by default
-await user.tags.aappend("python")           # Race-condition safe
-await user.metadata.aupdate(role="dev")     # Always atomic
+await user.tags.aappend("python")  # Race-condition safe
+await user.metadata.aupdate(role="dev")  # Always atomic
 
 # Others - Manual transaction management required
-async with redis.pipeline() as pipe:        # Manual setup
-    pipe.multi()                             # Manual transaction
+async with redis.apipeline() as pipe:  # Manual setup
+    pipe.multi()  # Manual transaction
     # ... manual Redis commands               # Error-prone
     await pipe.execute()
 ```
@@ -212,9 +213,10 @@ await user.metadata.aupdate(key="val") # Native Redis JSON operations
 ```
 
 #### **Pipeline with True Atomicity**
+
 ```python
 # Rapyer - Everything in pipeline is atomic
-async with user.pipeline() as pipelined_user:
+async with user.apipeline() as pipelined_user:
     await pipelined_user.tags.aappend("redis")
     await pipelined_user.metadata.aupdate(level="senior")
     # Single atomic transaction - either all succeed or all fail

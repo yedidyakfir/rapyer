@@ -18,7 +18,7 @@ async def test_pipeline_context_manager__dict_update_operations__check_atomic_ba
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.metadata.aupdate(key1="value1", key2="value2")
         await redis_model.metadata.aupdate(key3="value3", key4="value4")
 
@@ -38,7 +38,7 @@ async def test_pipeline_context_manager__multiple_dict_fields__check_atomic_exec
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.metadata.aupdate(status="active", version="1.0")
         await redis_model.config.aupdate(timeout=30, retries=3)
 
@@ -73,7 +73,7 @@ async def test_pipeline_context_manager__exception_during_pipeline__check_no_cha
 
     # Act & Assert
     with pytest.raises(ValueError, match="Test exception"):
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             await redis_model.metadata.aupdate(should_not_be_saved="value")
             raise ValueError("Test exception")
 
@@ -90,7 +90,7 @@ async def test_pipeline_context_manager__empty_pipeline__check_no_operations_edg
     original_data = await PipelineTestModel.aget(model.key)
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         pass  # No operations
 
     # Assert - Data should remain unchanged
@@ -105,7 +105,7 @@ async def test_pipeline_context_manager__incremental_updates_atomic__check_inter
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         # First update
         await redis_model.metadata.aupdate(stage="processing", started_at="2023-01-01")
 
@@ -142,7 +142,7 @@ async def test_pipeline_context_manager__pipeline_context_cleanup__check_context
     # Act & Assert - Context should be None before a pipeline
     assert _context_var.get() is None
 
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         # Context should be set to pipeline inside context
         assert _context_var.get() is not None
         await redis_model.metadata.aupdate(updated="true")
@@ -162,7 +162,7 @@ async def test_pipeline_list_aappend__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.tags.aappend("new_tag")
 
         # Check if the change is not applied yet (atomicity test)
@@ -181,7 +181,7 @@ async def test_pipeline_list_aextend__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.tags.aextend(["tag1", "tag2"])
 
         # Check if the change is not applied yet (atomicity test)
@@ -200,7 +200,7 @@ async def test_pipeline_list_ainsert__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.tags.ainsert(1, "middle")
 
         # Check if the change is not applied yet (atomicity test)
@@ -219,7 +219,7 @@ async def test_pipeline_list_aclear__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.tags.aclear()
 
         # Check if the change is not applied yet (atomicity test)
@@ -238,7 +238,7 @@ async def test_pipeline_dict_aset_item__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.metadata.aset_item("new_key", "new_value")
 
         # Check if the change is not applied yet (atomicity test)
@@ -257,7 +257,7 @@ async def test_pipeline_dict_adel_item__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.metadata.adel_item("key1")
 
         # Check if the change is not applied yet (atomicity test)
@@ -276,7 +276,7 @@ async def test_pipeline_dict_aupdate__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.metadata.aupdate(key1="value1", key2="value2")
 
         # Check if the change is not applied yet (atomicity test)
@@ -299,7 +299,7 @@ async def test_pipeline_dict_aclear__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.metadata.aclear()
 
         # Check if the change is not applied yet (atomicity test)
@@ -318,7 +318,7 @@ async def test_pipeline_string_set__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         redis_model.name = "updated"
         await redis_model.name.asave()
 
@@ -338,7 +338,7 @@ async def test_pipeline_int_set__check_atomicity_sanity():
     await model.asave()
 
     # Act
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         redis_model.counter = 99
         await redis_model.counter.asave()
 
@@ -360,7 +360,7 @@ async def test_pipeline_multiple_operations__check_combined_atomicity_sanity():
     await model.asave()
 
     # Act - Test multiple operations in a single pipeline
-    async with model.pipeline() as redis_model:
+    async with model.apipeline() as redis_model:
         await redis_model.tags.aappend("tag2")
         await redis_model.tags.aextend(["tag3", "tag4"])
         await redis_model.metadata.aupdate(key2="value2", key3="value3")
@@ -399,7 +399,7 @@ async def test_pipeline_exception_rollback__check_no_changes_applied_edge_case()
 
     # Act & Assert - Pipeline should roll back on exception
     with pytest.raises(ValueError, match="Test exception"):
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             await redis_model.tags.aappend("should_not_be_saved")
             await redis_model.metadata.aset_item("new_key", "should_not_be_saved")
             raise ValueError("Test exception")
@@ -419,7 +419,7 @@ async def test_pipeline_delete__check_atomicity_sanity(real_redis_client):
     await model2.asave()
 
     # Act
-    async with model1.pipeline() as redis_model:
+    async with model1.apipeline() as redis_model:
         await redis_model.adelete()
 
         # Check if models still exist during a pipeline (atomicity test)
@@ -444,7 +444,7 @@ async def test_pipeline_try_delete__check_atomicity_sanity(real_redis_client):
     await model2.asave()
 
     # Act
-    async with model1.pipeline() as redis_model:
+    async with model1.apipeline() as redis_model:
         await ComprehensiveTestModel.adelete_by_key(model1.key)
 
         # Check if models still exist during pipeline (atomicity test)
@@ -471,7 +471,7 @@ async def test_pipeline_multiple_deletes__check_atomicity_sanity(real_redis_clie
     await model3.asave()
 
     # Act
-    async with model1.pipeline() as redis_model:
+    async with model1.apipeline() as redis_model:
         await redis_model.adelete()
         await ComprehensiveTestModel.adelete_by_key(model2.key)
 

@@ -403,7 +403,17 @@ class AtomicRedisModel(BaseModel):
             yield redis_model
 
     @contextlib.asynccontextmanager
-    async def pipeline(
+    @deprecated(
+        "pipeline function is deprecated and will be removed in rapyer 1.2.0, use apipeline instead"
+    )
+    async def apipeline(
+        self, ignore_if_deleted: bool = False
+    ) -> AsyncGenerator[Self, None]:
+        async with self.apipeline(ignore_if_deleted=ignore_if_deleted) as redis_model:
+            yield redis_model
+
+    @contextlib.asynccontextmanager
+    async def apipeline(
         self, ignore_if_deleted: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with self.Meta.redis.pipeline() as pipe:

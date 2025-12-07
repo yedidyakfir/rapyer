@@ -11,7 +11,7 @@ class TestPipelineStringField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.str_field = "new_value"
 
             # Assert - changes not visible in Redis during pipeline
@@ -32,7 +32,7 @@ class TestPipelineStringField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.str_field += "_suffix"
 
             # Assert - changes not visible in Redis during pipeline
@@ -52,7 +52,7 @@ class TestPipelineStringField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.str_field += "_first"
             redis_model.str_field += "_second"
 
@@ -73,7 +73,7 @@ class TestPipelineIntegerField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.int_field = 50
 
             # Assert - changes not visible in Redis during pipeline
@@ -93,7 +93,7 @@ class TestPipelineIntegerField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.int_field += 25
 
             # Assert - changes not visible in Redis during pipeline
@@ -113,7 +113,7 @@ class TestPipelineIntegerField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.int_field += 10
             redis_model.int_field += 20
 
@@ -136,7 +136,7 @@ class TestPipelineListField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.list_field.append("item1")
 
             # Assert - changes not visible in Redis during pipeline
@@ -156,7 +156,7 @@ class TestPipelineListField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             await redis_model.list_field.aappend("async_item")
 
             # Assert - changes not visible in Redis during pipeline
@@ -176,7 +176,7 @@ class TestPipelineListField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.list_field.extend(["item1", "item2"])
 
             # Assert - changes not visible in Redis during pipeline
@@ -196,7 +196,7 @@ class TestPipelineListField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             await redis_model.list_field.aextend(["async_item1", "async_item2"])
 
             # Assert - changes not visible in Redis during pipeline
@@ -216,7 +216,7 @@ class TestPipelineListField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.list_field.append("sync_item")
             await redis_model.list_field.aappend("async_item")
             redis_model.list_field.extend(["extend1", "extend2"])
@@ -243,7 +243,7 @@ class TestPipelineDictField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.dict_field.update({"key1": "value1", "key2": "value2"})
 
             # Assert - changes not visible in Redis during pipeline
@@ -263,7 +263,7 @@ class TestPipelineDictField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             await redis_model.dict_field.aupdate(
                 async_key1="async_value1", async_key2="async_value2"
             )
@@ -288,7 +288,7 @@ class TestPipelineDictField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.dict_field["direct_key"] = "direct_value"
 
             # Assert - changes not visible in Redis during pipeline
@@ -308,7 +308,7 @@ class TestPipelineDictField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             await redis_model.dict_field.aset_item("async_key", "async_value")
 
             # Assert - changes not visible in Redis during pipeline
@@ -328,7 +328,7 @@ class TestPipelineDictField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.dict_field.update({"sync_key": "sync_value"})
             await redis_model.dict_field.aset_item("async_key", "async_value")
             redis_model.dict_field["direct_key"] = "direct_value"
@@ -354,7 +354,7 @@ class TestPipelineBoolField:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             redis_model.bool_field = True
 
             # Assert - boolean changes not visible in Redis during pipeline
@@ -378,7 +378,7 @@ class TestPipelineCrossType:
         await model.asave()
 
         # Act
-        async with model.pipeline() as redis_model:
+        async with model.apipeline() as redis_model:
             # String operations
             redis_model.str_field += "_modified"
 

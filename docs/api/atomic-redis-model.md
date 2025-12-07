@@ -257,7 +257,7 @@ async with user.alock("settings_update", save_at_end=True) as locked_user:
 **Description:** Batches all operations into a Redis pipeline for atomic execution.
 
 ```python
-async with user.pipeline() as pipeline_user:
+async with user.apipeline() as pipeline_user:
     user.score += 100
     user.achievements.append("New Achievement")
     # All operations executed atomically
@@ -355,7 +355,7 @@ retrieved_user = await User.aget(user.key)
 await user.aupdate(age=31, tags=["python", "redis"])
 
 # Batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.age += 1
     user.tags.append("asyncio")
     user.settings["theme"] = "dark"

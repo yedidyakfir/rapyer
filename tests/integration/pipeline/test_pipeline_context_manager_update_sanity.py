@@ -18,7 +18,7 @@ async def test_pipeline_context_manager_updates_model_with_new_data_sanity():
     await new_model.asave()
 
     # Assert
-    async with original_model.pipeline() as pipelined_model:
+    async with original_model.apipeline() as pipelined_model:
         assert isinstance(original_model.name, RedisStr)
         assert isinstance(pipelined_model.name, RedisStr)
         assert (

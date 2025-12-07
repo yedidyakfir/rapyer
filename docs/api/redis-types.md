@@ -217,7 +217,7 @@ user = User(tags=["python"])
 await user.asave()
 
 # Use in pipeline for atomic batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.tags.append("redis")
     user.tags.extend(["asyncio", "web"])
     user.tags += ["backend"]  # Uses __iadd__
@@ -282,7 +282,7 @@ last_song = await playlist.songs.apop()      # Returns "Song 4"
 first_song = await playlist.songs.apop(0)    # Returns "Song 1"
 
 # Batch operations in pipeline
-async with playlist.pipeline():
+async with playlist.apipeline():
     playlist.songs.append("New Song")
     playlist.ratings.extend([5, 4, 5])
     playlist.songs.clear()  # Will be executed last, atomically
@@ -329,7 +329,7 @@ user = User(settings={"theme": "light"})
 await user.asave()
 
 # Use in pipeline for atomic batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.settings.update({"theme": "dark", "lang": "en"})
     user.settings["notifications"] = "enabled"
     user.metadata.clear()
@@ -402,7 +402,7 @@ setting = await user.settings.apopitem()         # Returns ("language", "en")
 await user.settings.adel_item("notifications")
 
 # Batch operations in pipeline
-async with user.pipeline():
+async with user.apipeline():
     user.settings.update({"theme": "blue", "font": "large"})
     user.scores["game1"] = 100
     user.scores["game2"] = 85
@@ -533,10 +533,10 @@ class Example(AtomicRedisModel):
 All Redis types support pipeline operations for atomic batch execution:
 
 ```python
-async with model.pipeline():
-    model.tags.append("new-tag")          # Batched
-    model.settings["key"] = "value"       # Batched
-    model.counter += 1                    # Batched
+async with model.apipeline():
+    model.tags.append("new-tag")  # Batched
+    model.settings["key"] = "value"  # Batched
+    model.counter += 1  # Batched
     # All operations execute atomically when context exits
 ```
 

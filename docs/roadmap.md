@@ -66,22 +66,23 @@ admin = await User.find_one(User.role == "admin")
 - [ ] **Pipeline Context**: Maintain pipeline context through conditional blocks
 
 ### Example Usage
+
 ```python
-async with user.pipeline() as p:
+async with user.apipeline() as p:
     # Simple conditional
     (p.age > 17).if_true(
         lambda: p.status.set("adult")
-    ).else(
+    ). else (
         lambda: p.status.set("minor")
     )
-    
+
     # Complex conditional with multiple actions
     (p.score >= 100).if_true([
         lambda: p.level.set("premium"),
         lambda: p.badges.append("high_scorer"),
         lambda: p.notifications.update({"achievement": "unlocked"})
     ])
-    
+
     # Loop operations
     for item in p.inventory:
         (item.expired).if_true(

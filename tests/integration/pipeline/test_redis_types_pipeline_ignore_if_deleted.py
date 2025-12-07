@@ -27,7 +27,7 @@ async def test_redis_types_pipeline_ignore_if_deleted_true__model_not_saved_pipe
     model = AllTypesModel()
 
     # Act
-    async with model.pipeline(ignore_if_deleted=True) as redis_model:
+    async with model.apipeline(ignore_if_deleted=True) as redis_model:
         field = getattr(redis_model, field_name)
         setattr(redis_model, field_name, test_value)
         await field.asave()
@@ -62,7 +62,7 @@ async def test_redis_types_pipeline_ignore_if_deleted_false__model_not_saved_err
 
     # Act & Assert
     with pytest.raises(Exception):
-        async with model.pipeline(ignore_if_deleted=False) as redis_model:
+        async with model.apipeline(ignore_if_deleted=False) as redis_model:
             field = getattr(redis_model, field_name)
             setattr(redis_model, field_name, test_value)
             await field.asave()
@@ -76,7 +76,7 @@ async def test_redis_list_pipeline_ignore_if_deleted_true__model_not_saved_pipel
     model = AllTypesModel()
 
     # Act
-    async with model.pipeline(ignore_if_deleted=True) as redis_model:
+    async with model.apipeline(ignore_if_deleted=True) as redis_model:
         await redis_model.list_field.aappend("item1")
         await redis_model.list_field.aextend(["item2", "item3"])
 
@@ -96,7 +96,7 @@ async def test_redis_list_pipeline_ignore_if_deleted_false__model_not_saved_erro
 
     # Act & Assert
     with pytest.raises(Exception):
-        async with model.pipeline(ignore_if_deleted=False) as redis_model:
+        async with model.apipeline(ignore_if_deleted=False) as redis_model:
             await redis_model.list_field.aappend("item1")
 
 
@@ -108,7 +108,7 @@ async def test_redis_dict_pipeline_ignore_if_deleted_true__model_not_saved_pipel
     model = AllTypesModel()
 
     # Act
-    async with model.pipeline(ignore_if_deleted=True) as redis_model:
+    async with model.apipeline(ignore_if_deleted=True) as redis_model:
         await redis_model.dict_field.aset_item("key1", "value1")
         await redis_model.dict_field.aupdate(key2="value2", key3="value3")
 
@@ -128,7 +128,7 @@ async def test_redis_dict_pipeline_ignore_if_deleted_false__model_not_saved_erro
 
     # Act & Assert
     with pytest.raises(Exception):
-        async with model.pipeline(ignore_if_deleted=False) as redis_model:
+        async with model.apipeline(ignore_if_deleted=False) as redis_model:
             await redis_model.dict_field.aset_item("key1", "value1")
 
 
@@ -140,7 +140,7 @@ async def test_redis_types_pipeline_multiple_operations_ignore_if_deleted_true__
     model = AllTypesModel()
 
     # Act
-    async with model.pipeline(ignore_if_deleted=True) as redis_model:
+    async with model.apipeline(ignore_if_deleted=True) as redis_model:
         redis_model.str_field = "test"
         await redis_model.str_field.asave()
         redis_model.int_field = 100
@@ -172,7 +172,7 @@ async def test_redis_types_pipeline_multiple_operations_ignore_if_deleted_false_
 
     # Act & Assert
     with pytest.raises(Exception):
-        async with model.pipeline(ignore_if_deleted=False) as redis_model:
+        async with model.apipeline(ignore_if_deleted=False) as redis_model:
             redis_model.str_field = "test"
             await redis_model.str_field.asave()
             redis_model.int_field = 100

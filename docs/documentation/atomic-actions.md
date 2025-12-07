@@ -12,20 +12,22 @@ The pipeline is a context manager that batches all Redis operations performed on
 from rapyer import AtomicRedisModel
 from typing import List, Dict
 
+
 class User(AtomicRedisModel):
     name: str
     score: int = 0
     achievements: List[str] = []
     metadata: Dict[str, str] = {}
 
+
 async def update_user_progress(user: User, points: int, achievement: str):
     # All operations inside this context are atomic
-    async with user.pipeline() as pipeline_user:
+    async with user.apipeline() as pipeline_user:
         # Model is automatically loaded to current state
         user.score += points
         user.achievements.append(achievement)
         user.metadata["last_update"] = "2024-01-15"
-        
+
         # All changes are saved atomically when context exits
 ```
 
@@ -59,7 +61,7 @@ class GameUser(AtomicRedisModel):
     stats: Dict[str, int] = {}
 
 async def complete_level(user: GameUser, level_score: int, level_name: str):
-    async with user.pipeline():
+    async with user.apipeline():
         # Update score and level
         user.total_score += level_score
         if user.total_score > user.level * 1000:
@@ -84,7 +86,7 @@ class ShoppingCart(AtomicRedisModel):
     total_price: int = 0
 
 async def add_items_to_cart(cart: ShoppingCart, items_with_prices: List[tuple]):
-    async with cart.pipeline():
+    async with cart.apipeline():
         for item_id, quantity, price_per_item in items_with_prices:
             # Add item to cart
             cart.items.append(item_id)
@@ -107,7 +109,7 @@ class UserProfile(AtomicRedisModel):
     last_login: str = ""
 
 async def update_user_settings(profile: UserProfile, new_email: str, theme: str):
-    async with profile.pipeline():
+    async with profile.apipeline():
         # Update email
         old_email = profile.email
         profile.email = new_email
@@ -132,11 +134,11 @@ Pipeline operations are atomic - if any operation fails, all changes are rolled 
 ```python
 async def safe_user_update(user: User):
     try:
-        async with user.pipeline():
+        async with user.apipeline():
             user.score += 100
             user.achievements.append("New Achievement")
             user.metadata["invalid_key"] = "some_value"  # This might fail
-            
+
     except Exception as e:
         print(f"Update failed: {e}")
         # All changes are automatically rolled back
@@ -150,15 +152,15 @@ async def robust_cart_update(cart: ShoppingCart, items: List[dict]):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            async with cart.pipeline():
+            async with cart.apipeline():
                 for item in items:
                     cart.items.append(item["id"])
                     cart.quantities[item["id"]] = item["quantity"]
                     cart.total_price += item["price"] * item["quantity"]
-            
+
             print("Cart updated successfully")
             break
-            
+
         except Exception as e:
             if attempt < max_retries - 1:
                 print(f"Attempt {attempt + 1} failed, retrying...")
@@ -397,7 +399,7 @@ async def safe_account_operation(account_key: str, amount: int):
 ### Pipeline Example (Good for batch operations)
 
 ```python
-async with user.pipeline():
+async with user.apipeline():
     user.score += 100
     user.achievements.append("New Achievement")
     user.stats["games_played"] = user.stats.aget("games_played", 0) + 1
