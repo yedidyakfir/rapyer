@@ -83,17 +83,17 @@ class User(AtomicRedisModel):
     email: str
 
 user = User(name="John", email="john@example.com")
-await user.save()
+await user.asave()
 
 # String operations work normally
 print(user.name.upper())  # "JOHN"
 print(user.name.startswith("J"))  # True
 
 # Save individual field
-await user.name.save()
+await user.name.asave()
 
 # Load latest value
-await user.name.load()
+await user.name.aload()
 ```
 
 ---
@@ -126,7 +126,7 @@ All standard Python `int` methods are available plus:
 
 ```python
 counter = Counter(count=5)
-await counter.save()
+await counter.asave()
 
 # Atomically increment by 1
 new_value = await counter.count.increase()  # Returns 6
@@ -148,7 +148,7 @@ class BlogPost(AtomicRedisModel):
     likes: int = 0
 
 post = BlogPost(title="My Blog Post")
-await post.save()
+await post.asave()
 
 # Atomic increment operations
 await post.views.increase()        # Increment views by 1
@@ -214,10 +214,10 @@ These methods work immediately in pipeline contexts and batch operations:
 
 ```python
 user = User(tags=["python"])
-await user.save()
+await user.asave()
 
 # Use in pipeline for atomic batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.tags.append("redis")
     user.tags.extend(["asyncio", "web"])
     user.tags += ["backend"]  # Uses __iadd__
@@ -270,7 +270,7 @@ class Playlist(AtomicRedisModel):
     ratings: List[int] = []
 
 playlist = Playlist(name="My Favorites", songs=["Song 1"])
-await playlist.save()
+await playlist.asave()
 
 # Immediate Redis operations
 await playlist.songs.aappend("Song 2")
@@ -282,7 +282,7 @@ last_song = await playlist.songs.apop()      # Returns "Song 4"
 first_song = await playlist.songs.apop(0)    # Returns "Song 1"
 
 # Batch operations in pipeline
-async with playlist.pipeline():
+async with playlist.apipeline():
     playlist.songs.append("New Song")
     playlist.ratings.extend([5, 4, 5])
     playlist.songs.clear()  # Will be executed last, atomically
@@ -326,10 +326,10 @@ class User(AtomicRedisModel):
 
 ```python
 user = User(settings={"theme": "light"})
-await user.save()
+await user.asave()
 
 # Use in pipeline for atomic batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.settings.update({"theme": "dark", "lang": "en"})
     user.settings["notifications"] = "enabled"
     user.metadata.clear()
@@ -388,7 +388,7 @@ class UserProfile(AtomicRedisModel):
     scores: Dict[str, int] = {}
 
 user = UserProfile(username="john", settings={"theme": "light"})
-await user.save()
+await user.asave()
 
 # Immediate Redis operations
 await user.settings.aset_item("language", "en")
@@ -402,7 +402,7 @@ setting = await user.settings.apopitem()         # Returns ("language", "en")
 await user.settings.adel_item("notifications")
 
 # Batch operations in pipeline
-async with user.pipeline():
+async with user.apipeline():
     user.settings.update({"theme": "blue", "font": "large"})
     user.scores["game1"] = 100
     user.scores["game2"] = 85
@@ -448,10 +448,10 @@ with open("image.png", "rb") as f:
     image_data = f.read()
 
 image = Image(name="profile.png", data=image_data)
-await image.save()  # Automatically serializes bytes data
+await image.asave()  # Automatically serializes bytes data
 
 # Load and work with bytes
-await image.load()
+await image.aload()
 print(len(image.data))  # Works like normal bytes
 ```
 
@@ -499,7 +499,7 @@ post = BlogPost(
     title="My Post", 
     created_at=datetime.now(timezone.utc)
 )
-await post.save()
+await post.asave()
 
 # Datetime operations work normally
 age = datetime.now(timezone.utc) - post.created_at
@@ -507,7 +507,7 @@ is_recent = age.days < 7
 
 # Update timestamp
 post.published_at = datetime.now(timezone.utc)
-await post.save()
+await post.asave()
 ```
 
 ---
@@ -533,10 +533,10 @@ class Example(AtomicRedisModel):
 All Redis types support pipeline operations for atomic batch execution:
 
 ```python
-async with model.pipeline():
-    model.tags.append("new-tag")          # Batched
-    model.settings["key"] = "value"       # Batched
-    model.counter += 1                    # Batched
+async with model.apipeline():
+    model.tags.append("new-tag")  # Batched
+    model.settings["key"] = "value"  # Batched
+    model.counter += 1  # Batched
     # All operations execute atomically when context exits
 ```
 
@@ -553,7 +553,7 @@ Redis type operations may raise:
 from rapyer.errors import KeyNotFound
 
 try:
-    await redis_list.load()
+    await redis_list.aload()
 except KeyNotFound:
     print("Field not found in Redis")
 ```

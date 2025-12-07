@@ -12,20 +12,22 @@ The pipeline is a context manager that batches all Redis operations performed on
 from rapyer import AtomicRedisModel
 from typing import List, Dict
 
+
 class User(AtomicRedisModel):
     name: str
     score: int = 0
     achievements: List[str] = []
     metadata: Dict[str, str] = {}
 
+
 async def update_user_progress(user: User, points: int, achievement: str):
     # All operations inside this context are atomic
-    async with user.pipeline() as pipeline_user:
+    async with user.apipeline() as pipeline_user:
         # Model is automatically loaded to current state
         user.score += points
         user.achievements.append(achievement)
         user.metadata["last_update"] = "2024-01-15"
-        
+
         # All changes are saved atomically when context exits
 ```
 
@@ -59,7 +61,7 @@ class GameUser(AtomicRedisModel):
     stats: Dict[str, int] = {}
 
 async def complete_level(user: GameUser, level_score: int, level_name: str):
-    async with user.pipeline():
+    async with user.apipeline():
         # Update score and level
         user.total_score += level_score
         if user.total_score > user.level * 1000:
@@ -84,7 +86,7 @@ class ShoppingCart(AtomicRedisModel):
     total_price: int = 0
 
 async def add_items_to_cart(cart: ShoppingCart, items_with_prices: List[tuple]):
-    async with cart.pipeline():
+    async with cart.apipeline():
         for item_id, quantity, price_per_item in items_with_prices:
             # Add item to cart
             cart.items.append(item_id)
@@ -107,7 +109,7 @@ class UserProfile(AtomicRedisModel):
     last_login: str = ""
 
 async def update_user_settings(profile: UserProfile, new_email: str, theme: str):
-    async with profile.pipeline():
+    async with profile.apipeline():
         # Update email
         old_email = profile.email
         profile.email = new_email
@@ -132,11 +134,11 @@ Pipeline operations are atomic - if any operation fails, all changes are rolled 
 ```python
 async def safe_user_update(user: User):
     try:
-        async with user.pipeline():
+        async with user.apipeline():
             user.score += 100
             user.achievements.append("New Achievement")
             user.metadata["invalid_key"] = "some_value"  # This might fail
-            
+
     except Exception as e:
         print(f"Update failed: {e}")
         # All changes are automatically rolled back
@@ -150,15 +152,15 @@ async def robust_cart_update(cart: ShoppingCart, items: List[dict]):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            async with cart.pipeline():
+            async with cart.apipeline():
                 for item in items:
                     cart.items.append(item["id"])
                     cart.quantities[item["id"]] = item["quantity"]
                     cart.total_price += item["price"] * item["quantity"]
-            
+
             print("Cart updated successfully")
             break
-            
+
         except Exception as e:
             if attempt < max_retries - 1:
                 print(f"Attempt {attempt + 1} failed, retrying...")
@@ -202,24 +204,26 @@ The lock context manager:
 ```python
 from rapyer import AtomicRedisModel
 
+
 class BankAccount(AtomicRedisModel):
     balance: int = 0
     transaction_count: int = 0
     account_holder: str = ""
 
+
 async def transfer_money(from_account_key: str, to_account_key: str, amount: int):
     # Lock both accounts to prevent race conditions
-    async with BankAccount.lock_from_key(from_account_key, "transfer") as from_account:
-        async with BankAccount.lock_from_key(to_account_key, "transfer") as to_account:
+    async with BankAccount.alock_from_key(from_account_key, "transfer") as from_account:
+        async with BankAccount.alock_from_key(to_account_key, "transfer") as to_account:
             # Models are automatically refreshed with latest Redis state
             if from_account.balance >= amount:
                 # Pure Python operations - no async needed
                 from_account.balance -= amount
                 from_account.transaction_count += 1
-                
+
                 to_account.balance += amount
                 to_account.transaction_count += 1
-                
+
                 return f"Transferred ${amount} successfully"
             else:
                 return "Insufficient funds"
@@ -242,24 +246,24 @@ class User(AtomicRedisModel):
 
 # These can run concurrently (different lock actions)
 async def update_profile(user_key: str, new_name: str, new_email: str):
-    async with User.lock_from_key(user_key, "profile_update") as user:
+    async with User.alock_from_key(user_key, "profile_update") as user:
         # Model state refreshed from Redis
         user.name = new_name
         user.email = new_email
 
 async def track_page_view(user_key: str):
-    async with User.lock_from_key(user_key, "view_tracking") as user:
+    async with User.alock_from_key(user_key, "view_tracking") as user:
         # Independent operation with separate lock
         user.profile_views += 1
         
 async def update_login_time(user_key: str):
-    async with User.lock_from_key(user_key, "login_update") as user:
+    async with User.alock_from_key(user_key, "login_update") as user:
         from datetime import datetime
         user.last_login = datetime.now().isoformat()
 
 # This would be serialized with other "profile_update" locks on the SAME user
 async def another_profile_update(user_key: str):
-    async with User.lock_from_key(user_key, "profile_update") as user:
+    async with User.alock_from_key(user_key, "profile_update") as user:
         # Must wait for other "profile_update" operations on this specific user to complete
         user.settings["theme"] = "dark"
 ```
@@ -272,33 +276,34 @@ Each model instance has its own independent locks. Operations on different insta
 # These operations can ALL run concurrently, even with the same operation name
 async def concurrent_example():
     import asyncio
-    
+
     # All of these will run simultaneously - different model instances
     await asyncio.gather(
-        User.lock_from_key("user:123", "profile_update"),  # User 123
-        User.lock_from_key("user:456", "profile_update"),  # User 456  
-        User.lock_from_key("user:789", "profile_update"),  # User 789
+        User.alock_from_key("user:123", "profile_update"),  # User 123
+        User.alock_from_key("user:456", "profile_update"),  # User 456  
+        User.alock_from_key("user:789", "profile_update"),  # User 789
     )
-    
+
     # But these would be serialized - same instance, same operation
     # Only one can run at a time for user:123 with "profile_update"
-    async with User.lock_from_key("user:123", "profile_update") as user:
+    async with User.alock_from_key("user:123", "profile_update") as user:
         user.name = "First Update"
-    
-    async with User.lock_from_key("user:123", "profile_update") as user:
+
+    async with User.alock_from_key("user:123", "profile_update") as user:
         user.name = "Second Update"  # Waits for first to complete
+
 
 # Different operation names on same instance - these CAN run concurrently
 async def concurrent_operations_same_user():
     import asyncio
-    
+
     user_key = "user:123"
-    
+
     # These run simultaneously - same instance, different operations
     await asyncio.gather(
-        update_profile(user_key, "New Name", "new@email.com"),      # "profile_update"
-        track_page_view(user_key),                                   # "view_tracking"  
-        update_login_time(user_key)                                  # "login_update"
+        update_profile(user_key, "New Name", "new@email.com"),  # "profile_update"
+        track_page_view(user_key),  # "view_tracking"  
+        update_login_time(user_key)  # "login_update"
     )
 ```
 
@@ -308,7 +313,7 @@ You can also lock an existing model instance:
 
 ```python
 async def update_user_safely(user: User):
-    async with user.lock("settings_update") as locked_user:
+    async with user.alock("settings_update") as locked_user:
         # locked_user has refreshed state from Redis
         locked_user.settings["last_updated"] = "2024-01-15"
         locked_user.settings["updated_by"] = "admin"
@@ -329,7 +334,7 @@ class GameCharacter(AtomicRedisModel):
     skills: Dict[str, int] = {}
 
 async def level_up_character(character_key: str, exp_gained: int):
-    async with GameCharacter.lock_from_key(character_key, "level_up") as character:
+    async with GameCharacter.alock_from_key(character_key, "level_up") as character:
         # Character state is refreshed from Redis
         character.experience += exp_gained
         
@@ -363,21 +368,21 @@ If an error occurs within the lock context, changes are not saved:
 ```python
 async def safe_account_operation(account_key: str, amount: int):
     try:
-        async with BankAccount.lock_from_key(account_key, "withdraw") as account:
+        async with BankAccount.alock_from_key(account_key, "withdraw") as account:
             if account.balance < amount:
                 raise ValueError("Insufficient funds")
-                
+
             if amount > 10000:
                 raise ValueError("Daily limit exceeded")
-                
+
             account.balance -= amount
             account.transaction_count += 1
-            
+
     except ValueError as e:
         print(f"Operation failed: {e}")
         # No changes saved to Redis - account state unchanged
         return False
-    
+
     return True
 ```
 
@@ -392,16 +397,18 @@ async def safe_account_operation(account_key: str, amount: int):
 | **Use when** | Multiple related changes | Need current values for decisions |
 
 ### Pipeline Example (Good for batch operations)
+
 ```python
-async with user.pipeline():
+async with user.apipeline():
     user.score += 100
     user.achievements.append("New Achievement")
-    user.stats["games_played"] = user.stats.get("games_played", 0) + 1
+    user.stats["games_played"] = user.stats.aget("games_played", 0) + 1
 ```
 
 ### Lock Example (Good for complex logic)
+
 ```python
-async with user.lock("score_update") as locked_user:
+async with user.alock("score_update") as locked_user:
     if locked_user.score >= 1000:
         locked_user.level += 1
         locked_user.achievements.append(f"Reached Level {locked_user.level}")

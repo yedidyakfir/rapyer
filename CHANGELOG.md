@@ -4,7 +4,20 @@
 
 ### ✨ Added
 - **Bulk Insert**: We added the ainsert classmethod to AtomicRedisModel to insert multiple models in a single operation. 
-- **Bulk delete**: We added the adelete_many classmethod to AtomicRedisModel to delete many objects in a single operation. 
+- **Bulk delete**: We added the adelete_many classmethod to AtomicRedisModel to delete many objects in a single operation.
+
+### ⚠️ Deprecated
+- **Function Name Migration to Async**: The following functions have been renamed to follow async naming conventions. We moved to a strict convention to support non async models in a future version. Old names are deprecated and will be removed in a future version:
+  - `save()` → `asave()` - Save model instance to Redis
+  - `load()` → `aload()` - Load model data from Redis  
+  - `delete()` → `adelete()` - Delete model instance from Redis
+  - `get()` → `aget()` - Retrieve model instance by key (class method)
+  - `duplicate()` → `aduplicate()` - Create a duplicate of the model
+  - `duplicate_many()` → `aduplicate_many()` - Create multiple duplicates
+  - `delete_by_key()` → `adelete_by_key()` - Delete model by key (class method)
+  - `lock()` → `alock()` - Create lock context manager for model
+  - `lock_from_key()` → `alock_from_key()` - Create lock context manager from key (class method)
+  - `pipeline()` → `apipeline()` - Create pipeline context manager for batched operations 
 
 ## [1.1.0]
 
@@ -82,7 +95,7 @@ This release introduces **native BaseModel compatibility**, making Redis types w
 
 - **Native Redis Type Integration**: Redis types now work directly with BaseModel - no need to initialize with `""`, `0`, etc.
 - **Direct Field Assignment**: Use simple assignment like `name: RedisStr = ""` instead of `name: RedisStr = ""`
-- **Enhanced Nested Operations**: Support for saving inner fields directly with `model.lst[1].save()`
+- **Enhanced Nested Operations**: Support for saving inner fields directly with `model.lst[1].asave()`
 - **Simplified Type Declarations**: All Redis types (RedisStr, RedisInt, RedisList, RedisDict, RedisBytes) now support native Python value assignment
 
 ### 🔄 Changed

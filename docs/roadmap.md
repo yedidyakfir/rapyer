@@ -66,22 +66,23 @@ admin = await User.find_one(User.role == "admin")
 - [ ] **Pipeline Context**: Maintain pipeline context through conditional blocks
 
 ### Example Usage
+
 ```python
-async with user.pipeline() as p:
+async with user.apipeline() as p:
     # Simple conditional
     (p.age > 17).if_true(
         lambda: p.status.set("adult")
-    ).else(
+    ). else (
         lambda: p.status.set("minor")
     )
-    
+
     # Complex conditional with multiple actions
     (p.score >= 100).if_true([
         lambda: p.level.set("premium"),
         lambda: p.badges.append("high_scorer"),
         lambda: p.notifications.update({"achievement": "unlocked"})
     ])
-    
+
     # Loop operations
     for item in p.inventory:
         (item.expired).if_true(
@@ -102,14 +103,15 @@ async with user.pipeline() as p:
 - [ ] **Performance Optimization**: Efficient Redis operations for nested field access
 
 ### Example Usage
+
 ```python
 # Extract specific nested field
-value = await model.field_lst[0].field_int.get(redis_id)
+value = await model.field_lst[0].field_int.aget(redis_id)
 
 # Multiple nested field extractions
 values = await model.extract_fields([
     "field_lst[0].field_int",
-    "field_lst[1].field_str", 
+    "field_lst[1].field_str",
     "nested_dict.sub_field"
 ], redis_id)
 ```
@@ -129,19 +131,21 @@ values = await model.extract_fields([
 - [ ] **Configuration Options**: Allow setting TTL refresh interval and grace periods
 
 ### Example Usage
+
 ```python
 class User(AtomicRedisModel):
     name: str
     email: str
-    
+
     class Config:
         ttl_postpone_on_access = True  # Refresh TTL on any access
-        ttl_postpone_on_write = True   # Refresh TTL on writes only
+        ttl_postpone_on_write = True  # Refresh TTL on writes only
+
 
 # TTL gets postponed automatically
 user = await User.get("user:123")  # TTL refreshed to another 3600 seconds
-user.name = "Updated Name"          # TTL refreshed again
-await user.save()
+user.name = "Updated Name"  # TTL refreshed again
+await user.asave()
 ```
 
 **Benefits**: Prevents premature deletion of active models, better cache behavior for frequently accessed data, configurable per-model basis
@@ -160,14 +164,16 @@ await user.save()
 - [ ] **Serialization Strategy**: Pluggable serialization for complex priority/value types
 
 ### Example Usage
+
 ```python
 class TaskQueue(AtomicRedisModel):
     pending_tasks: RedisPriorityQueue[Task, int]  # Task objects with int priority
     request_counter: RedisCounter
     user_filter: RedisBloomFilter[str]  # String membership testing
-    
+
     class Config:
         priority_queue_order = "min"  # or "max" for max-heap behavior
+
 
 # Priority queue operations
 await queue.pending_tasks.push(task, priority=5)
@@ -175,7 +181,7 @@ high_priority_task = await queue.pending_tasks.pop()  # Returns highest priority
 
 # Counter operations  
 await queue.request_counter.increment(5)
-current_count = await queue.request_counter.get()
+current_count = await queue.request_counter.aget()
 
 # Bloom filter operations
 await queue.user_filter.add("user123")

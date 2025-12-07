@@ -11,16 +11,16 @@ from tests.models.simple_types import StrModel
 async def test_redis_str_set_functionality_sanity(test_values):
     # Arrange
     model = StrModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.name = test_values
-    await model.name.save()
+    await model.name.asave()
 
     # Assert
     fresh_model = StrModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.load()
+    loaded_value = await fresh_model.name.aload()
     assert loaded_value == test_values
 
 
@@ -32,14 +32,14 @@ async def test_redis_str_set_functionality_sanity(test_values):
 async def test_redis_str_load_functionality_sanity(test_values):
     # Arrange
     model = StrModel()
-    await model.save()
+    await model.asave()
     model.name = test_values
-    await model.name.save()
+    await model.name.asave()
 
     # Act
     fresh_model = StrModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.load()
+    loaded_value = await fresh_model.name.aload()
 
     # Assert
     assert loaded_value == test_values
@@ -51,7 +51,7 @@ async def test_redis_str_load_with_none_value_edge_case():
     model = StrModel()
 
     # Act
-    loaded_value = await model.name.load()
+    loaded_value = await model.name.aload()
 
     # Assert
     assert loaded_value is None
@@ -100,14 +100,14 @@ async def test_redis_str_clone_functionality_sanity():
 async def test_redis_str_persistence_across_instances_edge_case():
     # Arrange
     model1 = StrModel(name="original")
-    await model1.save()
+    await model1.asave()
     model1.name = "modified"
-    await model1.name.save()
+    await model1.name.asave()
 
     # Act
     model2 = StrModel()
     model2.pk = model1.pk
-    loaded_value = await model2.name.load()
+    loaded_value = await model2.name.aload()
 
     # Assert
     assert loaded_value == "modified"
@@ -152,15 +152,15 @@ async def test_redis_str_concatenation_functionality_sanity():
 async def test_redis_str_empty_string_functionality_edge_case():
     # Arrange
     model = StrModel(name="")
-    await model.save()
+    await model.asave()
 
     # Act
     model.name = ""
-    await model.name.save()
+    await model.name.asave()
 
     # Assert
     fresh_model = StrModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.load()
+    loaded_value = await fresh_model.name.aload()
     assert loaded_value == ""
     assert len(model.name) == 0

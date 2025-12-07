@@ -4,4 +4,10 @@ try:
 except ImportError:
     from typing_extensions import Self, Unpack
 
-__all__ = ["Self", "Unpack"]
+# For python 3.13 support
+try:
+    from typing import deprecated
+except ImportError:
+    from typing_extensions import deprecated
+
+__all__ = ["Self", "Unpack", "deprecated"]

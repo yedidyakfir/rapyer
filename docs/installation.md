@@ -1,53 +1,63 @@
 # Installation
 
-## Requirements
+## 📋 Requirements
 
-- **Python 3.10+** - Rapyer requires modern Python features
-- **Redis server with JSON module** - For data storage
-- **Pydantic v2** - For type validation (installed automatically)
+Before installing Rapyer, make sure you have:
 
-## Install Rapyer
+!!! warning "Prerequisites"
+    - **Python 3.10+** - Rapyer requires modern Python features
+    - **Redis server with JSON module** - For data storage
+    - **Pydantic v2** - For type validation (installed automatically)
 
-```bash
+## 📦 Install Rapyer
+
+```bash title="Install from PyPI"
 pip install rapyer
 ```
 
-## Redis Setup
+## 🔧 Redis Setup
 
-Rapyer requires Redis with the JSON module enabled. Here are several options:
+Rapyer requires Redis with the JSON module enabled. Choose from these options:
 
-### Option 1: Redis Stack (Recommended)
-Redis Stack includes the JSON module by default:
+=== "Redis Stack (Recommended)"
+    Redis Stack includes the JSON module by default:
 
-#### Using Docker
-```bash
-docker run -d --name redis-stack -p 6379:6379 redis/redis-stack-server:latest
-```
+    **Using Docker**
+    ```bash
+    docker run -d --name redis-stack -p 6379:6379 redis/redis-stack-server:latest
+    ```
 
-#### Ubuntu/Debian
-```bash
-sudo apt install redis-stack-server
-```
+    **Ubuntu/Debian**
+    ```bash
+    sudo apt install redis-stack-server
+    ```
 
-#### macOS
-```bash
-brew install redis-stack
-```
+    **macOS**
+    ```bash
+    brew install redis-stack
+    ```
 
-### Option 2: Redis with RedisJSON Module
-If you have an existing Redis installation, install the RedisJSON module according to the RedisJSON documentation.
+=== "Redis with RedisJSON"
+    If you have an existing Redis installation, install the RedisJSON module according to the [RedisJSON documentation](https://redis.io/docs/stack/json/).
 
-### Option 3: Cloud Redis
-Use managed Redis services that support modules:
-- Redis Cloud
-- AWS ElastiCache (with RedisJSON)
-- Google Cloud Memorystore
+    ```bash
+    # Example for Ubuntu/Debian
+    sudo apt install redis-server redis-modules
+    ```
 
-## Basic Configuration
+=== "Cloud Redis"
+    Use managed Redis services that support modules:
+    
+    - **Redis Cloud** - Enterprise Redis with JSON support
+    - **AWS ElastiCache** - With RedisJSON module
+    - **Google Cloud Memorystore** - Managed Redis service
 
-> **⚠️ IMPORTANT**: When creating your Redis client, always use `decode_responses=True` to prevent typing errors and ensure proper string handling.
+## ⚙️ Basic Configuration
 
-```python
+!!! danger "Important"
+    When creating your Redis client, **always use `decode_responses=True`** to prevent typing errors and ensure proper string handling.
+
+```python title="Basic Configuration"
 import redis.asyncio as redis
 from rapyer import AtomicRedisModel
 
@@ -56,7 +66,7 @@ redis_client = redis.Redis(
     host='localhost',
     port=6379,
     db=0,
-    decode_responses=True  # IMPORTANT: Set to True to prevent typing errors
+    decode_responses=True  # (1)!
 )
 
 # Define your model
@@ -67,6 +77,8 @@ class User(AtomicRedisModel):
 # Set the Redis client for your model after class declaration
 User.Meta.redis = redis_client
 ```
+
+1. **Critical**: Always set to `True` to prevent typing errors
 
 ## Global Configuration with init_rapyer
 
@@ -120,30 +132,34 @@ redis_client = redis.Redis(
     decode_responses=True
 )
 
+
 class TestModel(AtomicRedisModel):
     message: str
 
+
 # Set Redis client after class declaration
 TestModel.Meta.redis = redis_client
+
 
 async def test_setup():
     try:
         # Test basic operations
         model = TestModel(message="Hello, Rapyer!")
-        await model.save()
-        
+        await model.asave()
+
         # Retrieve the model
-        retrieved = await TestModel.get(model.key)
+        retrieved = await TestModel.aget(model.key)
         print(f"Success! Retrieved: {retrieved.message}")
-        
+
         # Cleanup
-        await model.delete()
+        await model.adelete()
         print("Setup verification complete!")
-        
+
     except Exception as e:
         print(f"Setup error: {e}")
     finally:
         await redis_client.aclose()
+
 
 if __name__ == "__main__":
     asyncio.run(test_setup())

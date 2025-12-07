@@ -24,17 +24,17 @@ async def real_redis_client(redis_client):
 async def test_lock_context_manager_updates_model_with_new_data_sanity():
     # Arrange
     original_model = LockTestModel(name="test", value=42, tags=["tag1"])
-    await original_model.save()
+    await original_model.asave()
 
     # Act
-    new_model = await LockTestModel.get(original_model.key)
+    new_model = await LockTestModel.aget(original_model.key)
     new_model.name = "updated_name"
     new_model.value = 100
     new_model.tags.append("tag2")
-    await new_model.save()
+    await new_model.asave()
 
     # Assert
-    async with original_model.lock() as locked_model:
+    async with original_model.alock() as locked_model:
         assert locked_model.name == "updated_name" == original_model.name
         assert locked_model.value == 100 == original_model.value
         assert locked_model.tags == ["tag1", "tag2"] == original_model.tags

@@ -26,7 +26,7 @@ async def test_ainert_multiple_models_single_transaction_sanity(transaction_redi
 
     # Assert
     for model in models:
-        retrieved_model = await rapyer.get(model.key)
+        retrieved_model = await rapyer.aget(model.key)
         assert retrieved_model == model
 
     info = await transaction_redis.info("commandstats")

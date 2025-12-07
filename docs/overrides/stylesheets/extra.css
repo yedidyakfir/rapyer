@@ -1,0 +1,111 @@
+/* Redis-inspired color scheme */
+:root {
+  --md-primary-fg-color: #DC382D; /* Redis red */
+  --md-primary-fg-color--light: #FF6B5F;
+  --md-primary-fg-color--dark: #B8312A;
+  --md-accent-fg-color: #FF6B5F; /* Light Redis red for accents */
+  --md-accent-fg-color--transparent: rgba(220, 56, 45, 0.1);
+}
+
+/* Dark theme overrides */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #DC382D;
+  --md-primary-fg-color--light: #FF6B5F;
+  --md-primary-fg-color--dark: #B8312A;
+  --md-accent-fg-color: #FF6B5F;
+  --md-accent-fg-color--transparent: rgba(255, 107, 95, 0.1);
+  
+  /* Custom dark background colors */
+  --md-default-bg-color: #1a1a1a;
+  --md-default-fg-color: #ffffff;
+  --md-default-fg-color--light: #cccccc;
+  --md-default-fg-color--lighter: #999999;
+  --md-default-fg-color--lightest: #666666;
+  
+  /* Code blocks styling */
+  --md-code-bg-color: #2d2d2d;
+  --md-code-fg-color: #f8f8f2;
+}
+
+/* Header and navigation styling */
+.md-header {
+  background-color: var(--md-primary-fg-color);
+  box-shadow: 0 0 0.2rem rgba(220, 56, 45, 0.3);
+}
+
+/* Search styling */
+.md-search__input {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-search__input:focus {
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 0 0 0.1rem rgba(255, 107, 95, 0.3);
+}
+
+/* Code highlighting with Redis theme */
+.highlight .hll { background-color: #49483e }
+.highlight .c { color: #75715e }
+.highlight .k { color: #DC382D; font-weight: bold }
+.highlight .kn { color: #DC382D }
+.highlight .s { color: #FF6B5F }
+.highlight .s2 { color: #FF6B5F }
+
+/* Custom admonitions */
+.md-typeset .admonition.info {
+  border-color: var(--md-accent-fg-color);
+}
+
+.md-typeset .admonition.info > .admonition-title {
+  background-color: rgba(255, 107, 95, 0.1);
+  border-color: var(--md-accent-fg-color);
+}
+
+/* Footer styling */
+.md-footer {
+  background-color: #2d2d2d;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Buttons and links */
+.md-button {
+  background-color: var(--md-primary-fg-color);
+  border-color: var(--md-primary-fg-color);
+  color: white;
+}
+
+.md-button:hover {
+  background-color: var(--md-primary-fg-color--light);
+  border-color: var(--md-primary-fg-color--light);
+}
+
+/* Table styling for dark theme */
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: rgba(220, 56, 45, 0.2);
+  color: white;
+}
+
+/* Sidebar navigation active item */
+.md-nav__item .md-nav__link--active {
+  color: var(--md-accent-fg-color);
+  font-weight: 700;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-primary-fg-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-primary-fg-color--light);
+}
