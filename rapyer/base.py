@@ -361,7 +361,9 @@ class AtomicRedisModel(BaseModel):
 
     @classmethod
     @contextlib.asynccontextmanager
-    @deprecated("lock_from_key function is deprecated, use alock_from_key instead")
+    @deprecated(
+        "lock_from_key function is deprecated and will be removed in rapyer 1.2.0, use alock_from_key instead"
+    )
     async def lock_from_key(
         cls, key: str, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
@@ -380,7 +382,17 @@ class AtomicRedisModel(BaseModel):
                 await redis_model.asave()
 
     @contextlib.asynccontextmanager
+    @deprecated(
+        "lock function is deprecated and will be removed in rapyer 1.2.0, use alock instead"
+    )
     async def lock(
+        self, action: str = "default", save_at_end: bool = False
+    ) -> AsyncGenerator[Self, None]:
+        async with self.alock_from_key(self.key, action, save_at_end) as redis_model:
+            yield redis_model
+
+    @contextlib.asynccontextmanager
+    async def alock(
         self, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with self.alock_from_key(self.key, action, save_at_end) as redis_model:

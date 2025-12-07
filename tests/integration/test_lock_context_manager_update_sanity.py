@@ -34,7 +34,7 @@ async def test_lock_context_manager_updates_model_with_new_data_sanity():
     await new_model.asave()
 
     # Assert
-    async with original_model.lock() as locked_model:
+    async with original_model.alock() as locked_model:
         assert locked_model.name == "updated_name" == original_model.name
         assert locked_model.value == 100 == original_model.value
         assert locked_model.tags == ["tag1", "tag2"] == original_model.tags

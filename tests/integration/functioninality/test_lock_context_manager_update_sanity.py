@@ -17,7 +17,7 @@ async def test_lock_context_manager_updates_model_with_new_data_sanity():
     await new_model.asave()
 
     # Assert
-    async with original_model.lock() as locked_model:
+    async with original_model.alock() as locked_model:
         validated_lock_model = LockTestModel.model_validate(locked_model.model_dump())
         validated_original_model = LockTestModel.model_validate(
             original_model.model_dump()

@@ -40,7 +40,7 @@ async def test_redis_model_lock_with_concurrent_access_functionality():
         # Get a fresh model instance
         fresh_model = await RichModel.aget(model_key)
 
-        async with fresh_model.lock(save_at_end=True) as locked_model:
+        async with fresh_model.alock(save_at_end=True) as locked_model:
             current_time = datetime.now().isoformat()
             enter_mock(current_time, locked_model.model_dump())
 

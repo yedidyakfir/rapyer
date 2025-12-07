@@ -245,7 +245,7 @@ async with User.alock_from_key("User:123", "profile_update", save_at_end=True) a
 **Description:** Acquires an exclusive lock on the current model instance.
 
 ```python
-async with user.lock("settings_update", save_at_end=True) as locked_user:
+async with user.alock("settings_update", save_at_end=True) as locked_user:
     locked_user.settings = {"theme": "dark"}
 ```
 
@@ -361,7 +361,7 @@ async with user.pipeline():
     user.settings["theme"] = "dark"
 
 # Lock for exclusive access
-async with user.lock("profile_update", save_at_end=True):
+async with user.alock("profile_update", save_at_end=True):
     if user.age >= 25:
         user.tags.append("adult")
         user.settings["account_type"] = "premium"

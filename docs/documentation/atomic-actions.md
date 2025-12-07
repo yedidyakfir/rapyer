@@ -311,7 +311,7 @@ You can also lock an existing model instance:
 
 ```python
 async def update_user_safely(user: User):
-    async with user.lock("settings_update") as locked_user:
+    async with user.alock("settings_update") as locked_user:
         # locked_user has refreshed state from Redis
         locked_user.settings["last_updated"] = "2024-01-15"
         locked_user.settings["updated_by"] = "admin"
@@ -404,8 +404,9 @@ async with user.pipeline():
 ```
 
 ### Lock Example (Good for complex logic)
+
 ```python
-async with user.lock("score_update") as locked_user:
+async with user.alock("score_update") as locked_user:
     if locked_user.score >= 1000:
         locked_user.level += 1
         locked_user.achievements.append(f"Reached Level {locked_user.level}")

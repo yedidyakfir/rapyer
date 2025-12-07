@@ -75,7 +75,7 @@ async def main():
     print(f"User: {loaded_user.name}, Tags: {loaded_user.tags}")
 
     # Atomic operations with locks for complex updates
-    async with user.lock("update_profile") as locked_user:
+    async with user.alock("update_profile") as locked_user:
         locked_user.age += 1
         await locked_user.tags.aappend("experienced")
         # Changes saved atomically when context exits
@@ -101,7 +101,7 @@ await user.score.set(100)                   # Set value
 For complex multi-field updates:
 
 ```python
-async with user.lock("transaction") as locked_user:
+async with user.alock("transaction") as locked_user:
     locked_user.balance -= 50
     locked_user.transaction_count += 1
     # All changes saved atomically
@@ -152,7 +152,7 @@ await user.scores.aappend(95)               # Native Redis operation
 | Feature | Rapyer                                          | Redis OM | pydantic-redis | orredis |
 |---------|-------------------------------------------------|----------|----------------|---------|
 | **🚀 Atomic Operations** | ✅ Built-in for all operations                   | ❌ Manual transactions only | ❌ Manual transactions only | ❌ Manual transactions only |
-| **🔒 Lock Context Manager** | ✅ Automatic with `async with model.lock()`      | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
+| **🔒 Lock Context Manager** | ✅ Automatic with `async with model.alock()`     | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
 | **⚡ Pipeline Operations** | ✅ True atomic batching with `model.pipeline()`  | ⚠️ Basic pipeline support | ❌ No pipeline support | ❌ No pipeline support |
 | **🌐 Universal Type Support** | ✅ Native + automatic serialization for any type | ⚠️ HashModel vs JsonModel limitations | ⚠️ Limited complex types | ⚠️ Limited complex types |
 | **🔄 Race Condition Safe** | ✅ Built-in prevention with Lua scripts          | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
@@ -182,9 +182,10 @@ async with redis.pipeline() as pipe:        # Manual setup
 ```
 
 #### **Intelligent Lock Management**
+
 ```python
 # Rapyer - Automatic lock context
-async with user.lock("profile_update") as locked_user:
+async with user.alock("profile_update") as locked_user:
     locked_user.balance -= 50
     locked_user.transaction_count += 1
     # All changes saved atomically on exit
@@ -192,7 +193,7 @@ async with user.lock("profile_update") as locked_user:
 # Others - Manual lock implementation
 lock_key = f"lock:{user.key}"
 while not await redis.set(lock_key, token, nx=True):  # Manual retry logic
-    await asyncio.sleep(0.1)                           # Race conditions possible
+    await asyncio.sleep(0.1)  # Race conditions possible
 # ... manual cleanup required
 ```
 
