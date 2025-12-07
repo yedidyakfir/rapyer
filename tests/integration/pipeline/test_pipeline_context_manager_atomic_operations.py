@@ -420,7 +420,7 @@ async def test_pipeline_delete__check_atomicity_sanity(real_redis_client):
 
     # Act
     async with model1.pipeline() as redis_model:
-        await redis_model.delete()
+        await redis_model.adelete()
 
         # Check if models still exist during a pipeline (atomicity test)
         key1_exists = await real_redis_client.exists(model1.key)
@@ -445,7 +445,7 @@ async def test_pipeline_try_delete__check_atomicity_sanity(real_redis_client):
 
     # Act
     async with model1.pipeline() as redis_model:
-        await ComprehensiveTestModel.delete_by_key(model1.key)
+        await ComprehensiveTestModel.adelete_by_key(model1.key)
 
         # Check if models still exist during pipeline (atomicity test)
         key1_exists = await real_redis_client.exists(model1.key)
@@ -472,8 +472,8 @@ async def test_pipeline_multiple_deletes__check_atomicity_sanity(real_redis_clie
 
     # Act
     async with model1.pipeline() as redis_model:
-        await redis_model.delete()
-        await ComprehensiveTestModel.delete_by_key(model2.key)
+        await redis_model.adelete()
+        await ComprehensiveTestModel.adelete_by_key(model2.key)
 
         # Check if all models still exist during pipeline (atomicity test)
         key1_exists = await real_redis_client.exists(model1.key)

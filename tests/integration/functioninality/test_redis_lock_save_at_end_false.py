@@ -10,7 +10,7 @@ async def test_lock_model_changes_not_saved_with_save_at_end_false_sanity():
     await original_model.asave()
 
     # Act
-    async with LockTestModel.lock_from_key(
+    async with LockTestModel.alock_from_key(
         original_model.key, save_at_end=False
     ) as locked_model:
         locked_model.name = "modified"
@@ -33,7 +33,7 @@ async def test_lock_redis_operations_still_work_with_save_at_end_false_sanity():
     await original_model.asave()
 
     # Act
-    async with LockTestModel.lock_from_key(
+    async with LockTestModel.alock_from_key(
         original_model.key, save_at_end=False
     ) as locked_model:
         await locked_model.tags.aappend("tag2")
@@ -57,8 +57,8 @@ async def test_lock_model_deletion_persists_with_save_at_end_false_sanity():
     assert retrieved_model.name == "to_delete"
 
     # Act
-    async with LockTestModel.lock_from_key(model_key) as locked_model:
-        await locked_model.delete()
+    async with LockTestModel.alock_from_key(model_key) as locked_model:
+        await locked_model.adelete()
 
     # Assert
     with pytest.raises(Exception):
@@ -72,7 +72,7 @@ async def test_lock_model_field_modifications_vs_redis_operations_with_save_at_e
     await model.asave()
 
     # Act
-    async with LockTestModel.lock_from_key(
+    async with LockTestModel.alock_from_key(
         model.key, save_at_end=False
     ) as locked_model:
         # Field modification (should not persist)

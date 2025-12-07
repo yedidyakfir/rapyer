@@ -140,7 +140,7 @@ async def test_setup():
         print(f"Success! Retrieved: {retrieved.message}")
 
         # Cleanup
-        await model.delete()
+        await model.adelete()
         print("Setup verification complete!")
 
     except Exception as e:

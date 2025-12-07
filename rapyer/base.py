@@ -333,14 +333,27 @@ class AtomicRedisModel(BaseModel):
             await pipe.execute()
 
     @classmethod
+    @deprecated(
+        "function delete is deprecated and will be removed in rapyer 1.2.0, use adelete instead"
+    )
     async def delete_by_key(cls, key: str) -> bool:
+        return await cls.adelete_by_key(key)
+
+    @classmethod
+    async def adelete_by_key(cls, key: str) -> bool:
         client = _context_var.get() or cls.Meta.redis
         return await client.delete(key) == 1
 
+    @deprecated(
+        "function delete is deprecated and will be removed in rapyer 1.2.0, use adelete instead"
+    )
     async def delete(self):
+        return await self.adelete()
+
+    async def adelete(self):
         if self.is_inner_model():
             raise RuntimeError("Can only delete from inner model")
-        return await self.delete_by_key(self.key)
+        return await self.adelete_by_key(self.key)
 
     @classmethod
     async def adelete_many(cls, *args: Unpack[Self]):
@@ -348,7 +361,16 @@ class AtomicRedisModel(BaseModel):
 
     @classmethod
     @contextlib.asynccontextmanager
+    @deprecated("lock_from_key function is deprecated, use alock_from_key instead")
     async def lock_from_key(
+        cls, key: str, action: str = "default", save_at_end: bool = False
+    ) -> AsyncGenerator[Self, None]:
+        async with cls.alock_from_key(key, action, save_at_end) as redis_model:
+            yield redis_model
+
+    @classmethod
+    @contextlib.asynccontextmanager
+    async def alock_from_key(
         cls, key: str, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
@@ -361,7 +383,7 @@ class AtomicRedisModel(BaseModel):
     async def lock(
         self, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
-        async with self.lock_from_key(self.key, action, save_at_end) as redis_model:
+        async with self.alock_from_key(self.key, action, save_at_end) as redis_model:
             unset_fields = {
                 k: redis_model.__dict__[k] for k in redis_model.model_fields_set
             }

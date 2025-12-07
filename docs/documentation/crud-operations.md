@@ -289,7 +289,7 @@ async def main():
     user_key = user.key
 
     # Delete from Redis
-    await user.delete()
+    await user.adelete()
     print(f"Deleted user with key: {user_key}")
 
     # Verify deletion
@@ -438,7 +438,7 @@ async def crud_example():
     print(f"After update: Age={updated_user.age}, Tags={updated_user.tags}")
 
     # DELETE
-    await updated_user.delete()
+    await updated_user.adelete()
     print("Deleted user")
 
     # Verify deletion

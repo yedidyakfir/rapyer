@@ -97,7 +97,7 @@ async def test_base_redis_model__delete__check_redis_delete_sanity(real_redis_cl
     loaded_user = await UserModel.aget(user.key)
 
     # Act
-    await loaded_user.delete()
+    await loaded_user.adelete()
 
     # Assert
     key_exists = await real_redis_client.exists(user.key)
@@ -113,7 +113,7 @@ async def test_base_redis_model__try_delete_existing_key__check_returns_true_san
     await user.asave()
 
     # Act
-    result = await UserModel.delete_by_key(user.key)
+    result = await UserModel.adelete_by_key(user.key)
 
     # Assert
     assert result is True
@@ -127,7 +127,7 @@ async def test_base_redis_model__try_delete_nonexistent_key__check_returns_false
     mock_key = "UserModel:nonexistent_key"
 
     # Act
-    result = await UserModel.delete_by_key(mock_key)
+    result = await UserModel.adelete_by_key(mock_key)
 
     # Assert
     assert result is False

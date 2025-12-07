@@ -65,7 +65,7 @@ await user.aload()  # Refreshes user with latest Redis data
 **Description:** Deletes this model instance from Redis. Can only be called on top-level models (not nested ones).
 
 ```python
-success = await user.delete()
+success = await user.adelete()
 ```
 
 #### `duplicate()`
@@ -140,7 +140,7 @@ user = await User.aget("User:abc-123")
 **Description:** Deletes a model from Redis by its key without needing to load it first.
 
 ```python
-success = await User.delete_by_key("User:abc-123")
+success = await User.adelete_by_key("User:abc-123")
 ```
 
 #### `afind()`
@@ -231,7 +231,7 @@ class User(AtomicRedisModel):
 **Description:** Acquires an exclusive lock on the model and yields the loaded instance.
 
 ```python
-async with User.lock_from_key("User:123", "profile_update", save_at_end=True) as user:
+async with User.alock_from_key("User:123", "profile_update", save_at_end=True) as user:
     user.name = "Updated Name"
     # Automatically saved when context exits
 ```

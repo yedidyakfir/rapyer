@@ -21,7 +21,7 @@ async def test_delete_integration__save_verify_exists_delete_verify_removed_sani
     assert model_data[0]["tags"] == ["test_tag_1", "test_tag_2"]
 
     # Act
-    result = await user.delete()
+    result = await user.adelete()
 
     # Assert
     assert result is True
@@ -36,7 +36,7 @@ async def test_delete_integration__delete_unsaved_model_returns_false_edge_case(
     # Note: not saving the model
 
     # Act
-    result = await user.delete()
+    result = await user.adelete()
 
     # Assert
     assert result is False
@@ -48,7 +48,7 @@ async def test_delete_integration__delete_nonexistent_model_returns_false_edge_c
     nonexistent_key = "UserModel:nonexistent_test_key_12345"
 
     # Act
-    result = await UserModel.delete_by_key(nonexistent_key)
+    result = await UserModel.adelete_by_key(nonexistent_key)
 
     # Assert
     assert result is False
@@ -66,14 +66,14 @@ async def test_delete_integration__try_delete_same_key_twice_first_true_second_f
     assert await real_redis_client.exists(user.key) == 1
 
     # Act - First deletion
-    first_result = await UserModel.delete_by_key(user.key)
+    first_result = await UserModel.adelete_by_key(user.key)
 
     # Assert first deletion
     assert first_result is True
     assert await real_redis_client.exists(user.key) == 0
 
     # Act - Second deletion of the same key
-    second_result = await UserModel.delete_by_key(user.key)
+    second_result = await UserModel.adelete_by_key(user.key)
 
     # Assert second deletion
     assert second_result is False
@@ -93,4 +93,4 @@ async def test_delete_integration__call_delete_on_inner_model_raises_runtime_err
 
     # Act & Assert
     with pytest.raises(RuntimeError, match="Can only delete from inner model"):
-        res = await inner_redis_model.delete()
+        res = await inner_redis_model.adelete()

@@ -152,7 +152,7 @@ async def test_generic_model__delete_operation__check_key_removed(real_redis_cli
     await model.asave()
 
     # Act
-    await model.delete()
+    await model.adelete()
 
     # Assert
     key_exists = await real_redis_client.exists(model.key)
@@ -166,7 +166,7 @@ async def test_generic_model__try_delete_existing__check_returns_true():
     await model.asave()
 
     # Act
-    result = await GenericListModel.delete_by_key(model.key)
+    result = await GenericListModel.adelete_by_key(model.key)
 
     # Assert
     assert result is True
@@ -178,7 +178,7 @@ async def test_generic_model__try_delete_nonexistent__check_returns_false():
     mock_key = "GenericListModel:nonexistent_key"
 
     # Act
-    result = await GenericListModel.delete_by_key(mock_key)
+    result = await GenericListModel.adelete_by_key(mock_key)
 
     # Assert
     assert result is False
