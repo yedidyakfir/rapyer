@@ -1,49 +1,76 @@
 # Overview
 
-<div align="center">
-  <img src="icon.png" alt="Rapyer Logo" width="120">
+<div align="center" markdown="1">
+
+<img src="icon.png" alt="Rapyer Logo" width="120" style="margin-bottom: 2rem;">
+
+**Pydantic models with Redis as the storage backend**
+
+[![PyPI version](https://badge.fury.io/py/rapyer.svg)](https://badge.fury.io/py/rapyer)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-red.svg)](https://www.python.org/downloads/)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)](https://redis.io)
+
 </div>
 
-## Why Redis?
+## 🚀 Why Redis?
 
-Redis is an in-memory key-value store designed for fast caching, queues, and real-time data processing. It offers high speed, atomic operations, and excellent scalability, making it ideal for low-latency applications. However, its main limitation is the cost of memory and limited persistence options compared to disk-based databases. Despite this, Redis remains a popular choice for performance-critical workloads.
-## The Power of Pydantic
+Redis is an in-memory key-value store designed for fast caching, queues, and real-time data processing. It offers high speed, atomic operations, and excellent scalability, making it ideal for low-latency applications. 
 
-Pydantic has revolutionized Python data validation and serialization. There are already many libraries that use Pydantic for orm, Beanie(MongoDB), FastAPI(http server), etc, however the current packages to support redis are somewhat lacking.
+!!! info "Performance Benefits"
+    Redis provides **microsecond-level latency** and can handle millions of operations per second, making it perfect for real-time applications.
 
-Pydantic's strength lies in its automatic validation, type safety, and developer-friendly API that makes working with complex data structures intuitive and safe.
+## ⚡ The Power of Pydantic
 
-## Introducing Rapyer
+Pydantic has revolutionized Python data validation and serialization. There are already many libraries that use Pydantic for ORM: Beanie (MongoDB), FastAPI (HTTP server), etc. However, the current packages to support Redis are somewhat lacking.
+
+!!! tip "Type Safety"
+    Pydantic's strength lies in its **automatic validation**, **type safety**, and **developer-friendly API** that makes working with complex data structures intuitive and safe.
+
+## 🎯 Introducing Rapyer
 
 Rapyer bridges the gap between Redis's performance and Pydantic's type safety, creating a powerful combination optimized for real-world applications.
 
-### Wide Variety of Field Support
+### 🔧 Wide Variety of Field Support
 
-Rapyer supports a wide variety of field types and offers user to perform complex atomic actions of these fields.
-- **Primitive types** - Optimized native Redis storage for strings, integers, floats, booleans
-- **Collection types** - Lists, dictionaries, sets with full atomic operation support
-- **Specialized types** - Enhanced RedisStr, RedisList, RedisDict with IDE autocomplete
+Rapyer supports a wide variety of field types and offers users the ability to perform complex atomic actions on these fields:
 
-You can also create your own custom types or decide how to save the data in redis.
-Other types are also supported, essentially we support any type that can be serialized to pickle, however, they can be used to perform atomic operations.
+=== "Primitive Types"
+    - **Strings** - Optimized Redis string storage
+    - **Integers** - Native Redis number handling  
+    - **Floats** - Precise decimal operations
+    - **Booleans** - Efficient boolean storage
 
-### Atomic Operations for Race Condition Prevention
+=== "Collection Types"
+    - **Lists** - Full atomic list operations
+    - **Dictionaries** - Atomic dict updates and lookups
+    - **Sets** - Redis set operations with Python interface
+
+=== "Specialized Types"
+    - **RedisStr** - Enhanced string type with IDE autocomplete
+    - **RedisList** - List type with atomic operations
+    - **RedisDict** - Dictionary type with atomic operations
+
+!!! note "Custom Types"
+    You can also create your own custom types or decide how to save the data in Redis. Other types are also supported - essentially we support any type that can be serialized to pickle, however, they can be used to perform atomic operations.
+
+### ⚛️ Atomic Operations for Race Condition Prevention
 
 Every operation in Rapyer is designed to be atomic and safe in concurrent environments:
 
-```python
+```python title="Atomic Operations Example"
 # All operations are atomic - no race conditions possible
-await user.tags.aappend("python")  # Atomic list append
-await user.metadata.aupdate(role="dev")  # Atomic dict update
-user.score += 10;
-await user.score.asave()  # Atomic increment
+await user.tags.aappend("python")          # Atomic list append
+await user.metadata.aupdate(role="dev")    # Atomic dict update
+user.score += 10
+await user.score.asave()                   # Atomic increment
 ```
 
-For complex multi-field operations, Rapyer provides lock context managers and pipeline operations that ensure consistency across multiple changes.
+!!! success "Concurrency Safe"
+    For complex multi-field operations, Rapyer provides **lock context managers** and **pipeline operations** that ensure consistency across multiple changes.
 
-## Quick Example
+## 🚀 Quick Example
 
-```python
+```python title="Complete Rapyer Example"
 import asyncio
 from rapyer import AtomicRedisModel
 from typing import List, Dict
@@ -62,20 +89,26 @@ async def main():
     await user.asave()
 
     # Atomic operations
-    await user.tags.aappend("developer")
-    await user.tags.aextend(["python", "redis"])
-    await user.metadata.aupdate(team="backend", level="senior")
+    await user.tags.aappend("developer")                    # (1)!
+    await user.tags.aextend(["python", "redis"])           # (2)!
+    await user.metadata.aupdate(team="backend", level="senior")  # (3)!
 
     # Load and verify
     loaded = await User.aget(user.key)
-    print(f"User: {loaded.name}, Tags: {loaded.tags}")
+    print(f"User: {loaded.name}, Tags: {loaded.tags}")     # (4)!
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-This example demonstrates Rapyer's core philosophy: combine Redis performance with Pydantic safety, all while maintaining atomic operations that prevent data corruption in concurrent applications.
+1. Add a single tag atomically
+2. Extend with multiple tags in one operation  
+3. Update multiple metadata fields atomically
+4. Load the complete model from Redis
+
+!!! abstract "Core Philosophy"
+    This example demonstrates Rapyer's core philosophy: combine **Redis performance** with **Pydantic safety**, all while maintaining **atomic operations** that prevent data corruption in concurrent applications.
 
 ## Why Choose Rapyer?
 
