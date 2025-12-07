@@ -8,19 +8,20 @@ theme:
   name: material
   logo: icon.png
   favicon: icon.png
+  custom_dir: docs/overrides
   palette:
-    - scheme: default
-      primary: red
-      accent: red
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
     - scheme: slate
       primary: red
-      accent: red
+      accent: deep orange
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+    - scheme: default
+      primary: red
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
   features:
     - navigation.instant
     - navigation.instant.prefetch
@@ -81,3 +82,6 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/yedidyakfir/rapyer
+      
+extra_css:
+  - stylesheets/extra.css
