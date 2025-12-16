@@ -9,7 +9,7 @@ on:
 jobs:
   benchmarks:
     name: Run benchmarks
-    runs-on: ubuntu-latest
+    runs-on: codspeed-macro
     steps:
       - uses: actions/checkout@v5
       - name: Install poetry
@@ -43,7 +43,7 @@ jobs:
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
         with:
-          mode: simulation
+          mode: walltime
           run: poetry run pytest benchmarks/ --codspeed
         env:
           REDIS_DB: 0
