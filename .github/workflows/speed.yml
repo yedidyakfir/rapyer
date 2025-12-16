@@ -23,7 +23,7 @@ jobs:
         with:
           python-version-file: pyproject.toml
       - name: Install dependencies
-        run: poetry install --extras benchmark
+        run: poetry install --with benchmark
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
         with:
