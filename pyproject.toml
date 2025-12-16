@@ -74,7 +74,9 @@ pytest-cov = "^6.0.0"
 
 
 [tool.poetry.group.benchmark.dependencies]
+pytest = "^8.4.2"
 pytest-benchmark = "^5.2.3"
+pytest-codspeed = "^4.2.0"
 
 [tool.coverage.run]
 source = ["rapyer"]
