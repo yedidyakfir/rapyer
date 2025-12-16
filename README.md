@@ -234,7 +234,7 @@ async with user.apipeline() as pipelined_user:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-Thanks for [@Mizaro](https://github.com/Mizaro) this would not have been possible without you. 
+Thanks for [@Mizaro](https://github.com/Mizaro) and [@oazmiry](https://github.com/oazmiry) this would not have been possible without you. 
 
 ## License
 
