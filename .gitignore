@@ -117,6 +117,7 @@ dmypy.json
 
 # Benchmark
 .benchmarks
+.codspeed
 
 # Dynaconf secrets
 .secrets.*
