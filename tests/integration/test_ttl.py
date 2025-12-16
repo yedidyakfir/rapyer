@@ -9,7 +9,7 @@ async def test_base_redis_model_with_ttl__save__check_ttl_set_sanity(real_redis_
     user = UserModelWithTTL(name="john", age=30)
 
     # Act
-    await user.save()
+    await user.asave()
 
     # Assert
     ttl = await real_redis_client.ttl(user.key)
@@ -25,7 +25,7 @@ async def test_base_redis_model_without_ttl__save__check_no_ttl_set_sanity(
     user = UserModelWithoutTTL(name="john", age=30)
 
     # Act
-    await user.save()
+    await user.asave()
 
     # Assert
     ttl = await real_redis_client.ttl(user.key)

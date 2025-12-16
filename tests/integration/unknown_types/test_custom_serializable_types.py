@@ -24,8 +24,8 @@ async def test_custom_serializable_types__save_and_get__check_equality_sanity():
     )
 
     # Act
-    await original_model.save()
-    retrieved_model = await ModelWithCustomTypes.get(original_model.key)
+    await original_model.asave()
+    retrieved_model = await ModelWithCustomTypes.aget(original_model.key)
 
     # Assert
     assert original_model == retrieved_model
@@ -45,10 +45,10 @@ async def test_custom_serializable_types__model_reload__check_equality_sanity():
             title="Reload Test", count=50, active=False
         ),
     )
-    await original_model.save()
+    await original_model.asave()
 
     # Act - get a fresh model from Redis
-    reloaded_model = await ModelWithCustomTypes.get(original_model.key)
+    reloaded_model = await ModelWithCustomTypes.aget(original_model.key)
 
     # Assert - values should be preserved
     assert reloaded_model == original_model

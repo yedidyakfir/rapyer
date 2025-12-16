@@ -51,7 +51,7 @@ class User(AtomicRedisModel):
 
 # Usage
 user = User(email="alice@example.com", name="Alice", age=30)
-await user.save()  # Stored with email as the Redis key
+await user.asave()  # Stored with email as the Redis key
 ```
 
 #### Log Entry with Timestamp Key
@@ -73,7 +73,7 @@ log = LogEntry(
     message="Application started",
     source="main.py"
 )
-await log.save()  # Stored with timestamp as the Redis key
+await log.asave()  # Stored with timestamp as the Redis key
 ```
 
 #### Product with SKU Key
@@ -94,7 +94,7 @@ product = Product(
     price=1299.99,
     category="Electronics"
 )
-await product.save()
+await product.asave()
 ```
 
 ## Important Considerations
@@ -121,11 +121,11 @@ Custom key field values should never change after the model is saved. Changing t
 
 ```python
 user = User(email="john@example.com", name="John")
-await user.save()
+await user.asave()
 
 # ❌ Avoid changing the key field value
 user.email = "john.doe@example.com"  # This changes the primary key!
-await user.save()  # This might create a new record instead of updating
+await user.asave()  # This might create a new record instead of updating
 ```
 
 ### Performance Impact

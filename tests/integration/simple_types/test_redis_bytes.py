@@ -18,16 +18,16 @@ from tests.models.simple_types import BytesModel
 async def test_redis_bytes_set_functionality_sanity(test_values):
     # Arrange
     model = BytesModel()
-    await model.save()
+    await model.asave()
 
     # Act
     model.data = test_values
-    await model.data.save()
+    await model.data.asave()
 
     # Assert
     fresh_model = BytesModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.data.load()
+    loaded_value = await fresh_model.data.aload()
     assert loaded_value == test_values
 
 
@@ -38,14 +38,14 @@ async def test_redis_bytes_set_functionality_sanity(test_values):
 async def test_redis_bytes_load_functionality_sanity(test_values):
     # Arrange
     model = BytesModel()
-    await model.save()
+    await model.asave()
     model.data = test_values
-    await model.data.save()
+    await model.data.asave()
 
     # Act
     fresh_model = BytesModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.data.load()
+    loaded_value = await fresh_model.data.aload()
 
     # Assert
     assert loaded_value == test_values
@@ -55,10 +55,10 @@ async def test_redis_bytes_load_functionality_sanity(test_values):
 async def test_redis_bytes_load_with_none_value_edge_case():
     # Arrange
     model = BytesModel()
-    await model.save()
+    await model.asave()
 
     # Act
-    loaded_value = await model.data.load()
+    loaded_value = await model.data.aload()
 
     # Assert
     assert loaded_value == b""
@@ -77,14 +77,14 @@ async def test_redis_bytes_load_type_conversion_edge_case(redis_values):
     # Arrange
     redis_value, expected = redis_values
     model = BytesModel()
-    await model.save()
+    await model.asave()
     model.data = redis_value
-    await model.data.save()
+    await model.data.asave()
 
     # Act
     fresh_model = BytesModel()
     fresh_model.pk = model.pk
-    loaded_value = await fresh_model.data.load()
+    loaded_value = await fresh_model.data.aload()
 
     # Assert
     assert loaded_value == expected

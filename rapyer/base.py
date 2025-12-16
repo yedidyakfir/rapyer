@@ -25,7 +25,8 @@ from rapyer.errors.base import KeyNotFound
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
-from rapyer.typing_support import Self
+from rapyer.typing_support import Self, Unpack
+from rapyer.typing_support import deprecated
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
@@ -200,7 +201,13 @@ class AtomicRedisModel(BaseModel):
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
 
-    async def save(self) -> Self:
+    @deprecated(
+        f"save function is deprecated and will become sync function in rapyer 1.2.0, use asave() instead"
+    )
+    async def save(self):
+        return await self.asave()
+
+    async def asave(self) -> Self:
         model_dump = self.redis_dump()
         await self.Meta.redis.json().set(self.key, self.json_path, model_dump)
         if self.Meta.ttl is not None:
@@ -213,20 +220,32 @@ class AtomicRedisModel(BaseModel):
     def redis_dump_json(self):
         return self.model_dump_json(context={REDIS_DUMP_FLAG_NAME: True})
 
+    @deprecated(
+        "duplicate function is deprecated and will be removed in rapyer 1.2.0, use aduplicate instead"
+    )
     async def duplicate(self) -> Self:
+        return await self.aduplicate()
+
+    async def aduplicate(self) -> Self:
         if self.is_inner_model():
             raise RuntimeError("Can only duplicate from top level model")
 
         duplicated = self.__class__(**self.model_dump())
-        await duplicated.save()
+        await duplicated.asave()
         return duplicated
 
+    @deprecated(
+        "duplicate_many function is deprecated and will be removed in rapyer 1.2.0, use aduplicate_many instead"
+    )
     async def duplicate_many(self, num: int) -> list[Self]:
+        return await self.aduplicate_many(num)
+
+    async def aduplicate_many(self, num: int) -> list[Self]:
         if self.is_inner_model():
             raise RuntimeError("Can only duplicate from top level model")
 
         duplicated_models = [self.__class__(**self.model_dump()) for _ in range(num)]
-        await asyncio.gather(*[model.save() for model in duplicated_models])
+        await asyncio.gather(*[model.asave() for model in duplicated_models])
         return duplicated_models
 
     def update(self, **kwargs):
@@ -252,7 +271,14 @@ class AtomicRedisModel(BaseModel):
             await pipe.execute()
 
     @classmethod
+    @deprecated(
+        "get() classmethod is deprecated and will be removed in rapyer 1.2.0, use aget instead"
+    )
     async def get(cls, key: str) -> Self:
+        return await cls.aget(key)
+
+    @classmethod
+    async def aget(cls, key: str) -> Self:
         if cls._key_field_name and ":" not in key:
             key = f"{cls.class_key_initials()}:{key}"
         model_dump = await cls.Meta.redis.json().get(key, "$")
@@ -264,7 +290,13 @@ class AtomicRedisModel(BaseModel):
         instance.key = key
         return instance
 
-    async def load(self) -> Self:
+    @deprecated(
+        "load function is deprecated and will be removed in rapyer 1.2.0, use aload() instead"
+    )
+    async def load(self):
+        return await self.aload()
+
+    async def aload(self) -> Self:
         model_dump = await self.Meta.redis.json().get(self.key, self.json_path)
         if not model_dump:
             raise KeyNotFound(f"{self.key} is missing in redis")
@@ -294,31 +326,76 @@ class AtomicRedisModel(BaseModel):
         return await cls.Meta.redis.keys(f"{cls.class_key_initials()}:*")
 
     @classmethod
+    async def ainsert(cls, *models: Unpack[Self]):
+        async with cls.Meta.redis.pipeline() as pipe:
+            for model in models:
+                pipe.json().set(model.key, model.json_path, model.redis_dump())
+            await pipe.execute()
+
+    @classmethod
+    @deprecated(
+        "function delete is deprecated and will be removed in rapyer 1.2.0, use adelete instead"
+    )
     async def delete_by_key(cls, key: str) -> bool:
+        return await cls.adelete_by_key(key)
+
+    @classmethod
+    async def adelete_by_key(cls, key: str) -> bool:
         client = _context_var.get() or cls.Meta.redis
         return await client.delete(key) == 1
 
+    @deprecated(
+        "function delete is deprecated and will be removed in rapyer 1.2.0, use adelete instead"
+    )
     async def delete(self):
+        return await self.adelete()
+
+    async def adelete(self):
         if self.is_inner_model():
             raise RuntimeError("Can only delete from inner model")
-        return await self.delete_by_key(self.key)
+        return await self.adelete_by_key(self.key)
+
+    @classmethod
+    async def adelete_many(cls, *args: Unpack[Self]):
+        await cls.Meta.redis.delete(*[model.key for model in args])
 
     @classmethod
     @contextlib.asynccontextmanager
+    @deprecated(
+        "lock_from_key function is deprecated and will be removed in rapyer 1.2.0, use alock_from_key instead"
+    )
     async def lock_from_key(
         cls, key: str, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
+        async with cls.alock_from_key(key, action, save_at_end) as redis_model:
+            yield redis_model
+
+    @classmethod
+    @contextlib.asynccontextmanager
+    async def alock_from_key(
+        cls, key: str, action: str = "default", save_at_end: bool = False
+    ) -> AsyncGenerator[Self, None]:
         async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
-            redis_model = await cls.get(key)
+            redis_model = await cls.aget(key)
             yield redis_model
             if save_at_end:
-                await redis_model.save()
+                await redis_model.asave()
 
     @contextlib.asynccontextmanager
+    @deprecated(
+        "lock function is deprecated and will be removed in rapyer 1.2.0, use alock instead"
+    )
     async def lock(
         self, action: str = "default", save_at_end: bool = False
     ) -> AsyncGenerator[Self, None]:
-        async with self.lock_from_key(self.key, action, save_at_end) as redis_model:
+        async with self.alock_from_key(self.key, action, save_at_end) as redis_model:
+            yield redis_model
+
+    @contextlib.asynccontextmanager
+    async def alock(
+        self, action: str = "default", save_at_end: bool = False
+    ) -> AsyncGenerator[Self, None]:
+        async with self.alock_from_key(self.key, action, save_at_end) as redis_model:
             unset_fields = {
                 k: redis_model.__dict__[k] for k in redis_model.model_fields_set
             }
@@ -326,12 +403,22 @@ class AtomicRedisModel(BaseModel):
             yield redis_model
 
     @contextlib.asynccontextmanager
-    async def pipeline(
+    @deprecated(
+        "pipeline function is deprecated and will be removed in rapyer 1.2.0, use apipeline instead"
+    )
+    async def apipeline(
+        self, ignore_if_deleted: bool = False
+    ) -> AsyncGenerator[Self, None]:
+        async with self.apipeline(ignore_if_deleted=ignore_if_deleted) as redis_model:
+            yield redis_model
+
+    @contextlib.asynccontextmanager
+    async def apipeline(
         self, ignore_if_deleted: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with self.Meta.redis.pipeline() as pipe:
             try:
-                redis_model = await self.__class__.get(self.key)
+                redis_model = await self.__class__.aget(self.key)
                 unset_fields = {
                     k: redis_model.__dict__[k] for k in redis_model.model_fields_set
                 }
@@ -386,11 +473,18 @@ class AtomicRedisModel(BaseModel):
 REDIS_MODELS: list[type[AtomicRedisModel]] = []
 
 
+@deprecated(
+    "get function is deprecated and will be removed in rapyer 1.2.0, use aget instead"
+)
 async def get(redis_key: str) -> AtomicRedisModel:
+    return await aget(redis_key)
+
+
+async def aget(redis_key: str) -> AtomicRedisModel:
     redis_model_mapping = {klass.__name__: klass for klass in REDIS_MODELS}
     class_name = redis_key.split(":")[0]
     klass = redis_model_mapping.get(class_name)
-    return await klass.get(redis_key)
+    return await klass.aget(redis_key)
 
 
 def find_redis_models() -> list[type[AtomicRedisModel]]:

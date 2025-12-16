@@ -11,8 +11,8 @@ async def test_inheritance_models__default_values__save_load_verify_sanity():
     instance = AdminUserModel()
 
     # Act
-    await instance.save()
-    loaded_instance = await AdminUserModel.get(instance.key)
+    await instance.asave()
+    loaded_instance = await AdminUserModel.aget(instance.key)
 
     # Assert
     assert loaded_instance == instance
@@ -44,8 +44,8 @@ async def test_inheritance_models__explicit_values__save_load_verify_sanity():
     )
 
     # Act
-    await admin.save()
-    loaded_admin = await AdminUserModel.get(admin.key)
+    await admin.asave()
+    loaded_admin = await AdminUserModel.aget(admin.key)
 
     # Assert
     assert loaded_admin.name == "John Doe"
@@ -76,8 +76,8 @@ async def test_inheritance_models__admin_with_default_base_values__save_load_ver
     )
 
     # Act
-    await admin.save()
-    loaded_admin = await AdminUserModel.get(admin.key)
+    await admin.asave()
+    loaded_admin = await AdminUserModel.aget(admin.key)
 
     # Assert
     assert loaded_admin == admin
@@ -87,21 +87,21 @@ async def test_inheritance_models__admin_with_default_base_values__save_load_ver
 async def test_inheritance_models__admin_inherited_field_operations__redis_actions_sanity():
     # Arrange
     admin = AdminUserModel(name="Test Admin", tags=["initial"])
-    await admin.save()
+    await admin.asave()
 
     # Act & Assert - Test list operations on inherited fields
     await admin.tags.aappend("new_tag")
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert "new_tag" in loaded_admin.tags
 
     await admin.tags.aextend(["tag1", "tag2"])
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert "tag1" in loaded_admin.tags
     assert "tag2" in loaded_admin.tags
 
     # Test dict operations on inherited fields
     await admin.metadata.aset_item("key1", "value1")
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert loaded_admin.metadata["key1"] == "value1"
 
 
@@ -114,26 +114,26 @@ async def test_inheritance_models__admin_model_operations__redis_actions_both_pa
         permissions=["read"],
         managed_users={"user1": "John"},
     )
-    await admin.save()
+    await admin.asave()
 
     # Act & Assert - Test operations on parent fields
     await admin.tags.aappend("parent_field_tag")
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert "parent_field_tag" in loaded_admin.tags
 
     await admin.metadata.aset_item("parent_key", "parent_value")
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert loaded_admin.metadata["parent_key"] == "parent_value"
 
     # Act & Assert - Test operations on child fields
     await admin.permissions.aappend("write")
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert "write" in loaded_admin.permissions
 
     await admin.managed_users.aset_item("user2", "Jane")
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert loaded_admin.managed_users["user2"] == "Jane"
 
     await admin.access_codes.aappend(9999)
-    loaded_admin = await AdminUserModel.get(admin.key)
+    loaded_admin = await AdminUserModel.aget(admin.key)
     assert 9999 in loaded_admin.access_codes
