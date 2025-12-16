@@ -9,10 +9,13 @@ def test__dict_apop__sanity(benchmark, real_redis_client):
     # Arrange
     model = StrDictModel(metadata={"key": "value"})
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(model.asave())
+
+    def setup():
+        loop.run_until_complete(model.asave())
 
     def run_sync():
         return loop.run_until_complete(model.metadata.apop("key"))
 
-    result = benchmark(run_sync)
+    # Act
+    result = benchmark.pedantic(run_sync, setup=setup, rounds=20)
     assert result == "value"
