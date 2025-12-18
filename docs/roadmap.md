@@ -3,6 +3,34 @@
 This is the current roadmap for the rayper package, note that this is just a basic POC.
 You are welcome to add suggestions and contribute to our development.
 
+## Redis Space Optimization
+
+**Goal**: Optimize Redis space usage by not storing parameters with default values
+
+### Tasks
+- [ ] **Default Value Detection**: Identify fields with default values during serialization
+- [ ] **Selective Storage**: Skip storing fields that match their default values in Redis
+- [ ] **Smart Deserialization**: Apply default values for missing fields during model loading
+- [ ] **Configuration Options**: Allow per-field or per-model control of default value optimization
+- [ ] **Backward Compatibility**: Ensure models can load data saved before optimization
+
+### Example Usage
+```python
+class User(AtomicRedisModel):
+    name: str
+    status: str = "active"  # Default value not stored in Redis
+    score: int = 0         # Default value not stored in Redis
+    
+    class Config:
+        optimize_defaults = True  # Enable default value optimization
+
+# Only non-default values stored in Redis
+user = User(name="Alice")  # Only "name" stored, "status" and "score" use defaults
+await user.asave()
+```
+
+**Benefits**: Reduced Redis memory usage, lower storage costs, improved performance for models with many default values
+
 ## Bulk Operations Support
 
 **Goal**: Enable efficient bulk insert, update, and delete operations for multiple models
