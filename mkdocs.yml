@@ -1,8 +1,8 @@
 site_name: Rapyer
 site_description: A Python package that provides Pydantic models with Redis as the backend storage
-site_url: https://yedidyakfir.github.io/rapyer/
-repo_url: https://github.com/yedidyakfir/rapyer
-repo_name: yedidyakfir/rapyer
+site_url: https://imaginary-cherry.github.io/rapyer/
+repo_url: https://github.com/imaginary-cherry/rapyer
+repo_name: imaginary-cherry/rapyer
 
 theme:
   name: material
@@ -81,7 +81,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yedidyakfir/rapyer
+      link: https://github.com/imaginary-cherry/rapyer
       
 extra_css:
   - stylesheets/extra.css

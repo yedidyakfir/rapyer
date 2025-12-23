@@ -52,12 +52,12 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://yedidyakfir.github.io/rapyer/"
-Documentation = "https://yedidyakfir.github.io/rapyer/"
-Repository = "https://github.com/yedidyakfir/rapyer"
-"Source Code" = "https://github.com/yedidyakfir/rapyer"
-"Bug Tracker" = "https://github.com/yedidyakfir/rapyer/issues"
-"Changelog" = "https://github.com/yedidyakfir/rapyer/releases"
+Homepage = "https://imaginary-cherry.github.io/rapyer/"
+Documentation = "https://imaginary-cherry.github.io/rapyer/"
+Repository = "https://github.com/imaginary-cherry/rapyer"
+"Source Code" = "https://github.com/imaginary-cherry/rapyer"
+"Bug Tracker" = "https://github.com/imaginary-cherry/rapyer/issues"
+"Changelog" = "https://github.com/imaginary-cherry/rapyer/releases"
 
 [tool.poetry]
 packages = [{include = "rapyer"}]
