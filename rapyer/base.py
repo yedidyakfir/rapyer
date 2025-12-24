@@ -200,6 +200,11 @@ class AtomicRedisModel(BaseModel):
         if cls.__doc__ != DYNAMIC_CLASS_DOC:
             REDIS_MODELS.append(cls)
 
+    @classmethod
+    def init_class(cls):
+        for field_name in cls.__annotations__:
+            setattr(cls, field_name, ExpressionField(field_name))
+
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
 

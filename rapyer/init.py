@@ -18,11 +18,13 @@ async def init_rapyer(
         if ttl is not None:
             model.Meta.ttl = ttl
 
+        # Initialize model fields
+        model.init_class()
+
         # Create indexes for models with indexed fields
         if redis is not None:
             fields = model.redis_schema()
             if fields:
-
                 index_name = f"idx:{model.class_key_initials()}"
 
                 if override_old_idx:
