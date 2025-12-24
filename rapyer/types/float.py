@@ -1,5 +1,7 @@
 from typing import TypeAlias, TYPE_CHECKING
 
+from redis.commands.search.field import NumericField
+
 from rapyer.types.base import RedisType
 
 
