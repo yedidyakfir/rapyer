@@ -5,6 +5,7 @@ import functools
 import pickle
 import uuid
 from typing import ClassVar, Any, AsyncGenerator
+from typing import get_args
 
 from pydantic import (
     BaseModel,
@@ -18,11 +19,13 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
+from redis.commands.search.field import TextField
 
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
 from rapyer.fields.expression import ExpressionField
+from rapyer.fields.index import IndexAnnotation
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
@@ -108,6 +111,39 @@ class AtomicRedisModel(BaseModel):
     def json_path(self):
         field_path = self.field_path
         return f"${field_path}" if field_path else "$"
+
+    @classmethod
+    def redis_schema(cls):
+        fields = []
+
+        for field_name, annotation in cls.__annotations__.items():
+            if not is_redis_field(field_name, annotation):
+                continue
+
+            if not has_annotation(annotation, IndexAnnotation):
+                continue
+
+            # Get the actual type from Annotated if needed
+            args = get_args(annotation)
+            if args:
+                real_type = args[0]
+            else:
+                real_type = annotation
+
+            # Check if real_type is a class before using issubclass
+            if isinstance(real_type, type):
+                if issubclass(real_type, AtomicRedisModel):
+                    sub_fields = real_type.redis_schema()
+                    for sub_field in sub_fields:
+                        sub_field.name = f"{field_name}.{sub_field.name}"
+                        fields.append(sub_field)
+                elif issubclass(real_type, RedisType):
+                    field_schema = real_type.redis_schema(field_name)
+                    fields.append(field_schema)
+                else:
+                    fields.append(TextField(field_name))
+
+        return fields
 
     @classmethod
     def class_key_initials(cls):

@@ -1,5 +1,6 @@
 import redis.asyncio as redis_async
 from redis.asyncio.client import Redis
+from redis.commands.search.index_definition import IndexDefinition, IndexType
 
 from rapyer.base import REDIS_MODELS
 
@@ -13,6 +14,26 @@ async def init_rapyer(redis: str | Redis = None, ttl: int = None):
             model.Meta.redis = redis
         if ttl is not None:
             model.Meta.ttl = ttl
+
+        # Create indexes for models with indexed fields
+        if redis is not None:
+            fields = model.redis_schema()
+            if fields:
+
+                index_name = f"idx:{model.class_key_initials()}"
+
+                try:
+                    # Try to create the index
+                    await redis.ft(index_name).create_index(
+                        fields,
+                        definition=IndexDefinition(
+                            prefix=[f"{model.class_key_initials()}:"],
+                            index_type=IndexType.JSON,
+                        ),
+                    )
+                except Exception:
+                    # Index might already exist, ignore the error
+                    pass
 
 
 async def teardown_rapyer():

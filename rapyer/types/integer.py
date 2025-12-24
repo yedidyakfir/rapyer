@@ -1,10 +1,16 @@
 from typing import TypeAlias, TYPE_CHECKING
 
+from redis.commands.search.field import NumericField
+
 from rapyer.types.base import RedisType
 
 
 class RedisInt(int, RedisType):
     original_type = int
+
+    @classmethod
+    def redis_schema(cls, field_name: str):
+        return NumericField(field_name)
 
     async def increase(self, amount: int = 1):
         result = await self.client.json().numincrby(self.key, self.json_path, amount)

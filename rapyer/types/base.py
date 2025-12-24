@@ -7,11 +7,11 @@ from typing import get_args, Any, TypeVar, Generic
 from pydantic import GetCoreSchemaHandler, TypeAdapter
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, CoreSchema, SerializationInfo
-from rapyer.typing_support import deprecated
-
-from rapyer.typing_support import Self
+from redis.commands.search.field import TextField
 
 from rapyer.context import _context_var
+from rapyer.typing_support import Self
+from rapyer.typing_support import deprecated
 
 REDIS_DUMP_FLAG_NAME = "__rapyer_dumped__"
 
@@ -97,6 +97,10 @@ class RedisType(ABC):
     @abc.abstractmethod
     def clone(self):
         pass
+
+    @classmethod
+    def redis_schema(cls, field_name: str):
+        return TextField(field_name)
 
     @classmethod
     def __get_pydantic_core_schema__(
