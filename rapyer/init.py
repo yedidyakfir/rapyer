@@ -30,14 +30,17 @@ async def init_rapyer(
                         await redis.ft(index_name).dropindex(delete_documents=False)
                     except ResponseError as e:
                         pass
-
-                await redis.ft(index_name).create_index(
-                    fields,
-                    definition=IndexDefinition(
-                        prefix=[f"{model.class_key_initials()}:"],
-                        index_type=IndexType.JSON,
-                    ),
-                )
+                try:
+                    await redis.ft(index_name).create_index(
+                        fields,
+                        definition=IndexDefinition(
+                            prefix=[f"{model.class_key_initials()}:"],
+                            index_type=IndexType.JSON,
+                        ),
+                    )
+                except ResponseError as e:
+                    if override_old_idx:
+                        raise
 
 
 async def teardown_rapyer():
