@@ -201,39 +201,6 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, validator.__name__, validator)
                 continue
 
-            value = getattr(cls, attr_name, None)
-            if value is None:
-                continue
-
-            # Skip if the value is an ExpressionField (from parent class)
-            if isinstance(value, ExpressionField):
-                continue
-
-            real_type = find_first_type_in_annotation(attr_type)
-
-            if isinstance(value, real_type):
-                continue
-            redis_type = cls.__annotations__[attr_name]
-            redis_type: type[RedisType]
-            adapter = TypeAdapter(redis_type)
-
-            # Handle Field(default=...)
-            if isinstance(value, FieldInfo):
-                if value.default != PydanticUndefined:
-                    value.default = adapter.validate_python(value.default)
-                elif value.default_factory != PydanticUndefined and callable(
-                    value.default_factory
-                ):
-                    test_value = value.default_factory()
-                    if isinstance(test_value, real_type):
-                        continue
-                    original_factory = value.default_factory
-                    validate_from_adapter = functools.partial(
-                        convert_field_factory_type, original_factory, adapter
-                    )
-                    value.default_factory = validate_from_adapter
-            else:
-                setattr(cls, attr_name, adapter.validate_python(value))
 
         # Update the redis model list for initialization
         # Skip dynamically created classes from type conversion
