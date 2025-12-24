@@ -8,8 +8,11 @@ class RedisFloat(float, RedisType):
 
     @classmethod
     def redis_schema(cls, field_name: str):
-        from redis.commands.search.field import NumericField
         return NumericField(field_name)
+
+    async def aincrease(self, amount: float = 1.0):
+        result = await self.client.json().numincrby(self.key, self.json_path, amount)
+        return result[0] if isinstance(result, list) and result else result
 
     def clone(self):
         return float(self)
