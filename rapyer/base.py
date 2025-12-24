@@ -356,8 +356,10 @@ class AtomicRedisModel(BaseModel):
         return await self.adelete_by_key(self.key)
 
     @classmethod
-    async def adelete_many(cls, *args: Unpack[Self]):
-        await cls.Meta.redis.delete(*[model.key for model in args])
+    async def adelete_many(cls, *args: Unpack[Self | str]):
+        await cls.Meta.redis.delete(
+            *[model if isinstance(model, str) else model.key for model in args]
+        )
 
     @classmethod
     @contextlib.asynccontextmanager
