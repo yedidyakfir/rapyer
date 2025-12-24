@@ -10,7 +10,7 @@ from tests.models.index_types import (
 )
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(autouse=True)
 async def clean_test_indexes(redis_client):
     # Get list of existing indexes before test
     try:
@@ -42,7 +42,7 @@ async def clean_test_indexes(redis_client):
 
 
 @pytest.mark.asyncio
-async def test_basic_index_creation(redis_client, clean_test_indexes):
+async def test_basic_index_creation(redis_client):
     # Arrange
     models_to_test = [
         {
@@ -117,28 +117,67 @@ async def test_basic_index_creation(redis_client, clean_test_indexes):
 
 
 @pytest.mark.asyncio
-async def test_cleanup_preserves_existing_indexes(
-    redis_client, pre_existing_index, clean_test_indexes
-):
-    """
-    Test that the cleanup fixture preserves indexes that existed before the test.
-    """
-    # Arrange - Verify the pre-existing index exists
-    try:
-        info = await redis_client.execute_command("FT.INFO", pre_existing_index)
-        assert info is not None, "Pre-existing index not found"
-    except Exception:
-        pytest.fail("Pre-existing index not found")
+async def test_index_override_preserves_existing_data(redis_client, clean_test_indexes):
+    # Arrange
+    IndexTestModel.Meta.redis = redis_client
 
-    # Act - Run init_rapyer which creates new indexes
+    # Create a manual index with different fields than what the model expects
+    index_name = f"idx:{IndexTestModel.class_key_initials()}"
+    await redis_client.execute_command(
+        "FT.CREATE",
+        index_name,
+        "ON",
+        "JSON",
+        "PREFIX",
+        "1",
+        f"{IndexTestModel.class_key_initials()}:",
+        "SCHEMA",
+        "wrong_field",
+        "TEXT",
+        "another_field",
+        "NUMERIC",
+    )
+
+    # Create and save some test models
+    model1 = IndexTestModel(name="Alice", age=25, description="Test user 1")
+    model2 = IndexTestModel(name="Bob", age=30, description="Test user 2")
+    model3 = IndexTestModel(name="Charlie", age=35, description="Test user 3")
+
+    await IndexTestModel.ainsert(model1, model2, model3)
+    model_keys = [model1.key, model2.key, model3.key]
+
+    # Act - Run init_rapyer to override the index
     await init_rapyer(redis=redis_client)
 
-    # At this point, both the pre-existing index and new rapyer indexes should exist
-    # When the clean_test_indexes fixture cleans up, it should only remove the new ones
+    # Assert - Check that index was properly overridden
+    info = await redis_client.ft(index_name).info()
 
-    # Assert - Verify the pre-existing index still exists
-    try:
-        info = await redis_client.execute_command("FT.INFO", pre_existing_index)
-        assert info is not None, "Pre-existing index was incorrectly deleted by cleanup"
-    except Exception:
-        pytest.fail("Pre-existing index was incorrectly deleted by cleanup")
+    # Extract field information from the new index
+    fields_in_index = {}
+    for attr in info["attributes"]:
+        field_name = attr[1]  # Field name
+        field_type = attr[5]  # Field type
+        fields_in_index[field_name] = field_type
+
+    # Verify the index now has the correct schema for IndexTestModel
+    expected_fields = {"name": "TEXT", "age": "NUMERIC"}
+    for field_name, expected_type in expected_fields.items():
+        assert (
+            field_name in fields_in_index
+        ), f"Expected field '{field_name}' not found in overridden index"
+        assert (
+            fields_in_index[field_name] == expected_type
+        ), f"Field '{field_name}' expected type '{expected_type}', got '{fields_in_index[field_name]}'"
+
+    # Verify wrong fields are no longer in the index
+    assert (
+        "wrong_field" not in fields_in_index
+    ), "Old wrong_field still exists in overridden index"
+    assert (
+        "another_field" not in fields_in_index
+    ), "Old another_field still exists in overridden index"
+
+    # Assert - Verify all saved models still exist in Redis
+    for key in model_keys:
+        exists = await redis_client.exists(key)
+        assert exists == 1, f"Model with key {key} was lost after index override"
