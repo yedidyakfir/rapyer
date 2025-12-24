@@ -189,11 +189,6 @@ class AtomicRedisModel(BaseModel):
         for field_name, field in pydantic_annotation.items():
             setattr(cls, field_name, field)
 
-        # Store field names before calling super().__init_subclass__
-        field_names = [
-            name for name in cls.__annotations__.keys() if not name.startswith("_")
-        ]
-
         super().__init_subclass__(**kwargs)
 
         # Set new default values if needed
@@ -244,9 +239,6 @@ class AtomicRedisModel(BaseModel):
         # Skip dynamically created classes from type conversion
         if cls.__doc__ != DYNAMIC_CLASS_DOC:
             REDIS_MODELS.append(cls)
-
-            for field_name in field_names:
-                setattr(cls, field_name, ExpressionField(field_name))
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
