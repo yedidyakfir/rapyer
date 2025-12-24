@@ -1,11 +1,14 @@
 import redis.asyncio as redis_async
+from redis import ResponseError
 from redis.asyncio.client import Redis
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 
 from rapyer.base import REDIS_MODELS
 
 
-async def init_rapyer(redis: str | Redis = None, ttl: int = None):
+async def init_rapyer(
+    redis: str | Redis = None, ttl: int = None, override_old_idx: bool = True
+):
     if isinstance(redis, str):
         redis = redis_async.from_url(redis, decode_responses=True, max_connections=20)
 
@@ -22,18 +25,19 @@ async def init_rapyer(redis: str | Redis = None, ttl: int = None):
 
                 index_name = f"idx:{model.class_key_initials()}"
 
-                try:
-                    # Try to create the index
-                    await redis.ft(index_name).create_index(
-                        fields,
-                        definition=IndexDefinition(
-                            prefix=[f"{model.class_key_initials()}:"],
-                            index_type=IndexType.JSON,
-                        ),
-                    )
-                except Exception:
-                    # Index might already exist, ignore the error
-                    pass
+                if override_old_idx:
+                    try:
+                        await redis.ft(index_name).dropindex(delete_documents=False)
+                    except ResponseError as e:
+                        pass
+
+                await redis.ft(index_name).create_index(
+                    fields,
+                    definition=IndexDefinition(
+                        prefix=[f"{model.class_key_initials()}:"],
+                        index_type=IndexType.JSON,
+                    ),
+                )
 
 
 async def teardown_rapyer():
