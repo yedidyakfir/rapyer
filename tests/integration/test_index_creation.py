@@ -181,3 +181,71 @@ async def test_index_override_preserves_existing_data(redis_client, clean_test_i
     for key in model_keys:
         exists = await redis_client.exists(key)
         assert exists == 1, f"Model with key {key} was lost after index override"
+
+
+@pytest.mark.asyncio
+async def test_index_override_false_preserves_existing_index(
+    redis_client, clean_test_indexes
+):
+    """
+    Test that when override_old_idx=False, existing index is preserved and not overridden.
+    """
+    # Arrange
+    IndexTestModel.Meta.redis = redis_client
+
+    # Create a manual index with different fields than what the model expects
+    index_name = f"idx:{IndexTestModel.class_key_initials()}"
+    await redis_client.execute_command(
+        "FT.CREATE",
+        index_name,
+        "ON",
+        "JSON",
+        "PREFIX",
+        "1",
+        f"{IndexTestModel.class_key_initials()}:",
+        "SCHEMA",
+        "original_field",
+        "TEXT",
+        "preserved_field",
+        "NUMERIC",
+    )
+
+    # Verify the original index exists and capture its schema
+    original_info = await redis_client.ft(index_name).info()
+    original_fields = {}
+    for attr in original_info["attributes"]:
+        field_name = attr[1]  # Field name
+        field_type = attr[5]  # Field type
+        original_fields[field_name] = field_type
+
+    # Act
+    await init_rapyer(redis=redis_client, override_old_idx=False)
+
+    # Assert - Check that the original index was preserved
+    current_info = await redis_client.ft(index_name).info()
+    current_fields = {}
+    for attr in current_info["attributes"]:
+        field_name = attr[1]  # Field name
+        field_type = attr[5]  # Field type
+        current_fields[field_name] = field_type
+
+    # Verify the index still has the original schema (not the model's expected schema)
+    assert (
+        current_fields == original_fields
+    ), "Index schema changed despite override_old_idx=False"
+
+    # Verify original fields are still present
+    assert (
+        "original_field" in current_fields
+    ), "Original field was removed despite override_old_idx=False"
+    assert (
+        "preserved_field" in current_fields
+    ), "Preserved field was removed despite override_old_idx=False"
+
+    # Verify the model's expected fields are NOT in the index
+    assert (
+        "name" not in current_fields
+    ), "Model field 'name' was added despite override_old_idx=False"
+    assert (
+        "age" not in current_fields
+    ), "Model field 'age' was added despite override_old_idx=False"
