@@ -22,6 +22,7 @@ from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
+from rapyer.fields.expression import ExpressionField
 from rapyer.fields.key import KeyAnnotation
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
@@ -151,6 +152,12 @@ class AtomicRedisModel(BaseModel):
         cls.__annotations__ = {**cls.__annotations__, **new_annotations}
         for field_name, field in pydantic_annotation.items():
             setattr(cls, field_name, field)
+
+        # Store field names before calling super().__init_subclass__
+        field_names = [
+            name for name in cls.__annotations__.keys() if not name.startswith("_")
+        ]
+
         super().__init_subclass__(**kwargs)
 
         # Set new default values if needed
@@ -165,6 +172,10 @@ class AtomicRedisModel(BaseModel):
 
             value = getattr(cls, attr_name, None)
             if value is None:
+                continue
+
+            # Skip if the value is an ExpressionField (from parent class)
+            if isinstance(value, ExpressionField):
                 continue
 
             real_type = find_first_type_in_annotation(attr_type)
@@ -197,6 +208,9 @@ class AtomicRedisModel(BaseModel):
         # Skip dynamically created classes from type conversion
         if cls.__doc__ != DYNAMIC_CLASS_DOC:
             REDIS_MODELS.append(cls)
+
+            for field_name in field_names:
+                setattr(cls, field_name, ExpressionField(field_name))
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
