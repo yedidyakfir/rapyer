@@ -20,7 +20,7 @@ async def test_basic_index_creation(redis_client):
     fields_in_index = {}
     for attr in info["attributes"]:
         field_name = attr[1]  # Field name
-        field_type = attr[3]  # Field type
+        field_type = attr[5]  # Field type
         fields_in_index[field_name] = field_type
 
     # Assert indexed fields are present with correct types
