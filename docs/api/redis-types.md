@@ -129,10 +129,10 @@ counter = Counter(count=5)
 await counter.asave()
 
 # Atomically increment by 1
-new_value = await counter.count.increase()  # Returns 6
+new_value = await counter.count.aincrease()  # Returns 6
 
 # Increment by custom amount
-new_value = await counter.count.increase(10)  # Returns 16
+new_value = await counter.count.aincrease(10)  # Returns 16
 ```
 
 #### `clone()`
