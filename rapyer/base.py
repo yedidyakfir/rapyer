@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import contextlib
-import functools
 import pickle
 import uuid
 from typing import ClassVar, Any, AsyncGenerator
@@ -11,13 +10,10 @@ from pydantic import (
     BaseModel,
     PrivateAttr,
     ConfigDict,
-    TypeAdapter,
     model_validator,
     field_serializer,
     field_validator,
 )
-from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
 from redis.commands.search.field import TextField
 
@@ -38,8 +34,6 @@ from rapyer.utils.annotation import (
 )
 from rapyer.utils.fields import (
     get_all_pydantic_annotation,
-    find_first_type_in_annotation,
-    convert_field_factory_type,
     is_redis_field,
 )
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
@@ -200,7 +194,6 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, serializer.__name__, serializer)
                 setattr(cls, validator.__name__, validator)
                 continue
-
 
         # Update the redis model list for initialization
         # Skip dynamically created classes from type conversion

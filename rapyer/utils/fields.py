@@ -1,27 +1,7 @@
-import inspect
-from typing import get_origin, get_args, Any, Callable, ClassVar
+from typing import get_origin, ClassVar
 
-from pydantic import TypeAdapter, BaseModel
+from pydantic import BaseModel
 from pydantic.fields import FieldInfo
-
-
-def find_first_type_in_annotation(annotation: Any) -> type | None:
-    origin = get_origin(annotation)
-    if origin is None:
-        return annotation
-    if inspect.isclass(origin):
-        return origin
-    args = get_args(annotation)
-
-    if args:
-        return find_first_type_in_annotation(args[0])
-
-    return None
-
-
-def convert_field_factory_type(original_factory: Callable, adapter: TypeAdapter):
-    original_value = original_factory()
-    return adapter.validate_python(original_value)
 
 
 def _collect_annotations_recursive(
