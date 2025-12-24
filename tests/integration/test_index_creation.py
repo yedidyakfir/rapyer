@@ -116,56 +116,6 @@ async def test_basic_index_creation(redis_client, clean_test_indexes):
             ), f"Non-indexed field '{field_name}' found in index for {model.__name__}"
 
 
-@pytest_asyncio.fixture
-async def pre_existing_index(redis_client):
-    """
-    Fixture that creates a pre-existing index before the test and cleans it up after.
-    This simulates an index that existed before our test ran.
-    """
-    index_name = "idx:test_preserve_index"
-
-    # Create the pre-existing index
-    try:
-        await redis_client.execute_command(
-            "FT.CREATE",
-            index_name,
-            "ON",
-            "JSON",
-            "PREFIX",
-            "1",
-            "test_preserve:",
-            "SCHEMA",
-            "test_field",
-            "TEXT",
-        )
-    except Exception:
-        # Index might already exist from previous test, drop and recreate
-        try:
-            await redis_client.execute_command("FT.DROPINDEX", index_name)
-            await redis_client.execute_command(
-                "FT.CREATE",
-                index_name,
-                "ON",
-                "JSON",
-                "PREFIX",
-                "1",
-                "test_preserve:",
-                "SCHEMA",
-                "test_field",
-                "TEXT",
-            )
-        except Exception:
-            pass
-
-    yield index_name
-
-    # Clean up after test
-    try:
-        await redis_client.execute_command("FT.DROPINDEX", index_name)
-    except Exception:
-        pass
-
-
 @pytest.mark.asyncio
 async def test_cleanup_preserves_existing_indexes(
     redis_client, pre_existing_index, clean_test_indexes
