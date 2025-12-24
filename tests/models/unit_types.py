@@ -12,6 +12,10 @@ class SimpleIntModel(AtomicRedisModel):
     count: int = 0
 
 
+class SimpleFloatModel(AtomicRedisModel):
+    value: float = 0.0
+
+
 class SimpleBoolModel(AtomicRedisModel):
     flag: bool = False
 
