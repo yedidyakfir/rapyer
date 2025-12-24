@@ -304,7 +304,7 @@ if __name__ == "__main__":
 
 ### Bulk Model Deletion - `adelete_many()`
 
-For better performance when deleting multiple models, use the `adelete_many()` classmethod which performs all deletions in a single Redis transaction:
+For better performance when deleting multiple models, use the `adelete_many()` classmethod which performs all deletions in a single Redis transaction. You can pass either model instances or Redis keys directly:
 
 ```python
 async def bulk_delete_example():
@@ -320,9 +320,18 @@ async def bulk_delete_example():
     await User.ainsert(*users)
     print(f"Created {len(users)} users")
     
-    # Bulk delete all users in a single transaction
+    # Method 1: Bulk delete using model instances
     await User.adelete_many(*users)
     print(f"Successfully deleted {len(users)} users in one transaction")
+    
+    # Method 2: Bulk delete using Redis keys
+    user_keys = ["User:123", "User:456", "User:789"]
+    await User.adelete_many(*user_keys)
+    print(f"Successfully deleted users by keys")
+    
+    # Method 3: Mix models and keys
+    await User.adelete_many(users[0], "User:xyz", users[1].key)
+    print(f"Successfully deleted using mixed inputs")
     
     # Verify all users were deleted
     remaining_users = await User.afind()

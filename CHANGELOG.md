@@ -5,6 +5,7 @@
 ### ✨ Added
 - **Bulk Insert**: We added the ainsert classmethod to AtomicRedisModel to insert multiple models in a single operation. 
 - **Bulk delete**: We added the adelete_many classmethod to AtomicRedisModel to delete many objects in a single operation.
+- **Flexible Bulk Delete**: The adelete_many method now supports both model instances and Redis keys as arguments, allowing for more flexible bulk deletion operations. You can mix and match models and keys in a single call.
 
 ### ⚠️ Deprecated
 - **Function Name Migration to Async**: The following functions have been renamed to follow async naming conventions. We moved to a strict convention to support non async models in a future version. Old names are deprecated and will be removed in a future version:
