@@ -1,8 +1,5 @@
 import pytest
 import pytest_asyncio
-from redis import ResponseError
-from redis.commands.search.field import NumericField, TextField
-from redis.commands.search.index_definition import IndexDefinition, IndexType
 
 from tests.models.simple_types import IntModel, StrModel
 
