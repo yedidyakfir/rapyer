@@ -1,19 +1,20 @@
 import pytest
 import pytest_asyncio
 
+from tests.models.index_types import IndexTestModel, BaseIndexModel
 from tests.models.simple_types import IntModel, StrModel
 
 
 @pytest_asyncio.fixture
 async def create_indices(redis_client):
     # Create index for IntModel
-    await IntModel.acreate_index()
-    await StrModel.acreate_index()
+    await IndexTestModel.acreate_index()
+    await BaseIndexModel.acreate_index()
 
     yield
 
-    await IntModel.adelete_index()
-    await StrModel.adelete_index()
+    await IndexTestModel.adelete_index()
+    await BaseIndexModel.adelete_index()
 
 
 @pytest.mark.asyncio
