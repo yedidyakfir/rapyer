@@ -100,7 +100,7 @@ class RedisType(ABC):
 
     @classmethod
     def redis_schema(cls, field_name: str):
-        return TextField(field_name)
+        return TextField(f"$.{field_name}", as_name=field_name)
 
     @classmethod
     def __get_pydantic_core_schema__(

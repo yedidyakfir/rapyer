@@ -10,7 +10,7 @@ class RedisFloat(float, RedisType):
 
     @classmethod
     def redis_schema(cls, field_name: str):
-        return NumericField(field_name)
+        return NumericField(f"$.{field_name}", as_name=field_name)
 
     async def aincrease(self, amount: float = 1.0):
         result = await self.client.json().numincrby(self.key, self.json_path, amount)

@@ -16,11 +16,6 @@ from pydantic import (
     field_validator,
 )
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
-from redis import ResponseError
-from redis.commands.search.field import TextField
-from redis.commands.search.index_definition import IndexDefinition, IndexType
-from redis.commands.search.query import Query
-
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
@@ -36,11 +31,13 @@ from rapyer.utils.annotation import (
     has_annotation,
     DYNAMIC_CLASS_DOC,
 )
-from rapyer.utils.fields import (
-    get_all_pydantic_annotation,
-    is_redis_field,
-)
+from rapyer.utils.fields import get_all_pydantic_annotation, is_redis_field
+from rapyer.links import REDIS_SUPPORTED_LINK
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
+from redis import ResponseError
+from redis.commands.search.field import NumericField, TextField
+from redis.commands.search.index_definition import IndexDefinition, IndexType
+from redis.commands.search.query import Query
 
 
 def make_pickle_field_serializer(field: str):
@@ -123,10 +120,7 @@ class AtomicRedisModel(BaseModel):
 
             # Get the actual type from Annotated if needed
             args = get_args(annotation)
-            if args:
-                real_type = args[0]
-            else:
-                real_type = annotation
+            real_type = args[0] if args else annotation
 
             # Check if real_type is a class before using issubclass
             if isinstance(real_type, type):
@@ -139,7 +133,13 @@ class AtomicRedisModel(BaseModel):
                     field_schema = real_type.redis_schema(field_name)
                     fields.append(field_schema)
                 else:
-                    fields.append(TextField(field_name))
+                    raise RuntimeError(
+                        f"Indexed field {field_name} must be redis-supported to be indexed, see {REDIS_SUPPORTED_LINK}"
+                    )
+            else:
+                raise RuntimeError(
+                    f"Indexed field {field_name} must be a simple redis-supported type, see {REDIS_SUPPORTED_LINK}"
+                )
 
         return fields
 

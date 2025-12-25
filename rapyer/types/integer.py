@@ -11,7 +11,7 @@ class RedisInt(int, RedisType):
 
     @classmethod
     def redis_schema(cls, field_name: str):
-        return NumericField(field_name)
+        return NumericField(f"$.{field_name}", as_name=field_name)
 
     @deprecated(
         f"increase function is deprecated and will become sync function in rapyer 1.2.0, use aincrease() instead"
