@@ -2,7 +2,6 @@ import pytest
 import pytest_asyncio
 
 from tests.models.index_types import IndexTestModel, BaseIndexModel
-from tests.models.simple_types import IntModel, StrModel
 
 
 @pytest_asyncio.fixture
@@ -21,21 +20,21 @@ async def create_indices(redis_client):
 async def test_afind_with_single_expression_sanity(create_indices):
     # Arrange
     models = [
-        IntModel(count=5, score=50),
-        IntModel(count=10, score=100),
-        IntModel(count=15, score=150),
-        IntModel(count=20, score=200),
+        IndexTestModel(name="Alice", age=25, description="Engineer"),
+        IndexTestModel(name="Bob", age=30, description="Manager"),
+        IndexTestModel(name="Charlie", age=35, description="Designer"),
+        IndexTestModel(name="David", age=40, description="Director"),
     ]
-    await IntModel.ainsert(*models)
+    await IndexTestModel.ainsert(*models)
 
     # Act
-    IntModel.init_class()
-    found_models = await IntModel.afind(IntModel.count > 10)
+    IndexTestModel.init_class()
+    found_models = await IndexTestModel.afind(IndexTestModel.age > 30)
 
     # Assert
     assert len(found_models) == 2
     for model in models:
-        if model.count > 10:
+        if model.age > 30:
             assert model in found_models
 
 
@@ -43,21 +42,23 @@ async def test_afind_with_single_expression_sanity(create_indices):
 async def test_afind_with_multiple_expressions_sanity(create_indices):
     # Arrange
     models = [
-        IntModel(count=5, score=50),
-        IntModel(count=10, score=100),
-        IntModel(count=15, score=150),
-        IntModel(count=20, score=200),
+        IndexTestModel(name="Alice", age=25, description="Engineer"),
+        IndexTestModel(name="Bob", age=30, description="Manager"),
+        IndexTestModel(name="Charlie", age=35, description="Designer"),
+        IndexTestModel(name="David", age=40, description="Director"),
     ]
-    await IntModel.ainsert(*models)
+    await IndexTestModel.ainsert(*models)
 
     # Act
-    IntModel.init_class()
-    found_models = await IntModel.afind(IntModel.count >= 10, IntModel.score <= 150)
+    IndexTestModel.init_class()
+    found_models = await IndexTestModel.afind(
+        IndexTestModel.age >= 30, IndexTestModel.name == "Charlie"
+    )
 
     # Assert
-    assert len(found_models) == 2
+    assert len(found_models) == 1
     for model in models:
-        if model.count >= 10 and model.score <= 150:
+        if model.age >= 30 and model.name == "Charlie":
             assert model in found_models
 
 
@@ -65,22 +66,22 @@ async def test_afind_with_multiple_expressions_sanity(create_indices):
 async def test_afind_with_combined_expressions_sanity(create_indices):
     # Arrange
     models = [
-        IntModel(count=5, score=50),
-        IntModel(count=10, score=100),
-        IntModel(count=15, score=150),
-        IntModel(count=20, score=200),
+        IndexTestModel(name="Alice", age=25, description="Engineer"),
+        IndexTestModel(name="Bob", age=30, description="Manager"),
+        IndexTestModel(name="Charlie", age=35, description="Designer"),
+        IndexTestModel(name="David", age=40, description="Director"),
     ]
-    await IntModel.ainsert(*models)
+    await IndexTestModel.ainsert(*models)
 
     # Act
-    IntModel.init_class()
-    expression = (IntModel.count > 5) & (IntModel.score < 180)
-    found_models = await IntModel.afind(expression)
+    IndexTestModel.init_class()
+    expression = (IndexTestModel.age > 25) & (IndexTestModel.age < 40)
+    found_models = await IndexTestModel.afind(expression)
 
     # Assert
     assert len(found_models) == 2
     for model in models:
-        if model.count > 5 and model.score < 180:
+        if model.age > 25 and model.age < 40:
             assert model in found_models
 
 
@@ -88,22 +89,22 @@ async def test_afind_with_combined_expressions_sanity(create_indices):
 async def test_afind_with_or_expression_sanity(create_indices):
     # Arrange
     models = [
-        IntModel(count=5, score=50),
-        IntModel(count=10, score=100),
-        IntModel(count=15, score=150),
-        IntModel(count=20, score=200),
+        IndexTestModel(name="Alice", age=25, description="Engineer"),
+        IndexTestModel(name="Bob", age=30, description="Manager"),
+        IndexTestModel(name="Charlie", age=35, description="Designer"),
+        IndexTestModel(name="David", age=40, description="Director"),
     ]
-    await IntModel.ainsert(*models)
+    await IndexTestModel.ainsert(*models)
 
     # Act
-    IntModel.init_class()
-    expression = (IntModel.count <= 5) | (IntModel.count >= 20)
-    found_models = await IntModel.afind(expression)
+    IndexTestModel.init_class()
+    expression = (IndexTestModel.age <= 25) | (IndexTestModel.age >= 40)
+    found_models = await IndexTestModel.afind(expression)
 
     # Assert
     assert len(found_models) == 2
     for model in models:
-        if model.count <= 5 or model.count >= 20:
+        if model.age <= 25 or model.age >= 40:
             assert model in found_models
 
 
@@ -111,14 +112,14 @@ async def test_afind_with_or_expression_sanity(create_indices):
 async def test_afind_without_expressions_returns_all_sanity():
     # Arrange
     models = [
-        IntModel(count=5, score=50),
-        IntModel(count=10, score=100),
-        IntModel(count=15, score=150),
+        IndexTestModel(name="Alice", age=25, description="Engineer"),
+        IndexTestModel(name="Bob", age=30, description="Manager"),
+        IndexTestModel(name="Charlie", age=35, description="Designer"),
     ]
-    await IntModel.ainsert(*models)
+    await IndexTestModel.ainsert(*models)
 
     # Act
-    found_models = await IntModel.afind()
+    found_models = await IndexTestModel.afind()
 
     # Assert
     assert len(found_models) == 3
@@ -130,16 +131,16 @@ async def test_afind_without_expressions_returns_all_sanity():
 async def test_afind_with_string_field_expression_sanity(create_indices):
     # Arrange
     models = [
-        StrModel(name="Alice", description="Engineer"),
-        StrModel(name="Bob", description="Manager"),
-        StrModel(name="Charlie", description="Designer"),
-        StrModel(name="David", description="Engineer"),
+        IndexTestModel(name="Alice", age=25, description="Engineer"),
+        IndexTestModel(name="Bob", age=30, description="Manager"),
+        IndexTestModel(name="Charlie", age=35, description="Designer"),
+        IndexTestModel(name="David", age=40, description="Engineer"),
     ]
-    await StrModel.ainsert(*models)
+    await IndexTestModel.ainsert(*models)
 
     # Act
-    StrModel.init_class()
-    found_models = await StrModel.afind(StrModel.name == "Alice")
+    IndexTestModel.init_class()
+    found_models = await IndexTestModel.afind(IndexTestModel.name == "Alice")
 
     # Assert
     assert len(found_models) == 1
@@ -152,19 +153,19 @@ async def test_afind_with_string_field_expression_sanity(create_indices):
 async def test_afind_with_not_expression_sanity(create_indices):
     # Arrange
     models = [
-        IntModel(count=5, score=50),
-        IntModel(count=10, score=100),
-        IntModel(count=15, score=150),
+        IndexTestModel(name="Alice", age=25, description="Engineer"),
+        IndexTestModel(name="Bob", age=30, description="Manager"),
+        IndexTestModel(name="Charlie", age=35, description="Designer"),
     ]
-    await IntModel.ainsert(*models)
+    await IndexTestModel.ainsert(*models)
 
     # Act
-    IntModel.init_class()
-    expression = ~(IntModel.count == 10)
-    found_models = await IntModel.afind(expression)
+    IndexTestModel.init_class()
+    expression = ~(IndexTestModel.age == 30)
+    found_models = await IndexTestModel.afind(expression)
 
     # Assert
     assert len(found_models) == 2
     for model in models:
-        if model.count != 10:
+        if model.age != 30:
             assert model in found_models
