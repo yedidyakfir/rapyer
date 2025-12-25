@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import contextlib
+import functools
 import pickle
 import uuid
 from typing import ClassVar, Any, AsyncGenerator
@@ -336,19 +337,65 @@ class AtomicRedisModel(BaseModel):
         return instance
 
     @classmethod
-    async def afind(cls):
-        keys = await cls.afind_keys()
-        if not keys:
-            return []
+    async def afind(cls, *expressions):
+        # Original behavior when no expressions provided - return all
+        if not expressions:
+            keys = await cls.afind_keys()
+            if not keys:
+                return []
 
-        models = await cls.Meta.redis.json().mget(keys=keys, path="$")
+            models = await cls.Meta.redis.json().mget(keys=keys, path="$")
 
-        instances = []
-        for model, key in zip(models, keys):
-            model = cls.model_validate(model[0], context={REDIS_DUMP_FLAG_NAME: True})
-            model.key = key
-            instances.append(model)
-        return instances
+            instances = []
+            for model, key in zip(models, keys):
+                model = cls.model_validate(
+                    model[0], context={REDIS_DUMP_FLAG_NAME: True}
+                )
+                model.key = key
+                instances.append(model)
+            return instances
+
+        # With expressions - use Redis Search
+        # Combine all expressions with & operator
+        combined_expression = functools.reduce(lambda a, b: a & b, expressions)
+        query_string = combined_expression.create_filter()
+
+        # Create a Query object
+        query = Query(query_string).no_content()
+
+        # Try to search using the index
+        index_name = f"idx:{cls.__name__}"
+        try:
+            search_result = await cls.Meta.redis.ft(index_name).search(query)
+
+            if not search_result.docs:
+                return []
+
+            # Get the keys from search results
+            keys = [doc.id for doc in search_result.docs]
+
+            # Fetch the actual documents
+            models = await cls.Meta.redis.json().mget(keys=keys, path="$")
+
+            instances = []
+            for model, key in zip(models, keys):
+                if model:  # Check if model exists
+                    instance = cls.model_validate(
+                        model[0], context={REDIS_DUMP_FLAG_NAME: True}
+                    )
+                    instance.key = key
+                    instances.append(instance)
+
+            return instances
+
+        except ResponseError as e:
+            # If index doesn't exist, raise error to make it clear
+            if "no such index" in str(e).lower():
+                raise RuntimeError(
+                    f"Search index '{index_name}' does not exist. "
+                    f"Please create it using init_rapyer() or manually create the index."
+                ) from e
+            raise
 
     @classmethod
     async def afind_keys(cls):
