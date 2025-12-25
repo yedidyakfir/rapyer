@@ -7,6 +7,7 @@
 - **Bulk delete**: We added the adelete_many classmethod to AtomicRedisModel to delete many objects in a single operation.
 - **Flexible Bulk Delete**: The adelete_many method now supports both model instances and Redis keys as arguments, allowing for more flexible bulk deletion operations. You can mix and match models and keys in a single call.
 - **RedisFloat Type**: Added support for float Redis types with atomic increment operations and in-place arithmetic operations (+=, -=, *=, /=) within pipeline contexts.
+- **Global ainsert Function**: Added `rapyer.ainsert()` function to insert models of any type in a single operation, enabling bulk inserts of heterogeneous model types.
 
 ### ⚠️ Deprecated
 - **Function Name Migration to Async**: The following functions have been renamed to follow async naming conventions. We moved to a strict convention to support non async models in a future version. Old names are deprecated and will be removed in a future version:

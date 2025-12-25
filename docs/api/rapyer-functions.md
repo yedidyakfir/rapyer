@@ -1,6 +1,94 @@
+from rapyer import AtomicRedisModel
+
 # Rapyer Functions
 
 This page documents the global functions available in the rapyer package for working with Redis models.
+
+## ainsert()
+
+```python
+async def ainsert(*models: AtomicRedisModel) -> list[AtomicRedisModel]
+```
+
+Performs bulk insertion of multiple Redis models in a single transaction, supporting models of different types.
+
+### Description
+
+The `ainsert()` function provides a global way to insert multiple Redis models in a single atomic transaction. Unlike the class-specific `ainsert()` method, this global function can handle models of different types in a single operation.
+
+### Example
+
+```python
+import asyncio
+import rapyer
+from rapyer import AtomicRedisModel
+
+
+class User(AtomicRedisModel):
+    name: str
+    age: int
+    email: str
+
+
+class Product(AtomicRedisModel):
+    name: str
+    price: float
+    in_stock: bool
+
+
+class Order(AtomicRedisModel):
+    user_id: str
+    product_id: str
+    quantity: int
+
+
+async def main():
+    # Create instances of different model types
+    user = User(name="Alice", age=30, email="alice@example.com")
+    product1 = Product(name="Laptop", price=999.99, in_stock=True)
+    product2 = Product(name="Mouse", price=29.99, in_stock=True)
+    order = Order(user_id=user.key, product_id=product1.key, quantity=1)
+    
+    # Insert all models in a single transaction
+    await rapyer.ainsert(user, product1, product2, order)
+    print("All models inserted atomically")
+    
+    # Verify all models were saved
+    saved_user = await User.aget(user.key)
+    saved_product1 = await Product.aget(product1.key)
+    saved_order = await Order.aget(order.key)
+    
+    print(f"User: {saved_user.name}")
+    print(f"Product: {saved_product1.name}")
+    print(f"Order quantity: {saved_order.quantity}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Performance Benefits
+
+The global `ainsert()` function is particularly useful when:
+- You need to insert multiple models of different types
+- You want atomic guarantees across different model types
+- You're initializing related data that spans multiple model classes
+- You need optimal performance for bulk insertions
+
+### Comparison with Class-Specific ainsert()
+
+```python
+async def comparison_example():
+    users = [User(name=f"User{i}", age=20+i, email=f"user{i}@example.com") for i in range(3)]
+    products = [Product(name=f"Product{i}", price=10.0*i, in_stock=True) for i in range(3)]
+    
+    # ❌ Less efficient: Multiple transactions
+    await User.ainsert(*users)
+    await Product.ainsert(*products)
+    
+    # ✅ More efficient: Single transaction for all models
+    await rapyer.ainsert(*users, *products)
+```
 
 ## aget()
 

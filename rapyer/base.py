@@ -569,3 +569,11 @@ async def aget(redis_key: str) -> AtomicRedisModel:
 
 def find_redis_models() -> list[type[AtomicRedisModel]]:
     return REDIS_MODELS
+
+
+async def ainsert(*models: Unpack[AtomicRedisModel]) -> list[AtomicRedisModel]:
+    async with AtomicRedisModel.Meta.redis.pipeline() as pipe:
+        for model in models:
+            pipe.json().set(model.key, model.json_path, model.redis_dump())
+        await pipe.execute()
+    return models
