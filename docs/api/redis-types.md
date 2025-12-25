@@ -161,6 +161,91 @@ is_popular = post.views > 1000
 
 ---
 
+## RedisFloat
+
+A Redis-backed float type that extends Python's built-in `float` with atomic increment operations.
+
+```python
+from rapyer.types import RedisFloat
+
+class Product(AtomicRedisModel):
+    price: float  # Automatically becomes RedisFloat
+    discount: float = 0.0
+```
+
+### Inherits From
+- `float` - All standard float methods available
+- `RedisType` - All common Redis type functionality
+
+### Methods
+All standard Python `float` methods are available plus:
+
+#### `aincrease(amount=1.0)`
+**Type:** `async` method  
+**Parameters:**
+- `amount` (float): Amount to increment by (default: 1.0)  
+**Returns:** `float` - New value after increment  
+**Description:** Atomically increments the value in Redis.
+
+```python
+product = Product(price=99.99)
+await product.asave()
+
+# Atomically increment by 1.0
+new_price = await product.price.aincrease()  # Returns 100.99
+
+# Increment by custom amount
+new_price = await product.price.aincrease(10.50)  # Returns 111.49
+```
+
+#### In-Place Arithmetic Operations (Pipeline Context)
+RedisFloat supports in-place arithmetic operations that automatically sync with Redis when used within a pipeline:
+
+- `+=` - In-place addition
+- `-=` - In-place subtraction
+- `*=` - In-place multiplication
+- `/=` - In-place division
+
+```python
+async with product.apipeline():
+    product.price += 10.0    # Add 10.0
+    product.price *= 1.1     # Apply 10% increase
+    product.discount -= 5.0  # Reduce discount by 5.0
+    # All operations applied atomically when context exits
+```
+
+#### `clone()`
+**Returns:** `float`  
+**Description:** Returns a native Python float copy.
+
+### Example Usage
+
+```python
+class StockItem(AtomicRedisModel):
+    name: str
+    price: float = 0.0
+    weight: float = 0.0
+    rating: float = 5.0
+
+item = StockItem(name="Widget", price=19.99, weight=2.5)
+await item.asave()
+
+# Atomic increment operations
+await item.price.aincrease(5.0)      # Increase price by 5.0
+await item.rating.aincrease(-0.5)    # Decrease rating by 0.5
+
+# Standard float operations
+average_value = item.price / item.weight
+is_expensive = item.price > 100.0
+
+# Batch operations in pipeline
+async with item.apipeline():
+    item.price *= 0.9      # 10% discount
+    item.weight += 0.1     # Adjust weight
+```
+
+---
+
 ## RedisList
 
 A Redis-backed list type that extends Python's built-in `list` with atomic operations.
@@ -520,6 +605,7 @@ When you define model fields with standard Python types, they are automatically 
 class Example(AtomicRedisModel):
     text: str                    # → RedisStr
     number: int                  # → RedisInt
+    decimal: float               # → RedisFloat
     data: bytes                  # → RedisBytes
     timestamp: datetime          # → RedisDatetime
     tags: List[str]             # → RedisList[str]
