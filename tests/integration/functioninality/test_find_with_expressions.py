@@ -1,5 +1,8 @@
 import pytest
 import pytest_asyncio
+from redis import ResponseError
+from redis.commands.search.field import NumericField, TextField
+from redis.commands.search.index_definition import IndexDefinition, IndexType
 
 from tests.models.simple_types import IntModel, StrModel
 
@@ -47,9 +50,7 @@ async def test_afind_with_multiple_expressions_sanity(create_indices):
         IntModel(count=15, score=150),
         IntModel(count=20, score=200),
     ]
-
-    for model in models:
-        await model.asave()
+    await IntModel.ainsert(*models)
 
     # Act
     IntModel.init_class()
@@ -57,9 +58,9 @@ async def test_afind_with_multiple_expressions_sanity(create_indices):
 
     # Assert
     assert len(found_models) == 2
-    counts = [m.count for m in found_models]
-    assert 10 in counts
-    assert 15 in counts
+    for model in models:
+        if model.count >= 10 and model.score <= 150:
+            assert model in found_models
 
 
 @pytest.mark.asyncio
@@ -71,9 +72,7 @@ async def test_afind_with_combined_expressions_sanity(create_indices):
         IntModel(count=15, score=150),
         IntModel(count=20, score=200),
     ]
-
-    for model in models:
-        await model.asave()
+    await IntModel.ainsert(*models)
 
     # Act
     IntModel.init_class()
@@ -82,9 +81,9 @@ async def test_afind_with_combined_expressions_sanity(create_indices):
 
     # Assert
     assert len(found_models) == 2
-    counts = [m.count for m in found_models]
-    assert 10 in counts
-    assert 15 in counts
+    for model in models:
+        if model.count > 5 and model.score < 180:
+            assert model in found_models
 
 
 @pytest.mark.asyncio
@@ -96,9 +95,7 @@ async def test_afind_with_or_expression_sanity(create_indices):
         IntModel(count=15, score=150),
         IntModel(count=20, score=200),
     ]
-
-    for model in models:
-        await model.asave()
+    await IntModel.ainsert(*models)
 
     # Act
     IntModel.init_class()
@@ -107,9 +104,9 @@ async def test_afind_with_or_expression_sanity(create_indices):
 
     # Assert
     assert len(found_models) == 2
-    counts = [m.count for m in found_models]
-    assert 5 in counts
-    assert 20 in counts
+    for model in models:
+        if model.count <= 5 or model.count >= 20:
+            assert model in found_models
 
 
 @pytest.mark.asyncio
@@ -120,19 +117,15 @@ async def test_afind_without_expressions_returns_all_sanity():
         IntModel(count=10, score=100),
         IntModel(count=15, score=150),
     ]
-
-    for model in models:
-        await model.asave()
+    await IntModel.ainsert(*models)
 
     # Act
     found_models = await IntModel.afind()
 
     # Assert
     assert len(found_models) == 3
-    counts = [m.count for m in found_models]
-    assert 5 in counts
-    assert 10 in counts
-    assert 15 in counts
+    for model in models:
+        assert model in found_models
 
 
 @pytest.mark.asyncio
@@ -144,9 +137,7 @@ async def test_afind_with_string_field_expression_sanity(create_indices):
         StrModel(name="Charlie", description="Designer"),
         StrModel(name="David", description="Engineer"),
     ]
-
-    for model in models:
-        await model.asave()
+    await StrModel.ainsert(*models)
 
     # Act
     StrModel.init_class()
@@ -154,7 +145,9 @@ async def test_afind_with_string_field_expression_sanity(create_indices):
 
     # Assert
     assert len(found_models) == 1
-    assert found_models[0].name == "Alice"
+    for model in models:
+        if model.name == "Alice":
+            assert model in found_models
 
 
 @pytest.mark.asyncio
@@ -165,9 +158,7 @@ async def test_afind_with_not_expression_sanity(create_indices):
         IntModel(count=10, score=100),
         IntModel(count=15, score=150),
     ]
-
-    for model in models:
-        await model.asave()
+    await IntModel.ainsert(*models)
 
     # Act
     IntModel.init_class()
@@ -176,6 +167,6 @@ async def test_afind_with_not_expression_sanity(create_indices):
 
     # Assert
     assert len(found_models) == 2
-    counts = [m.count for m in found_models]
-    assert 5 in counts
-    assert 15 in counts
+    for model in models:
+        if model.count != 10:
+            assert model in found_models
