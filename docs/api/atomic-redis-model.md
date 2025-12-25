@@ -40,7 +40,7 @@ print(user.key)  # "User:abc-123-def-456"
 
 ### Instance Methods
 
-#### `save()`
+#### `asave()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Saves the current model instance to Redis using JSON.SET operation.
@@ -50,7 +50,7 @@ user = User(name="John", age=30)
 await user.asave()
 ```
 
-#### `load()`
+#### `aload()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Loads the latest data from Redis for this model instance, updating the current instance.
@@ -59,7 +59,7 @@ await user.asave()
 await user.aload()  # Refreshes user with latest Redis data
 ```
 
-#### `delete()`
+#### `adelete()`
 **Type:** `async` method  
 **Returns:** `bool`  
 **Description:** Deletes this model instance from Redis. Can only be called on top-level models (not nested ones).
@@ -68,7 +68,7 @@ await user.aload()  # Refreshes user with latest Redis data
 success = await user.adelete()
 ```
 
-#### `duplicate()`
+#### `aduplicate()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Creates a duplicate of the current model with a new primary key and saves it to Redis.
@@ -77,7 +77,7 @@ success = await user.adelete()
 user_copy = await user.aduplicate()
 ```
 
-#### `duplicate_many(num)`
+#### `aduplicate_many(num)`
 **Type:** `async` method  
 **Parameters:** 
 - `num` (int): Number of duplicates to create  
@@ -120,7 +120,7 @@ if user.is_inner_model():
 
 ### Class Methods
 
-#### `get(key)`
+#### `aget(key)`
 **Type:** `async` class method  
 **Parameters:** 
 - `key` (str): The Redis key to retrieve  
@@ -132,7 +132,7 @@ if user.is_inner_model():
 user = await User.aget("User:abc-123")
 ```
 
-#### `delete_by_key(key)`
+#### `adelete_by_key(key)`
 **Type:** `async` class method  
 **Parameters:** 
 - `key` (str): The Redis key to delete  
@@ -224,7 +224,7 @@ class User(AtomicRedisModel):
 
 ### Context Managers
 
-#### `lock_from_key(key, action="default", save_at_end=False)`
+#### `alock_from_key(key, action="default", save_at_end=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `key` (str): Redis key to lock
@@ -239,7 +239,7 @@ async with User.alock_from_key("User:123", "profile_update", save_at_end=True) a
     # Automatically saved when context exits
 ```
 
-#### `lock(action="default", save_at_end=False)`
+#### `alock(action="default", save_at_end=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `action` (str): Lock action name
@@ -252,7 +252,7 @@ async with user.alock("settings_update", save_at_end=True) as locked_user:
     locked_user.settings = {"theme": "dark"}
 ```
 
-#### `pipeline(ignore_if_deleted=False)`
+#### `apipeline(ignore_if_deleted=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `ignore_if_deleted` (bool): Continue if model was deleted during pipeline  

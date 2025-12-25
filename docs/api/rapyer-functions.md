@@ -2,10 +2,10 @@
 
 This page documents the global functions available in the rapyer package for working with Redis models.
 
-## get()
+## aget()
 
 ```python
-async def get(redis_key: str) -> AtomicRedisModel
+async def aget(redis_key: str) -> AtomicRedisModel
 ```
 
 Retrieves a model instance from Redis by its key, automatically determining the correct model class.
@@ -25,11 +25,11 @@ Retrieves a model instance from Redis by its key, automatically determining the 
 
 ### Description
 
-The `get()` function provides a global way to retrieve any model instance from Redis without knowing its specific class beforehand. It works by:
+The `aget()` function provides a global way to retrieve any model instance from Redis without knowing its specific class beforehand. It works by:
 
 1. Extracting the class name from the Redis key format (`ClassName:instance_id`)
 2. Looking up the appropriate model class from the registered Redis models
-3. Calling the class-specific `get()` method to retrieve and deserialize the instance
+3. Calling the class-specific `aget()` method to retrieve and deserialize the instance
 
 This is particularly useful when you have multiple model types and want a unified retrieval mechanism, or when working with keys of unknown model types.
 
@@ -61,7 +61,7 @@ async def main():
     await user.asave()
     await product.asave()
 
-    # Retrieve using global get function
+    # Retrieve using global aget function
     retrieved_user = await rapyer.aget(user.key)
     retrieved_product = await rapyer.aget(product.key)
 
