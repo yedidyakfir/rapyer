@@ -150,7 +150,9 @@ class AtomicRedisModel(BaseModel):
     @classmethod
     async def acreate_index(cls):
         fields = cls.redis_schema()
-        await cls.Meta.redis.ft(cls.class_key_initials()).create_index(
+        if not fields:
+            return
+        await cls.Meta.redis.ft(cls.index_name()).create_index(
             fields,
             definition=IndexDefinition(
                 prefix=[f"{cls.class_key_initials()}:"],
