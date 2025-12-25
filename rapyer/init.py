@@ -25,21 +25,13 @@ async def init_rapyer(
         if redis is not None:
             fields = model.redis_schema()
             if fields:
-                index_name = f"idx:{model.class_key_initials()}"
-
                 if override_old_idx:
                     try:
-                        await redis.ft(index_name).dropindex(delete_documents=False)
+                        await model.adelete_index()
                     except ResponseError as e:
                         pass
                 try:
-                    await redis.ft(index_name).create_index(
-                        fields,
-                        definition=IndexDefinition(
-                            prefix=[f"{model.class_key_initials()}:"],
-                            index_type=IndexType.JSON,
-                        ),
-                    )
+                    await model.acreate_index()
                 except ResponseError as e:
                     if override_old_idx:
                         raise

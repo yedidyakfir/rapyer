@@ -15,7 +15,10 @@ from pydantic import (
     field_validator,
 )
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
+from redis import ResponseError
 from redis.commands.search.field import TextField
+from redis.commands.search.index_definition import IndexDefinition, IndexType
+from redis.commands.search.query import Query
 
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
@@ -138,6 +141,25 @@ class AtomicRedisModel(BaseModel):
                     fields.append(TextField(field_name))
 
         return fields
+
+    @classmethod
+    def index_name(cls):
+        return f"idx:{cls.class_key_initials()}"
+
+    @classmethod
+    async def acreate_index(cls):
+        fields = cls.redis_schema()
+        await cls.Meta.redis.ft(cls.class_key_initials()).create_index(
+            fields,
+            definition=IndexDefinition(
+                prefix=[f"{cls.class_key_initials()}:"],
+                index_type=IndexType.JSON,
+            ),
+        )
+
+    @classmethod
+    async def adelete_index(cls):
+        await cls.Meta.redis.ft(cls.index_name()).dropindex(delete_documents=False)
 
     @classmethod
     def class_key_initials(cls):
