@@ -1,4 +1,7 @@
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Union
 
 
 class Expression:
@@ -13,6 +16,14 @@ class Expression:
 
     def __invert__(self) -> "NotExpression":
         return NotExpression(self)
+
+
+class ExpressionField(Expression):
+    def __init__(self, field_name: str):
+        self.field_name = field_name
+
+    def create_filter(self) -> str:
+        return f"@{self.field_name}:*"
 
     def __eq__(self, value: Any) -> "EqExpression":
         return EqExpression(self, value)
@@ -33,103 +44,79 @@ class Expression:
         return LteExpression(self, value)
 
 
-class ExpressionField(Expression):
-    def __init__(self, field_name: str):
-        self.field_name = field_name
-
-    def create_filter(self) -> str:
-        return f"@{self.field_name}:*"
-
-
 class EqExpression(Expression):
-    def __init__(self, left: Expression, right: Any):
+    def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
         self.operation = "eq"
 
     def create_filter(self) -> str:
-        if isinstance(self.left, ExpressionField):
-            # For string fields, wrap in quotes if needed
-            if isinstance(self.right, str):
-                # Escape special characters in the string
-                escaped_value = (
-                    self.right.replace('"', '\\"')
-                    .replace("\\", "\\\\")
-                    .replace("/", "\\/")
-                )
-                return f'@{self.left.field_name}:"{escaped_value}"'
-            # For numeric fields, use range syntax for exact match
-            return f"@{self.left.field_name}:[{self.right} {self.right}]"
-        return f"({self.left.create_filter()}) == {self.right}"
+        # For string fields, wrap in quotes if needed
+        if isinstance(self.right, str):
+            # Escape special characters in the string
+            escaped_value = (
+                self.right.replace('"', '\\"').replace("\\", "\\\\").replace("/", "\\/")
+            )
+            return f'@{self.left.field_name}:"{escaped_value}"'
+        # For numeric fields, use range syntax for exact match
+        return f"@{self.left.field_name}:[{self.right} {self.right}]"
 
 
 class NeExpression(Expression):
-    def __init__(self, left: Expression, right: Any):
+    def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
         self.operation = "ne"
 
     def create_filter(self) -> str:
-        if isinstance(self.left, ExpressionField):
-            # For not equal, we need to use different syntax
-            if isinstance(self.right, str):
-                escaped_value = (
-                    self.right.replace('"', '\\"')
-                    .replace("\\", "\\\\")
-                    .replace("/", "\\/")
-                )
-                return f'-@{self.left.field_name}:"{escaped_value}"'
-            # For numeric fields, use range syntax for exact match
-            return f"-@{self.left.field_name}:[{self.right} {self.right}]"
-        return f"({self.left.create_filter()}) != {self.right}"
+        # For not equal, we need to use different syntax
+        if isinstance(self.right, str):
+            escaped_value = (
+                self.right.replace('"', '\\"').replace("\\", "\\\\").replace("/", "\\/")
+            )
+            return f'-@{self.left.field_name}:"{escaped_value}"'
+        # For numeric fields, use range syntax for exact match
+        return f"-@{self.left.field_name}:[{self.right} {self.right}]"
 
 
 class GtExpression(Expression):
-    def __init__(self, left: Expression, right: Any):
+    def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
         self.operation = "gt"
 
     def create_filter(self) -> str:
-        if isinstance(self.left, ExpressionField):
-            return f"@{self.left.field_name}:[({self.right} +inf]"
-        return f"({self.left.create_filter()}) > {self.right}"
+        return f"@{self.left.field_name}:[({self.right} +inf]"
 
 
 class LtExpression(Expression):
-    def __init__(self, left: Expression, right: Any):
+    def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
         self.operation = "lt"
 
     def create_filter(self) -> str:
-        if isinstance(self.left, ExpressionField):
-            return f"@{self.left.field_name}:[-inf ({self.right}]"
-        return f"({self.left.create_filter()}) < {self.right}"
+        return f"@{self.left.field_name}:[-inf ({self.right}]"
 
 
 class GteExpression(Expression):
-    def __init__(self, left: Expression, right: Any):
+    def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
         self.operation = "gte"
 
     def create_filter(self) -> str:
-        if isinstance(self.left, ExpressionField):
-            return f"@{self.left.field_name}:[{self.right} +inf]"
-        return f"({self.left.create_filter()}) >= {self.right}"
+        return f"@{self.left.field_name}:[{self.right} +inf]"
 
 
 class LteExpression(Expression):
-    def __init__(self, left: Expression, right: Any):
+    def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
         self.operation = "lte"
 
     def create_filter(self) -> str:
-        if isinstance(self.left, ExpressionField):
-            return f"@{self.left.field_name}:[-inf {self.right}]"
-        return f"({self.left.create_filter()}) <= {self.right}"
+        return f"@{self.left.field_name}:[-inf {self.right}]"
 
 
 class AndExpression(Expression):
