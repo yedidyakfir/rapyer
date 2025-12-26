@@ -1,7 +1,4 @@
-from typing import Any, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Union
+from typing import Any
 
 
 class Expression:
@@ -48,7 +45,6 @@ class EqExpression(Expression):
     def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
-        self.operation = "eq"
 
     def create_filter(self) -> str:
         # For string fields, wrap in quotes if needed
@@ -66,7 +62,6 @@ class NeExpression(Expression):
     def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
-        self.operation = "ne"
 
     def create_filter(self) -> str:
         # For not equal, we need to use different syntax
@@ -83,7 +78,6 @@ class GtExpression(Expression):
     def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
-        self.operation = "gt"
 
     def create_filter(self) -> str:
         return f"@{self.left.field_name}:[({self.right} +inf]"
@@ -93,7 +87,6 @@ class LtExpression(Expression):
     def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
-        self.operation = "lt"
 
     def create_filter(self) -> str:
         return f"@{self.left.field_name}:[-inf ({self.right}]"
@@ -103,7 +96,6 @@ class GteExpression(Expression):
     def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
-        self.operation = "gte"
 
     def create_filter(self) -> str:
         return f"@{self.left.field_name}:[{self.right} +inf]"
@@ -113,7 +105,6 @@ class LteExpression(Expression):
     def __init__(self, left: ExpressionField, right: Any):
         self.left = left
         self.right = right
-        self.operation = "lte"
 
     def create_filter(self) -> str:
         return f"@{self.left.field_name}:[-inf {self.right}]"
@@ -123,7 +114,6 @@ class AndExpression(Expression):
     def __init__(self, left: Expression, right: Expression):
         self.left = left
         self.right = right
-        self.operation = "and"
 
     def create_filter(self) -> str:
         # In Redis Search, AND is implicit with space
@@ -136,7 +126,6 @@ class OrExpression(Expression):
     def __init__(self, left: Expression, right: Expression):
         self.left = left
         self.right = right
-        self.operation = "or"
 
     def create_filter(self) -> str:
         # In Redis Search, OR needs pipe operator
@@ -148,7 +137,6 @@ class OrExpression(Expression):
 class NotExpression(Expression):
     def __init__(self, expression: Expression):
         self.expression = expression
-        self.operation = "not"
 
     def create_filter(self) -> str:
         # NOT operator in Redis Search
