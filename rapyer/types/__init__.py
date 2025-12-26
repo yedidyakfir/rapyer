@@ -1,5 +1,5 @@
 from rapyer.types.byte import RedisBytes
-from rapyer.types.datetime import RedisDatetime
+from rapyer.types.datetime import RedisDatetime, RedisDatetimeTimestamp
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
@@ -13,5 +13,6 @@ __all__ = [
     "RedisList",
     "RedisDict",
     "RedisDatetime",
+    "RedisDatetimeTimestamp",
     "RedisFloat",
 ]
