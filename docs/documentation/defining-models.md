@@ -12,6 +12,7 @@ class User(AtomicRedisModel):
     name: str
     age: int
     email: str
+    balance: float = 0.0
     tags: List[str] = []
     preferences: Dict[str, str] = {}
 ```
@@ -29,6 +30,7 @@ async def main():
         name="Alice", 
         age=25, 
         email="alice@example.com",
+        balance=100.50,
         tags=["python", "developer"],
         preferences={"theme": "dark", "language": "en"}
     )
@@ -47,6 +49,9 @@ async def main():
     # Atomic string/numeric operations
     user.age += 1
     await user.age.asave()  # Save updated age atomically
+    
+    # Atomic float operations
+    await user.balance.aincrease(50.25)  # Add to balance atomically
     
     print(f"Updated user: {user.name}, Age: {user.age}")
     print(f"Tags: {user.tags}")

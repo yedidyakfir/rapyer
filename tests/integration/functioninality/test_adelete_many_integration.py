@@ -21,7 +21,7 @@ async def test_adelete_many_integration__delete_multiple_models_sanity(
     assert await real_redis_client.exists(user3.key) == 1
 
     # Act
-    await UserModel.adelete_many(user1, user2, user3)
+    await UserModel.adelete_many(user1, user2.key, user3)
 
     # Assert
     assert await real_redis_client.exists(user1.key) == 0

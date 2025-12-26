@@ -1,10 +1,14 @@
 import redis.asyncio as redis_async
+from redis import ResponseError
 from redis.asyncio.client import Redis
+from redis.commands.search.index_definition import IndexDefinition, IndexType
 
 from rapyer.base import REDIS_MODELS
 
 
-async def init_rapyer(redis: str | Redis = None, ttl: int = None):
+async def init_rapyer(
+    redis: str | Redis = None, ttl: int = None, override_old_idx: bool = True
+):
     if isinstance(redis, str):
         redis = redis_async.from_url(redis, decode_responses=True, max_connections=20)
 
@@ -13,6 +17,24 @@ async def init_rapyer(redis: str | Redis = None, ttl: int = None):
             model.Meta.redis = redis
         if ttl is not None:
             model.Meta.ttl = ttl
+
+        # Initialize model fields
+        model.init_class()
+
+        # Create indexes for models with indexed fields
+        if redis is not None:
+            fields = model.redis_schema()
+            if fields:
+                if override_old_idx:
+                    try:
+                        await model.adelete_index()
+                    except ResponseError as e:
+                        pass
+                try:
+                    await model.acreate_index()
+                except ResponseError as e:
+                    if override_old_idx:
+                        raise
 
 
 async def teardown_rapyer():

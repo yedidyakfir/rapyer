@@ -60,6 +60,7 @@ from tests.models.pickle_types import ModelWithUnserializableFields
 # Simple types
 from tests.models.simple_types import (
     IntModel,
+    FloatModel,
     BoolModel,
     StrModel,
     BytesModel,
@@ -121,6 +122,7 @@ async def real_redis_client(redis_client):
         ComprehensiveTestModel,
         # Simple types
         IntModel,
+        FloatModel,
         BoolModel,
         StrModel,
         BytesModel,

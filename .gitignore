@@ -115,6 +115,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Benchmark
+.benchmarks
+.codspeed
+
 # Dynaconf secrets
 .secrets.*
 future-work

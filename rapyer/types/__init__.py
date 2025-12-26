@@ -3,6 +3,7 @@ from rapyer.types.datetime import RedisDatetime
 from rapyer.types.dct import RedisDict
 from rapyer.types.integer import RedisInt
 from rapyer.types.lst import RedisList
+from rapyer.types.float import RedisFloat
 from rapyer.types.string import RedisStr
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "RedisList",
     "RedisDict",
     "RedisDatetime",
+    "RedisFloat",
 ]
