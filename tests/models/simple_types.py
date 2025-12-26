@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import Field
 
 from rapyer.base import AtomicRedisModel, RedisConfig
-from rapyer.types import RedisFloat
+from rapyer.types import RedisFloat, RedisDatetimeTimestamp
 from tests.models.common import TaskStatus, Priority
 
 
@@ -35,6 +35,11 @@ class BytesModel(AtomicRedisModel):
 class DatetimeModel(AtomicRedisModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class DatetimeTimestampModel(AtomicRedisModel):
+    created_at: RedisDatetimeTimestamp = Field(default_factory=datetime.now)
+    updated_at: RedisDatetimeTimestamp = Field(default_factory=datetime.now)
 
 
 class DatetimeListModel(AtomicRedisModel):
