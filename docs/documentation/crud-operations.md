@@ -165,19 +165,42 @@ This is much more efficient than individual get operations when you need to retr
 
 ### Filtering with Expressions
 
-The `afind()` method also supports filtering using expressions to find models that match specific criteria. To use filtering, your model fields must be marked with the `Index` annotation:
+The `afind()` method also supports filtering using expressions to find models that match specific criteria. To use filtering, your model fields must be marked with the `Index` annotation.
+
+#### Setting Up Index Fields
+
+To make fields searchable for filtering, you need to annotate them with the `Index` annotation:
 
 ```python
 from rapyer import AtomicRedisModel, Index
 from typing import Annotated
 
 class User(AtomicRedisModel):
+    # Regular fields (not searchable)
+    internal_id: str
+    
+    # Indexed fields (searchable with afind expressions)
     name: Annotated[str, Index]
     age: Annotated[int, Index]
     email: Annotated[str, Index]
     status: Annotated[str, Index] = "active"
     score: Annotated[float, Index] = 0.0
+```
 
+**Important Notes about Index:**
+- Only fields with `Index` annotation can be used in filter expressions
+- Redis automatically creates search indices when the first model is saved
+- Indices are created per model class
+- You can mix indexed and non-indexed fields in the same model
+
+!!! danger "Redis Database Limitation"
+    Redis Search indices are currently only supported on database 0 (`db=0`). If you're using a different database number, filtering with expressions will not work. This is a limitation of the Redis Search module.
+
+#### Using Filter Expressions
+
+Once fields are indexed, you can use them in filter expressions:
+
+```python
 async def filtering_example():
     # Create and save multiple users
     users = [
