@@ -4,7 +4,7 @@ from typing import Any
 class Expression:
     def create_filter(self) -> str:
         raise NotImplementedError("Subclasses must implement create_filter")
-    
+
     def __and__(self, other: "Expression") -> "AndExpression":
         return AndExpression(self, other)
 
@@ -33,20 +33,31 @@ class Expression:
         return LteExpression(self, value)
 
 
+class ExpressionField(Expression):
+    def __init__(self, field_name: str):
+        self.field_name = field_name
+
+    def create_filter(self) -> str:
+        return f"@{self.field_name}:*"
+
+
 class EqExpression(Expression):
     def __init__(self, left: Expression, right: Any):
         self.left = left
         self.right = right
         self.operation = "eq"
-    
+
     def create_filter(self) -> str:
-        from rapyer.fields.expression import ExpressionField
         if isinstance(self.left, ExpressionField):
             # For string fields, wrap in quotes if needed
             if isinstance(self.right, str):
                 # Escape special characters in the string
-                escaped_value = self.right.replace('"', '\\"').replace('\\', '\\\\').replace('/', '\\/')
-                return f'@{self.left.field_name}:\"{escaped_value}\"'
+                escaped_value = (
+                    self.right.replace('"', '\\"')
+                    .replace("\\", "\\\\")
+                    .replace("/", "\\/")
+                )
+                return f'@{self.left.field_name}:"{escaped_value}"'
             # For numeric fields, use range syntax for exact match
             return f"@{self.left.field_name}:[{self.right} {self.right}]"
         return f"({self.left.create_filter()}) == {self.right}"
@@ -57,14 +68,17 @@ class NeExpression(Expression):
         self.left = left
         self.right = right
         self.operation = "ne"
-    
+
     def create_filter(self) -> str:
-        from rapyer.fields.expression import ExpressionField
         if isinstance(self.left, ExpressionField):
             # For not equal, we need to use different syntax
             if isinstance(self.right, str):
-                escaped_value = self.right.replace('"', '\\"').replace('\\', '\\\\').replace('/', '\\/')
-                return f'-@{self.left.field_name}:\"{escaped_value}\"'
+                escaped_value = (
+                    self.right.replace('"', '\\"')
+                    .replace("\\", "\\\\")
+                    .replace("/", "\\/")
+                )
+                return f'-@{self.left.field_name}:"{escaped_value}"'
             # For numeric fields, use range syntax for exact match
             return f"-@{self.left.field_name}:[{self.right} {self.right}]"
         return f"({self.left.create_filter()}) != {self.right}"
@@ -75,9 +89,8 @@ class GtExpression(Expression):
         self.left = left
         self.right = right
         self.operation = "gt"
-    
+
     def create_filter(self) -> str:
-        from rapyer.fields.expression import ExpressionField
         if isinstance(self.left, ExpressionField):
             return f"@{self.left.field_name}:[({self.right} +inf]"
         return f"({self.left.create_filter()}) > {self.right}"
@@ -88,9 +101,8 @@ class LtExpression(Expression):
         self.left = left
         self.right = right
         self.operation = "lt"
-    
+
     def create_filter(self) -> str:
-        from rapyer.fields.expression import ExpressionField
         if isinstance(self.left, ExpressionField):
             return f"@{self.left.field_name}:[-inf ({self.right}]"
         return f"({self.left.create_filter()}) < {self.right}"
@@ -101,9 +113,8 @@ class GteExpression(Expression):
         self.left = left
         self.right = right
         self.operation = "gte"
-    
+
     def create_filter(self) -> str:
-        from rapyer.fields.expression import ExpressionField
         if isinstance(self.left, ExpressionField):
             return f"@{self.left.field_name}:[{self.right} +inf]"
         return f"({self.left.create_filter()}) >= {self.right}"
@@ -114,9 +125,8 @@ class LteExpression(Expression):
         self.left = left
         self.right = right
         self.operation = "lte"
-    
+
     def create_filter(self) -> str:
-        from rapyer.fields.expression import ExpressionField
         if isinstance(self.left, ExpressionField):
             return f"@{self.left.field_name}:[-inf {self.right}]"
         return f"({self.left.create_filter()}) <= {self.right}"
@@ -127,7 +137,7 @@ class AndExpression(Expression):
         self.left = left
         self.right = right
         self.operation = "and"
-    
+
     def create_filter(self) -> str:
         # In Redis Search, AND is implicit with space
         left_filter = self.left.create_filter()
@@ -140,7 +150,7 @@ class OrExpression(Expression):
         self.left = left
         self.right = right
         self.operation = "or"
-    
+
     def create_filter(self) -> str:
         # In Redis Search, OR needs pipe operator
         left_filter = self.left.create_filter()
@@ -152,7 +162,7 @@ class NotExpression(Expression):
     def __init__(self, expression: Expression):
         self.expression = expression
         self.operation = "not"
-    
+
     def create_filter(self) -> str:
         # NOT operator in Redis Search
         inner_filter = self.expression.create_filter()
