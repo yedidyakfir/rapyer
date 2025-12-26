@@ -37,3 +37,16 @@ class PersonModel(AtomicRedisModel):
     name: Index[str]
     email: Key[str]
     address: AddressModel
+
+
+# Nested Model with indexed parent field for testing
+class ParentWithIndexModel(AtomicRedisModel):
+    age: Index[int]
+    occupation: Index[str]
+    retirement_date: Index[datetime]
+
+
+class ChildWithParentModel(AtomicRedisModel):
+    name: Index[str]
+    dad: ParentWithIndexModel
+    birth_date: Index[datetime]
