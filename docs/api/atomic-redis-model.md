@@ -143,13 +143,36 @@ user = await User.aget("User:abc-123")
 success = await User.adelete_by_key("User:abc-123")
 ```
 
-#### `afind()`
+#### `afind(*expressions)`
 **Type:** `async` class method  
+**Parameters:**
+- `*expressions` (Expression): Optional filter expressions  
 **Returns:** `list of redis models`  
-**Description:** Retrieves all instances of this model class from Redis.
+**Description:** Retrieves all instances of this model class from Redis, optionally filtered by expressions.
+
+**Supported Filter Operators:**
+- `==` - Equal to
+- `!=` - Not equal to  
+- `>` - Greater than
+- `<` - Less than
+- `>=` - Greater than or equal to
+- `<=` - Less than or equal to
+- `&` - Logical AND
+- `|` - Logical OR
+- `~` - Logical NOT
 
 ```python
-all_users = await User.afind()  # Returns [User(...), User(...), ...]
+# Get all users
+all_users = await User.afind()  
+
+# Filter with expressions (requires Index annotation on fields)
+active_users = await User.afind(User.status == "active")
+adult_users = await User.afind(User.age >= 18)
+
+# Complex filters
+filtered = await User.afind(
+    (User.age > 18) & (User.status == "active") | (User.role == "admin")
+)
 ```
 
 #### `afind_keys()`

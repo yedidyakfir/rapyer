@@ -163,6 +163,71 @@ if __name__ == "__main__":
 
 This is much more efficient than individual get operations when you need to retrieve multiple instances.
 
+### Filtering with Expressions
+
+The `afind()` method also supports filtering using expressions to find models that match specific criteria. To use filtering, your model fields must be marked with the `Index` annotation:
+
+```python
+from rapyer import AtomicRedisModel, Index
+from typing import Annotated
+
+class User(AtomicRedisModel):
+    name: Annotated[str, Index]
+    age: Annotated[int, Index]
+    email: Annotated[str, Index]
+    status: Annotated[str, Index] = "active"
+    score: Annotated[float, Index] = 0.0
+
+async def filtering_example():
+    # Create and save multiple users
+    users = [
+        User(name="Alice", age=25, email="alice@example.com", status="active", score=85.5),
+        User(name="Bob", age=30, email="bob@example.com", status="inactive", score=92.0),
+        User(name="Charlie", age=35, email="charlie@example.com", status="active", score=78.3),
+        User(name="Diana", age=28, email="diana@example.com", status="active", score=95.8)
+    ]
+    await User.ainsert(*users)
+    
+    # Find users with age greater than 27
+    older_users = await User.afind(User.age > 27)
+    print(f"Users older than 27: {[u.name for u in older_users]}")  # Bob, Charlie, Diana
+    
+    # Find active users
+    active_users = await User.afind(User.status == "active")
+    print(f"Active users: {[u.name for u in active_users]}")  # Alice, Charlie, Diana
+    
+    # Combine conditions with AND (&)
+    young_active = await User.afind((User.age <= 30) & (User.status == "active"))
+    print(f"Young active users: {[u.name for u in young_active]}")  # Alice, Diana
+    
+    # Combine conditions with OR (|)
+    special_users = await User.afind((User.age < 26) | (User.score > 90))
+    print(f"Young or high-scoring users: {[u.name for u in special_users]}")  # Alice, Bob, Diana
+    
+    # Negate conditions with NOT (~)
+    not_inactive = await User.afind(~(User.status == "inactive"))
+    print(f"Not inactive users: {[u.name for u in not_inactive]}")  # Alice, Charlie, Diana
+    
+    # Complex expressions
+    complex_filter = await User.afind(
+        ((User.age >= 25) & (User.age <= 30)) & 
+        ((User.status == "active") | (User.score >= 85))
+    )
+    print(f"Complex filter results: {[u.name for u in complex_filter]}")
+
+if __name__ == "__main__":
+    asyncio.run(filtering_example())
+```
+
+**Supported Operators:**
+- **Comparison**: `==`, `!=`, `>`, `<`, `>=`, `<=`
+- **Logical**: `&` (AND), `|` (OR), `~` (NOT)
+
+**Important Notes:**
+- Fields must be annotated with `Index` to be searchable
+- Redis will automatically create search indices when the model is first saved
+- Filtering requires Redis Search module to be available
+
 ### Performance Comparison: `afind()` vs Individual `get()` Operations
 
 The `afind()` method provides significant performance improvements over retrieving models individually, especially as the number of models increases. The chart below shows the performance difference:
