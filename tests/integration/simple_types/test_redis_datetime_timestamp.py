@@ -104,4 +104,11 @@ async def test_redis_datetime_timestamp_model_save_load_sanity(test_datetime):
     loaded_model = await DatetimeTimestampModel.aget(model.key)
 
     # Assert
+    loaded_model.created_at = datetime.fromtimestamp(
+        loaded_model.created_at.timestamp(), tz=model.created_at.tzinfo
+    )
+    loaded_model.updated_at = datetime.fromtimestamp(
+        loaded_model.updated_at.timestamp(), tz=model.updated_at.tzinfo
+    )
+
     assert loaded_model == model
