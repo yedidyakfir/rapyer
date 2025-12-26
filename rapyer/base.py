@@ -29,6 +29,7 @@ from rapyer.typing_support import deprecated
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
+    field_with_flag,
     DYNAMIC_CLASS_DOC,
 )
 from rapyer.utils.fields import get_all_pydantic_annotation, is_redis_field
@@ -111,16 +112,13 @@ class AtomicRedisModel(BaseModel):
     def redis_schema(cls):
         fields = []
 
-        for field_name, annotation in cls.__annotations__.items():
-            if not is_redis_field(field_name, annotation):
+        for field_name, field_info in cls.model_fields.items():
+            real_type = field_info.annotation
+            if not is_redis_field(field_name, real_type):
                 continue
 
-            if not has_annotation(annotation, IndexAnnotation):
+            if not field_with_flag(field_info, IndexAnnotation):
                 continue
-
-            # Get the actual type from Annotated if needed
-            args = get_args(annotation)
-            real_type = args[0] if args else annotation
 
             # Check if real_type is a class before using issubclass
             if isinstance(real_type, type):
@@ -227,7 +225,7 @@ class AtomicRedisModel(BaseModel):
 
     @classmethod
     def init_class(cls):
-        for field_name in cls.__annotations__:
+        for field_name in cls.model_fields:
             setattr(cls, field_name, ExpressionField(field_name))
 
     def is_inner_model(self) -> bool:
@@ -366,7 +364,7 @@ class AtomicRedisModel(BaseModel):
         query = Query(query_string).no_content()
 
         # Try to search using the index
-        index_name = f"idx:{cls.__name__}"
+        index_name = cls.index_name()
         try:
             search_result = await cls.Meta.redis.ft(index_name).search(query)
 
