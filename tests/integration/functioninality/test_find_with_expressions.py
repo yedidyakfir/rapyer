@@ -16,16 +16,26 @@ async def create_indices(redis_client):
     await BaseIndexModel.adelete_index()
 
 
-@pytest.mark.asyncio
-async def test_afind_with_single_expression_sanity(create_indices):
-    # Arrange
-    models = [
+@pytest.fixture
+def test_models():
+    return [
         IndexTestModel(name="Alice", age=25, description="Engineer"),
         IndexTestModel(name="Bob", age=30, description="Manager"),
         IndexTestModel(name="Charlie", age=35, description="Designer"),
         IndexTestModel(name="David", age=40, description="Director"),
     ]
-    await IndexTestModel.ainsert(*models)
+
+
+@pytest_asyncio.fixture
+async def inserted_test_models(test_models):
+    await IndexTestModel.ainsert(*test_models)
+    return test_models
+
+
+@pytest.mark.asyncio
+async def test_afind_with_single_expression_sanity(create_indices, inserted_test_models):
+    # Arrange
+    models = inserted_test_models
 
     # Act
     IndexTestModel.init_class()
@@ -39,15 +49,9 @@ async def test_afind_with_single_expression_sanity(create_indices):
 
 
 @pytest.mark.asyncio
-async def test_afind_with_multiple_expressions_sanity(create_indices):
+async def test_afind_with_multiple_expressions_sanity(create_indices, inserted_test_models):
     # Arrange
-    models = [
-        IndexTestModel(name="Alice", age=25, description="Engineer"),
-        IndexTestModel(name="Bob", age=30, description="Manager"),
-        IndexTestModel(name="Charlie", age=35, description="Designer"),
-        IndexTestModel(name="David", age=40, description="Director"),
-    ]
-    await IndexTestModel.ainsert(*models)
+    models = inserted_test_models
 
     # Act
     IndexTestModel.init_class()
@@ -63,15 +67,9 @@ async def test_afind_with_multiple_expressions_sanity(create_indices):
 
 
 @pytest.mark.asyncio
-async def test_afind_with_combined_expressions_sanity(create_indices):
+async def test_afind_with_combined_expressions_sanity(create_indices, inserted_test_models):
     # Arrange
-    models = [
-        IndexTestModel(name="Alice", age=25, description="Engineer"),
-        IndexTestModel(name="Bob", age=30, description="Manager"),
-        IndexTestModel(name="Charlie", age=35, description="Designer"),
-        IndexTestModel(name="David", age=40, description="Director"),
-    ]
-    await IndexTestModel.ainsert(*models)
+    models = inserted_test_models
 
     # Act
     IndexTestModel.init_class()
@@ -86,15 +84,9 @@ async def test_afind_with_combined_expressions_sanity(create_indices):
 
 
 @pytest.mark.asyncio
-async def test_afind_with_or_expression_sanity(create_indices):
+async def test_afind_with_or_expression_sanity(create_indices, inserted_test_models):
     # Arrange
-    models = [
-        IndexTestModel(name="Alice", age=25, description="Engineer"),
-        IndexTestModel(name="Bob", age=30, description="Manager"),
-        IndexTestModel(name="Charlie", age=35, description="Designer"),
-        IndexTestModel(name="David", age=40, description="Director"),
-    ]
-    await IndexTestModel.ainsert(*models)
+    models = inserted_test_models
 
     # Act
     IndexTestModel.init_class()
@@ -108,15 +100,25 @@ async def test_afind_with_or_expression_sanity(create_indices):
             assert model in found_models
 
 
-@pytest.mark.asyncio
-async def test_afind_without_expressions_returns_all_sanity():
-    # Arrange
-    models = [
+@pytest.fixture
+def three_test_models():
+    return [
         IndexTestModel(name="Alice", age=25, description="Engineer"),
         IndexTestModel(name="Bob", age=30, description="Manager"),
         IndexTestModel(name="Charlie", age=35, description="Designer"),
     ]
-    await IndexTestModel.ainsert(*models)
+
+
+@pytest_asyncio.fixture
+async def inserted_three_test_models(three_test_models):
+    await IndexTestModel.ainsert(*three_test_models)
+    return three_test_models
+
+
+@pytest.mark.asyncio
+async def test_afind_without_expressions_returns_all_sanity(inserted_three_test_models):
+    # Arrange
+    models = inserted_three_test_models
 
     # Act
     found_models = await IndexTestModel.afind()
@@ -128,15 +130,9 @@ async def test_afind_without_expressions_returns_all_sanity():
 
 
 @pytest.mark.asyncio
-async def test_afind_with_string_field_expression_sanity(create_indices):
+async def test_afind_with_string_field_expression_sanity(create_indices, inserted_test_models):
     # Arrange
-    models = [
-        IndexTestModel(name="Alice", age=25, description="Engineer"),
-        IndexTestModel(name="Bob", age=30, description="Manager"),
-        IndexTestModel(name="Charlie", age=35, description="Designer"),
-        IndexTestModel(name="David", age=40, description="Engineer"),
-    ]
-    await IndexTestModel.ainsert(*models)
+    models = inserted_test_models
 
     # Act
     IndexTestModel.init_class()
@@ -150,14 +146,9 @@ async def test_afind_with_string_field_expression_sanity(create_indices):
 
 
 @pytest.mark.asyncio
-async def test_afind_with_not_expression_sanity(create_indices):
+async def test_afind_with_not_expression_sanity(create_indices, inserted_three_test_models):
     # Arrange
-    models = [
-        IndexTestModel(name="Alice", age=25, description="Engineer"),
-        IndexTestModel(name="Bob", age=30, description="Manager"),
-        IndexTestModel(name="Charlie", age=35, description="Designer"),
-    ]
-    await IndexTestModel.ainsert(*models)
+    models = inserted_three_test_models
 
     # Act
     IndexTestModel.init_class()
