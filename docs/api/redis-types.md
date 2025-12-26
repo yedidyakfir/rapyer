@@ -597,6 +597,62 @@ await post.asave()
 
 ---
 
+## RedisDatetimeTimestamp
+
+A Redis-backed datetime type that stores values as Unix timestamps (floats) instead of ISO strings.
+
+```python
+from rapyer.types import RedisDatetimeTimestamp
+from datetime import datetime
+
+class Event(AtomicRedisModel):
+    name: str
+    created_at: RedisDatetimeTimestamp  # Stored as timestamp float
+    updated_at: RedisDatetimeTimestamp = None
+```
+
+### Special Features
+
+#### Timestamp Storage Format
+Stores datetime values as Unix timestamps (float) in Redis instead of ISO strings, providing:
+- **Efficient storage**: Floats are more compact than ISO strings
+- **External compatibility**: Unix timestamps are widely supported
+- **Numeric operations**: Direct timestamp calculations possible
+
+!!! warning "Timezone Information Loss"
+    **Timezone information is lost** when storing as timestamps. Values are converted to Unix timestamps (UTC moments) and restored as naive datetimes in local timezone.
+
+#### Storage Comparison
+- **RedisDatetime**: `"2023-01-01T12:00:00"` (ISO string)
+- **RedisDatetimeTimestamp**: `1672531200.0` (Unix timestamp float)
+
+### Example Usage
+
+```python
+from datetime import datetime, timezone
+
+class Analytics(AtomicRedisModel):
+    event_name: str
+    timestamp: RedisDatetimeTimestamp  # Efficient timestamp storage
+    session_start: RedisDatetimeTimestamp
+    session_end: RedisDatetimeTimestamp = None
+
+# Create with current time
+analytics = Analytics(
+    event_name="user_login",
+    timestamp=datetime.now(),
+    session_start=datetime.now(timezone.utc)  # Timezone will be lost
+)
+await analytics.asave()
+
+# Datetime operations work normally
+duration = analytics.session_end - analytics.session_start if analytics.session_end else None
+
+# Efficient timestamp-based queries and storage
+epoch_time = analytics.timestamp.timestamp()
+```
+---
+
 ## Type Conversion
 
 When you define model fields with standard Python types, they are automatically converted to their Redis-backed equivalents:
@@ -607,12 +663,16 @@ class Example(AtomicRedisModel):
     number: int                  # → RedisInt
     decimal: float               # → RedisFloat
     data: bytes                  # → RedisBytes
-    timestamp: datetime          # → RedisDatetime
+    timestamp: datetime          # → RedisDatetime (ISO string storage)
+    epoch_time: RedisDatetimeTimestamp  # → RedisDatetimeTimestamp (timestamp storage)
     tags: List[str]             # → RedisList[str]
     settings: Dict[str, str]    # → RedisDict[str, str]
     scores: List[int]           # → RedisList[int]
     metadata: Dict[str, Any]    # → RedisDict[str, Any]
 ```
+
+!!! note "Datetime Type Choice"
+    Use `RedisDatetimeTimestamp` explicitly when you need timestamp storage format. Regular `datetime` annotation automatically becomes `RedisDatetime` with ISO string storage.
 
 ## Pipeline Context
 

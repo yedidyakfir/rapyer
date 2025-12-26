@@ -10,7 +10,7 @@
 - `int` → `RedisInt`
 - `float` → `RedisFloat`
 - `bytes` → `RedisBytes`
-- `datetime` → `RedisDatetime`
+- `datetime` → `RedisDatetime` (or `RedisDatetimeTimestamp` for timestamp storage)
 - `BaseModel` → `AtomicRedisModel` (nested models)
 
 **This is completely seamless** - since `RedisList` inherits from `list`, `RedisDict` inherits from `dict`, etc., your existing code continues to work exactly as before, but now with atomic Redis operations available.
@@ -230,6 +230,31 @@ class Event(AtomicRedisModel):
 
 All standard `datetime` methods are available (strftime, replace, etc.) but operate on the local copy.
 
+---
+
+## RedisDatetimeTimestamp
+A datetime field, but it will be stored in epoch time format
+
+**Redis Storage:** Timestamp values (floats) representing seconds since Unix epoch  
+**Use Case:** Timestamps requiring efficient storage or interoperability with systems expecting Unix timestamps
+
+```python
+from rapyer.types import RedisDatetimeTimestamp  # Recommended: TypeAlias
+from datetime import datetime
+
+class Event(AtomicRedisModel):
+    created_at: RedisDatetimeTimestamp = Field(default_factory=datetime.now)  # Stored as timestamp
+    updated_at: RedisDatetimeTimestamp                                         # Accepts datetime objects
+```
+
+### Important Notes
+
+!!! warning "Timezone Information Loss"
+    When using `RedisDatetimeTimestamp`, **timezone information is lost during storage**. The datetime is converted to a Unix timestamp (float) which represents a moment in UTC time. When loaded back, it becomes a naive datetime in the local timezone.
+
+!!! info "Storage Format Difference"
+    - **RedisDatetime**: Stores as ISO string format (e.g., "2023-01-01T12:00:00")
+    - **RedisDatetimeTimestamp**: Stores as Unix timestamp float (e.g., 1672531200.0)
 ---
 
 ## Nested Models (BaseModel → AtomicRedisModel)

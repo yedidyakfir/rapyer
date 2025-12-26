@@ -10,6 +10,7 @@ In this version we officaly starting the support for bulk operation on multiple 
 - **RedisFloat Type**: Added support for float Redis types with atomic increment operations and in-place arithmetic operations (+=, -=, *=, /=) within pipeline contexts.
 - **Global ainsert Function**: Added `rapyer.ainsert()` function to insert models of any type in a single operation, enabling bulk inserts of heterogeneous model types.
 - **Filtering in Search**: Added support for filtering in `afind()` method using expressions, allowing you to search for models that match specific criteria with operators like ==, !=, >, <, >=, <= and logical operators (&, |, ~).
+- **RedisDatetimeTimestamp Type**: Added new `RedisDatetimeTimestamp` type that stores datetime values as timestamps (floats) in Redis instead of ISO strings. This provides more efficient storage and better compatibility with external systems that expect timestamp format. Note: timezone information is lost during conversion as timestamps represent UTC moments in time.
 
 ### ⚠️ Deprecated
 - **Function Name Migration to Async**: The following functions have been renamed to follow async naming conventions. We moved to a strict convention to support non async models in a future version. Old names are deprecated and will be removed in a future version:
