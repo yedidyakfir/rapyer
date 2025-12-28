@@ -3,9 +3,8 @@ from typing import TypeVar, TYPE_CHECKING
 
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, SerializationInfo
-from typing_extensions import TypeAlias
-
 from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
+from typing_extensions import TypeAlias
 
 T = TypeVar("T")
 

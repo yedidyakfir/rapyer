@@ -1,11 +1,8 @@
 from datetime import datetime
 from typing import get_args
 
-import pytest
-
-from rapyer import AtomicRedisModel
 from rapyer.fields import Index
-from rapyer.types.datetime import RedisDatetime, RedisDatetimeTimestamp
+from rapyer.types.datetime import RedisDatetimeTimestamp
 
 
 def test_index_datetime_uses_timestamp_type_sanity():

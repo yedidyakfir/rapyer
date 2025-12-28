@@ -5,7 +5,6 @@ import functools
 import pickle
 import uuid
 from typing import ClassVar, Any, AsyncGenerator
-from typing import get_args
 
 from pydantic import (
     BaseModel,
@@ -22,6 +21,7 @@ from rapyer.errors.base import KeyNotFound
 from rapyer.fields.expression import ExpressionField
 from rapyer.fields.index import IndexAnnotation
 from rapyer.fields.key import KeyAnnotation
+from rapyer.links import REDIS_SUPPORTED_LINK
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
 from rapyer.typing_support import Self, Unpack
@@ -33,10 +33,7 @@ from rapyer.utils.annotation import (
     DYNAMIC_CLASS_DOC,
 )
 from rapyer.utils.fields import get_all_pydantic_annotation, is_redis_field
-from rapyer.links import REDIS_SUPPORTED_LINK
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
-from redis import ResponseError
-from redis.commands.search.field import NumericField, TextField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 

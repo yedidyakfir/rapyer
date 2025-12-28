@@ -3,9 +3,8 @@ from typing import TYPE_CHECKING
 
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo, SerializationInfo
-from redis.commands.search.field import NumericField
-
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
+from redis.commands.search.field import NumericField
 
 
 class RedisDatetime(datetime, RedisType):
@@ -33,7 +32,7 @@ class RedisDatetime(datetime, RedisType):
 
 
 class RedisDatetimeTimestamp(RedisDatetime):
-    
+
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type, handler):
         return core_schema.no_info_after_validator_function(
@@ -52,7 +51,7 @@ class RedisDatetimeTimestamp(RedisDatetime):
     def _validate_timestamp(cls, value, info: ValidationInfo):
         ctx = info.context or {}
         is_redis_data = ctx.get(REDIS_DUMP_FLAG_NAME)
-        
+
         if isinstance(value, (int, float)) and is_redis_data:
             return datetime.fromtimestamp(value)
         return value
@@ -61,7 +60,7 @@ class RedisDatetimeTimestamp(RedisDatetime):
     def _serialize_timestamp(cls, value, info: SerializationInfo):
         ctx = info.context or {}
         is_redis_data = ctx.get(REDIS_DUMP_FLAG_NAME)
-        
+
         if is_redis_data:
             return value.timestamp()
         return value

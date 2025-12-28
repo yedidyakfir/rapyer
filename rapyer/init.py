@@ -1,9 +1,7 @@
 import redis.asyncio as redis_async
+from rapyer.base import REDIS_MODELS
 from redis import ResponseError
 from redis.asyncio.client import Redis
-from redis.commands.search.index_definition import IndexDefinition, IndexType
-
-from rapyer.base import REDIS_MODELS
 
 
 async def init_rapyer(
