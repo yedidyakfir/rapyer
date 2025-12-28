@@ -9,7 +9,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Redis](https://img.shields.io/badge/redis-6.0+-red.svg)](https://redis.io/)
-[![codecov](https://codecov.io/gh/yedidyakfir/rapyer/branch/main/graph/badge.svg)](https://codecov.io/gh/yedidyakfir/rapyer)
+[![codecov](https://codecov.io/gh/imaginary-cherry/rapyer/branch/main/graph/badge.svg)](https://codecov.io/gh/imaginary-cherry/rapyer)
 [![PyPI version](https://badge.fury.io/py/rapyer.svg)](https://badge.fury.io/py/rapyer)
 [![Downloads](https://static.pepy.tech/badge/rapyer)](https://pepy.tech/project/rapyer)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)](https://redis.io)
