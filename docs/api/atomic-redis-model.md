@@ -40,7 +40,7 @@ print(user.key)  # "User:abc-123-def-456"
 
 ### Instance Methods
 
-#### `save()`
+#### `asave()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Saves the current model instance to Redis using JSON.SET operation.
@@ -50,7 +50,7 @@ user = User(name="John", age=30)
 await user.asave()
 ```
 
-#### `load()`
+#### `aload()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Loads the latest data from Redis for this model instance, updating the current instance.
@@ -59,7 +59,7 @@ await user.asave()
 await user.aload()  # Refreshes user with latest Redis data
 ```
 
-#### `delete()`
+#### `adelete()`
 **Type:** `async` method  
 **Returns:** `bool`  
 **Description:** Deletes this model instance from Redis. Can only be called on top-level models (not nested ones).
@@ -68,7 +68,7 @@ await user.aload()  # Refreshes user with latest Redis data
 success = await user.adelete()
 ```
 
-#### `duplicate()`
+#### `aduplicate()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Creates a duplicate of the current model with a new primary key and saves it to Redis.
@@ -77,7 +77,7 @@ success = await user.adelete()
 user_copy = await user.aduplicate()
 ```
 
-#### `duplicate_many(num)`
+#### `aduplicate_many(num)`
 **Type:** `async` method  
 **Parameters:** 
 - `num` (int): Number of duplicates to create  
@@ -120,7 +120,7 @@ if user.is_inner_model():
 
 ### Class Methods
 
-#### `get(key)`
+#### `aget(key)`
 **Type:** `async` class method  
 **Parameters:** 
 - `key` (str): The Redis key to retrieve  
@@ -132,7 +132,7 @@ if user.is_inner_model():
 user = await User.aget("User:abc-123")
 ```
 
-#### `delete_by_key(key)`
+#### `adelete_by_key(key)`
 **Type:** `async` class method  
 **Parameters:** 
 - `key` (str): The Redis key to delete  
@@ -143,13 +143,36 @@ user = await User.aget("User:abc-123")
 success = await User.adelete_by_key("User:abc-123")
 ```
 
-#### `afind()`
+#### `afind(*expressions)`
 **Type:** `async` class method  
+**Parameters:**
+- `*expressions` (Expression): Optional filter expressions  
 **Returns:** `list of redis models`  
-**Description:** Retrieves all instances of this model class from Redis.
+**Description:** Retrieves all instances of this model class from Redis, optionally filtered by expressions.
+
+**Supported Filter Operators:**
+- `==` - Equal to
+- `!=` - Not equal to  
+- `>` - Greater than
+- `<` - Less than
+- `>=` - Greater than or equal to
+- `<=` - Less than or equal to
+- `&` - Logical AND
+- `|` - Logical OR
+- `~` - Logical NOT
 
 ```python
-all_users = await User.afind()  # Returns [User(...), User(...), ...]
+# Get all users
+all_users = await User.afind()  
+
+# Filter with expressions (requires Index annotation on fields)
+active_users = await User.afind(User.status == "active")
+adult_users = await User.afind(User.age >= 18)
+
+# Complex filters
+filtered = await User.afind(
+    (User.age > 18) & (User.status == "active") | (User.role == "admin")
+)
 ```
 
 #### `afind_keys()`
@@ -189,20 +212,23 @@ await User.ainsert(*users)
 await User.ainsert(user1, user2, user3)
 ```
 
-#### `adelete_many(*models)`
+#### `adelete_many(*args)`
 **Type:** `async` class method  
 **Parameters:** 
-- `*models` (Self): Variable number of model instances to delete   
-**Description:** Deletes multiple model instances from Redis in a single atomic transaction. This is significantly more efficient than calling `delete()` on each model individually, as it uses Redis batch deletion.
+- `*args` (Self | str): Variable number of model instances or Redis keys to delete   
+**Description:** Deletes multiple model instances from Redis in a single atomic transaction. Accepts both model instances and Redis key strings, making it flexible for different use cases. This is significantly more efficient than calling `delete()` on each model individually, as it uses Redis batch deletion.
 
 ```python
-# Delete multiple user instances atomically
+# Delete using model instances
 await User.adelete_many(*users)
 
-# Alternative syntax
-await User.adelete_many(user1, user2, user3)
+# Delete using Redis keys
+await User.adelete_many("User:123", "User:456", "User:789")
 
-# Can be combined with afind() to delete all instances
+# Mix models and keys
+await User.adelete_many(user1, "User:xyz", user2.key, user3)
+
+# Delete all instances of a model
 all_users = await User.afind()
 await User.adelete_many(*all_users)
 ```
@@ -221,7 +247,7 @@ class User(AtomicRedisModel):
 
 ### Context Managers
 
-#### `lock_from_key(key, action="default", save_at_end=False)`
+#### `alock_from_key(key, action="default", save_at_end=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `key` (str): Redis key to lock
@@ -236,7 +262,7 @@ async with User.alock_from_key("User:123", "profile_update", save_at_end=True) a
     # Automatically saved when context exits
 ```
 
-#### `lock(action="default", save_at_end=False)`
+#### `alock(action="default", save_at_end=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `action` (str): Lock action name
@@ -249,7 +275,7 @@ async with user.alock("settings_update", save_at_end=True) as locked_user:
     locked_user.settings = {"theme": "dark"}
 ```
 
-#### `pipeline(ignore_if_deleted=False)`
+#### `apipeline(ignore_if_deleted=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `ignore_if_deleted` (bool): Continue if model was deleted during pipeline  

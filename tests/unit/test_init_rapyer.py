@@ -1,9 +1,8 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 
 import pytest
-from redis.asyncio.client import Redis
-
 from rapyer.init import init_rapyer
+from redis.asyncio.client import Redis
 from tests.models.collection_types import IntListModel, ProductListModel, StrListModel
 from tests.models.simple_types import (
     NoneTestModel,
@@ -15,7 +14,10 @@ from tests.models.simple_types import (
 
 @pytest.fixture
 def mock_redis_client():
-    return Mock(spec=Redis)
+    redis_mock = AsyncMock(spec=Redis)
+    redis_mock.ft.return_value.dropindex = AsyncMock()
+    redis_mock.ft.return_value.create_index = AsyncMock()
+    return redis_mock
 
 
 @pytest.fixture
@@ -47,10 +49,11 @@ async def test_init_rapyer_with_redis_client_sanity(mock_redis_client, redis_mod
 
 @patch("rapyer.init.redis_async.from_url")
 @pytest.mark.asyncio
-async def test_init_rapyer_with_string_connection_sanity(mock_from_url, redis_models):
+async def test_init_rapyer_with_string_connection_sanity(
+    mock_from_url, redis_models, mock_redis_client
+):
     # Arrange
     connection_string = "redis://localhost:6379"
-    mock_redis_client = Mock(spec=Redis)
     mock_from_url.return_value = mock_redis_client
 
     # Act

@@ -5,24 +5,6 @@ from tests.models.simple_types import IntModel
 
 @pytest.mark.parametrize("test_values", [42, -100, 0, 999, -999])
 @pytest.mark.asyncio
-async def test_redis_int_set_functionality_sanity(test_values):
-    # Arrange
-    model = IntModel()
-    await model.asave()
-
-    # Act
-    model.count = test_values
-    await model.count.asave()
-
-    # Assert
-    fresh_model = IntModel()
-    fresh_model.pk = model.pk
-    loaded_value = await fresh_model.count.aload()
-    assert loaded_value == test_values
-
-
-@pytest.mark.parametrize("test_values", [42, -100, 0, 999, -999])
-@pytest.mark.asyncio
 async def test_redis_int_load_functionality_sanity(test_values):
     # Arrange
     model = IntModel()

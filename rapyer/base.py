@@ -10,19 +10,18 @@ from pydantic import (
     BaseModel,
     PrivateAttr,
     ConfigDict,
-    TypeAdapter,
     model_validator,
     field_serializer,
     field_validator,
 )
-from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined
 from pydantic_core.core_schema import FieldSerializationInfo, ValidationInfo
-
 from rapyer.config import RedisConfig
 from rapyer.context import _context_var, _context_xx_pipe
 from rapyer.errors.base import KeyNotFound
+from rapyer.fields.expression import ExpressionField
+from rapyer.fields.index import IndexAnnotation
 from rapyer.fields.key import KeyAnnotation
+from rapyer.links import REDIS_SUPPORTED_LINK
 from rapyer.types.base import RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.types.convert import RedisConverter
 from rapyer.typing_support import Self, Unpack
@@ -30,15 +29,13 @@ from rapyer.typing_support import deprecated
 from rapyer.utils.annotation import (
     replace_to_redis_types_in_annotation,
     has_annotation,
+    field_with_flag,
     DYNAMIC_CLASS_DOC,
 )
-from rapyer.utils.fields import (
-    get_all_pydantic_annotation,
-    find_first_type_in_annotation,
-    convert_field_factory_type,
-    is_redis_field,
-)
+from rapyer.utils.fields import get_all_pydantic_annotation, is_redis_field
 from rapyer.utils.redis import acquire_lock, update_keys_in_pipeline
+from redis.commands.search.index_definition import IndexDefinition, IndexType
+from redis.commands.search.query import Query
 
 
 def make_pickle_field_serializer(field: str):
@@ -109,6 +106,60 @@ class AtomicRedisModel(BaseModel):
         return f"${field_path}" if field_path else "$"
 
     @classmethod
+    def redis_schema(cls):
+        fields = []
+
+        for field_name, field_info in cls.model_fields.items():
+            real_type = field_info.annotation
+            if not is_redis_field(field_name, real_type):
+                continue
+
+            if not field_with_flag(field_info, IndexAnnotation):
+                continue
+
+            # Check if real_type is a class before using issubclass
+            if isinstance(real_type, type):
+                if issubclass(real_type, AtomicRedisModel):
+                    sub_fields = real_type.redis_schema()
+                    for sub_field in sub_fields:
+                        sub_field.name = f"{field_name}.{sub_field.name}"
+                        fields.append(sub_field)
+                elif issubclass(real_type, RedisType):
+                    field_schema = real_type.redis_schema(field_name)
+                    fields.append(field_schema)
+                else:
+                    raise RuntimeError(
+                        f"Indexed field {field_name} must be redis-supported to be indexed, see {REDIS_SUPPORTED_LINK}"
+                    )
+            else:
+                raise RuntimeError(
+                    f"Indexed field {field_name} must be a simple redis-supported type, see {REDIS_SUPPORTED_LINK}"
+                )
+
+        return fields
+
+    @classmethod
+    def index_name(cls):
+        return f"idx:{cls.class_key_initials()}"
+
+    @classmethod
+    async def acreate_index(cls):
+        fields = cls.redis_schema()
+        if not fields:
+            return
+        await cls.Meta.redis.ft(cls.index_name()).create_index(
+            fields,
+            definition=IndexDefinition(
+                prefix=[f"{cls.class_key_initials()}:"],
+                index_type=IndexType.JSON,
+            ),
+        )
+
+    @classmethod
+    async def adelete_index(cls):
+        await cls.Meta.redis.ft(cls.index_name()).dropindex(delete_documents=False)
+
+    @classmethod
     def class_key_initials(cls):
         return cls.__name__
 
@@ -151,6 +202,7 @@ class AtomicRedisModel(BaseModel):
         cls.__annotations__ = {**cls.__annotations__, **new_annotations}
         for field_name, field in pydantic_annotation.items():
             setattr(cls, field_name, field)
+
         super().__init_subclass__(**kwargs)
 
         # Set new default values if needed
@@ -163,40 +215,16 @@ class AtomicRedisModel(BaseModel):
                 setattr(cls, validator.__name__, validator)
                 continue
 
-            value = getattr(cls, attr_name, None)
-            if value is None:
-                continue
-
-            real_type = find_first_type_in_annotation(attr_type)
-
-            if isinstance(value, real_type):
-                continue
-            redis_type = cls.__annotations__[attr_name]
-            redis_type: type[RedisType]
-            adapter = TypeAdapter(redis_type)
-
-            # Handle Field(default=...)
-            if isinstance(value, FieldInfo):
-                if value.default != PydanticUndefined:
-                    value.default = adapter.validate_python(value.default)
-                elif value.default_factory != PydanticUndefined and callable(
-                    value.default_factory
-                ):
-                    test_value = value.default_factory()
-                    if isinstance(test_value, real_type):
-                        continue
-                    original_factory = value.default_factory
-                    validate_from_adapter = functools.partial(
-                        convert_field_factory_type, original_factory, adapter
-                    )
-                    value.default_factory = validate_from_adapter
-            else:
-                setattr(cls, attr_name, adapter.validate_python(value))
-
         # Update the redis model list for initialization
         # Skip dynamically created classes from type conversion
         if cls.__doc__ != DYNAMIC_CLASS_DOC:
             REDIS_MODELS.append(cls)
+
+    @classmethod
+    def init_class(cls):
+        for field_name, field_info in cls.model_fields.items():
+            field_type = field_info.annotation
+            setattr(cls, field_name, ExpressionField(field_name, field_type))
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
@@ -307,12 +335,35 @@ class AtomicRedisModel(BaseModel):
         return instance
 
     @classmethod
-    async def afind(cls):
-        keys = await cls.afind_keys()
-        if not keys:
-            return []
+    async def afind(cls, *expressions):
+        # Original behavior when no expressions provided - return all
+        if not expressions:
+            keys = await cls.afind_keys()
+            if not keys:
+                return []
 
-        models = await cls.Meta.redis.json().mget(keys=keys, path="$")
+            models = await cls.Meta.redis.json().mget(keys=keys, path="$")
+        else:
+            # With expressions - use Redis Search
+            # Combine all expressions with & operator
+            combined_expression = functools.reduce(lambda a, b: a & b, expressions)
+            query_string = combined_expression.create_filter()
+
+            # Create a Query object
+            query = Query(query_string).no_content()
+
+            # Try to search using the index
+            index_name = cls.index_name()
+            search_result = await cls.Meta.redis.ft(index_name).search(query)
+
+            if not search_result.docs:
+                return []
+
+            # Get the keys from search results
+            keys = [doc.id for doc in search_result.docs]
+
+            # Fetch the actual documents
+            models = await cls.Meta.redis.json().mget(keys=keys, path="$")
 
         instances = []
         for model, key in zip(models, keys):
@@ -356,8 +407,10 @@ class AtomicRedisModel(BaseModel):
         return await self.adelete_by_key(self.key)
 
     @classmethod
-    async def adelete_many(cls, *args: Unpack[Self]):
-        await cls.Meta.redis.delete(*[model.key for model in args])
+    async def adelete_many(cls, *args: Unpack[Self | str]):
+        await cls.Meta.redis.delete(
+            *[model if isinstance(model, str) else model.key for model in args]
+        )
 
     @classmethod
     @contextlib.asynccontextmanager
@@ -489,3 +542,11 @@ async def aget(redis_key: str) -> AtomicRedisModel:
 
 def find_redis_models() -> list[type[AtomicRedisModel]]:
     return REDIS_MODELS
+
+
+async def ainsert(*models: Unpack[AtomicRedisModel]) -> list[AtomicRedisModel]:
+    async with AtomicRedisModel.Meta.redis.pipeline() as pipe:
+        for model in models:
+            pipe.json().set(model.key, model.json_path, model.redis_dump())
+        await pipe.execute()
+    return models
