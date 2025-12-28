@@ -1,7 +1,6 @@
 from typing import TypeVar, Generic, get_args, Any, TypeAlias, TYPE_CHECKING
 
 from pydantic_core import core_schema
-
 from rapyer.types.base import GenericRedisType, RedisType, REDIS_DUMP_FLAG_NAME
 from rapyer.utils.redis import update_keys_in_pipeline
 

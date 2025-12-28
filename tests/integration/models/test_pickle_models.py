@@ -1,5 +1,3 @@
-from typing import Any
-
 import pytest
 
 from tests.models.pickle_types import ModelWithUnserializableFields
@@ -51,8 +49,8 @@ async def test_model_with_unserializable_fields__save_and_load__models_equal_san
     original_model = ModelWithUnserializableFields(**test_data)
 
     # Act
-    await original_model.save()
-    loaded_model = await ModelWithUnserializableFields.get(original_model.key)
+    await original_model.asave()
+    loaded_model = await ModelWithUnserializableFields.aget(original_model.key)
 
     # Assert
     assert loaded_model == original_model
@@ -70,8 +68,8 @@ async def test_model_with_unserializable_fields__none_fields_preserved__edge_cas
     )
 
     # Act
-    await original_model.save()
-    loaded_model = await ModelWithUnserializableFields.get(original_model.key)
+    await original_model.asave()
+    loaded_model = await ModelWithUnserializableFields.aget(original_model.key)
 
     # Assert
     assert loaded_model.model_type is None
@@ -95,8 +93,8 @@ async def test_model_with_unserializable_fields__complex_types__edge_case(field_
     original_model = ModelWithUnserializableFields(**field_values)
 
     # Act
-    await original_model.save()
-    loaded_model = await ModelWithUnserializableFields.get(original_model.key)
+    await original_model.asave()
+    loaded_model = await ModelWithUnserializableFields.aget(original_model.key)
 
     # Assert
     assert loaded_model == original_model
@@ -108,13 +106,13 @@ async def test_model_with_unserializable_fields__complex_types__edge_case(field_
 async def test_model_with_unserializable_fields__update_none_fields__edge_case():
     # Arrange
     original_model = ModelWithUnserializableFields(model_type=str, value=42)
-    await original_model.save()
+    await original_model.asave()
 
     # Act
     original_model.model_type = None
     original_model.value = None
-    await original_model.save()
-    loaded_model = await ModelWithUnserializableFields.get(original_model.key)
+    await original_model.asave()
+    loaded_model = await ModelWithUnserializableFields.aget(original_model.key)
 
     # Assert
     assert loaded_model.model_type is None

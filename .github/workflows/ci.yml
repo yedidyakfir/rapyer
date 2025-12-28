@@ -41,6 +41,28 @@ jobs:
     - name: Check code formatting with black
       run: poetry run black --check --diff .
 
+  mypy:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install tox
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
+    
+    - name: Run mypy type checking
+      run: tox -e mypy
+
 
   test:
     runs-on: ubuntu-22.04
@@ -96,14 +118,22 @@ jobs:
 
   test-results:
     runs-on: ubuntu-22.04
-    needs: [test]
+    needs: [lint, mypy, test]
     if: always()
     steps:
       - name: Check test results
         run: |
+          if [[ "${{ needs.lint.result }}" != "success" ]]; then
+            echo "Lint job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.mypy.result }}" != "success" ]]; then
+            echo "MyPy job failed"
+            exit 1
+          fi
           if [[ "${{ needs.test.result }}" != "success" ]]; then
             echo "Test job failed"
             exit 1
           fi
-          echo "All tests passed successfully!"
+          echo "All checks passed successfully!"
 

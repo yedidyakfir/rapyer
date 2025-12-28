@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pytest
-
 import rapyer
 from tests.models.collection_types import (
     ListModel,
@@ -236,11 +235,11 @@ from tests.models.simple_types import (
 @pytest.mark.asyncio
 async def test_rapyer_get_functionality_sanity(model_instance):
     # Arrange
-    await model_instance.save()
+    await model_instance.asave()
     redis_key = model_instance.key
 
     # Act
-    retrieved_model = await rapyer.get(redis_key)
+    retrieved_model = await rapyer.aget(redis_key)
 
     # Assert
     assert retrieved_model == model_instance

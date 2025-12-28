@@ -52,16 +52,18 @@ import asyncio
 from rapyer.base import AtomicRedisModel
 from typing import List, Dict
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
     tags: List[str] = []
     metadata: Dict[str, str] = {}
 
+
 async def main():
     # Create and save a user
     user = User(name="John", age=30)
-    await user.save()
+    await user.asave()
 
     # Atomic operations that prevent race conditions
     await user.tags.aappend("python")
@@ -69,14 +71,15 @@ async def main():
     await user.metadata.aupdate(role="developer", level="senior")
 
     # Load user from Redis
-    loaded_user = await User.get(user.key)
+    loaded_user = await User.aget(user.key)
     print(f"User: {loaded_user.name}, Tags: {loaded_user.tags}")
 
     # Atomic operations with locks for complex updates
-    async with user.lock("update_profile") as locked_user:
+    async with user.alock("update_profile") as locked_user:
         locked_user.age += 1
         await locked_user.tags.aappend("experienced")
         # Changes saved atomically when context exits
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -98,7 +101,7 @@ await user.score.set(100)                   # Set value
 For complex multi-field updates:
 
 ```python
-async with user.lock("transaction") as locked_user:
+async with user.alock("transaction") as locked_user:
     locked_user.balance -= 50
     locked_user.transaction_count += 1
     # All changes saved atomically
@@ -108,7 +111,7 @@ async with user.lock("transaction") as locked_user:
 Batch multiple operations for performance:
 
 ```python
-async with user.pipeline() as pipelined_user:
+async with user.apipeline() as pipelined_user:
     await pipelined_user.tags.aappend("redis")
     await pipelined_user.metadata.aupdate(level="senior")
     # Executed as single atomic transaction
@@ -149,8 +152,8 @@ await user.scores.aappend(95)               # Native Redis operation
 | Feature | Rapyer                                          | Redis OM | pydantic-redis | orredis |
 |---------|-------------------------------------------------|----------|----------------|---------|
 | **🚀 Atomic Operations** | ✅ Built-in for all operations                   | ❌ Manual transactions only | ❌ Manual transactions only | ❌ Manual transactions only |
-| **🔒 Lock Context Manager** | ✅ Automatic with `async with model.lock()`      | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
-| **⚡ Pipeline Operations** | ✅ True atomic batching with `model.pipeline()`  | ⚠️ Basic pipeline support | ❌ No pipeline support | ❌ No pipeline support |
+| **🔒 Lock Context Manager** | ✅ Automatic with `async with model.alock()`     | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
+| **⚡ Pipeline Operations** | ✅ True atomic batching with `model.apipeline()` | ⚠️ Basic pipeline support | ❌ No pipeline support | ❌ No pipeline support |
 | **🌐 Universal Type Support** | ✅ Native + automatic serialization for any type | ⚠️ HashModel vs JsonModel limitations | ⚠️ Limited complex types | ⚠️ Limited complex types |
 | **🔄 Race Condition Safe** | ✅ Built-in prevention with Lua scripts          | ❌ Manual implementation required | ❌ Manual implementation required | ❌ Manual implementation required |
 | **📦 Redis JSON Native** | ✅ Optimized JSON operations                     | ✅ Via JsonModel only | ❌ Hash-based | ❌ Hash-based |
@@ -166,22 +169,24 @@ await user.scores.aappend(95)               # Native Redis operation
 ### 🏆 What Makes Rapyer Unique
 
 #### **True Atomic Operations Out of the Box**
+
 ```python
 # Rapyer - Atomic by default
-await user.tags.aappend("python")           # Race-condition safe
-await user.metadata.aupdate(role="dev")     # Always atomic
+await user.tags.aappend("python")  # Race-condition safe
+await user.metadata.aupdate(role="dev")  # Always atomic
 
 # Others - Manual transaction management required
-async with redis.pipeline() as pipe:        # Manual setup
-    pipe.multi()                             # Manual transaction
+async with redis.apipeline() as pipe:  # Manual setup
+    pipe.multi()  # Manual transaction
     # ... manual Redis commands               # Error-prone
     await pipe.execute()
 ```
 
 #### **Intelligent Lock Management**
+
 ```python
 # Rapyer - Automatic lock context
-async with user.lock("profile_update") as locked_user:
+async with user.alock("profile_update") as locked_user:
     locked_user.balance -= 50
     locked_user.transaction_count += 1
     # All changes saved atomically on exit
@@ -189,7 +194,7 @@ async with user.lock("profile_update") as locked_user:
 # Others - Manual lock implementation
 lock_key = f"lock:{user.key}"
 while not await redis.set(lock_key, token, nx=True):  # Manual retry logic
-    await asyncio.sleep(0.1)                           # Race conditions possible
+    await asyncio.sleep(0.1)  # Race conditions possible
 # ... manual cleanup required
 ```
 
@@ -208,9 +213,10 @@ await user.metadata.aupdate(key="val") # Native Redis JSON operations
 ```
 
 #### **Pipeline with True Atomicity**
+
 ```python
 # Rapyer - Everything in pipeline is atomic
-async with user.pipeline() as pipelined_user:
+async with user.apipeline() as pipelined_user:
     await pipelined_user.tags.aappend("redis")
     await pipelined_user.metadata.aupdate(level="senior")
     # Single atomic transaction - either all succeed or all fail

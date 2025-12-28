@@ -40,44 +40,44 @@ print(user.key)  # "User:abc-123-def-456"
 
 ### Instance Methods
 
-#### `save()`
+#### `asave()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Saves the current model instance to Redis using JSON.SET operation.
 
 ```python
 user = User(name="John", age=30)
-await user.save()
+await user.asave()
 ```
 
-#### `load()`
+#### `aload()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Loads the latest data from Redis for this model instance, updating the current instance.
 
 ```python
-await user.load()  # Refreshes user with latest Redis data
+await user.aload()  # Refreshes user with latest Redis data
 ```
 
-#### `delete()`
+#### `adelete()`
 **Type:** `async` method  
 **Returns:** `bool`  
 **Description:** Deletes this model instance from Redis. Can only be called on top-level models (not nested ones).
 
 ```python
-success = await user.delete()
+success = await user.adelete()
 ```
 
-#### `duplicate()`
+#### `aduplicate()`
 **Type:** `async` method  
 **Returns:** `Self`  
 **Description:** Creates a duplicate of the current model with a new primary key and saves it to Redis.
 
 ```python
-user_copy = await user.duplicate()
+user_copy = await user.aduplicate()
 ```
 
-#### `duplicate_many(num)`
+#### `aduplicate_many(num)`
 **Type:** `async` method  
 **Parameters:** 
 - `num` (int): Number of duplicates to create  
@@ -85,7 +85,7 @@ user_copy = await user.duplicate()
 **Description:** Creates multiple duplicates of the current model.
 
 ```python
-user_copies = await user.duplicate_many(5)  # Creates 5 duplicates
+user_copies = await user.aduplicate_many(5)  # Creates 5 duplicates
 ```
 
 #### `update(**kwargs)`
@@ -120,7 +120,7 @@ if user.is_inner_model():
 
 ### Class Methods
 
-#### `get(key)`
+#### `aget(key)`
 **Type:** `async` class method  
 **Parameters:** 
 - `key` (str): The Redis key to retrieve  
@@ -129,10 +129,10 @@ if user.is_inner_model():
 **Description:** Retrieves a model instance from Redis by its key.
 
 ```python
-user = await User.get("User:abc-123")
+user = await User.aget("User:abc-123")
 ```
 
-#### `delete_by_key(key)`
+#### `adelete_by_key(key)`
 **Type:** `async` class method  
 **Parameters:** 
 - `key` (str): The Redis key to delete  
@@ -140,7 +140,39 @@ user = await User.get("User:abc-123")
 **Description:** Deletes a model from Redis by its key without needing to load it first.
 
 ```python
-success = await User.delete_by_key("User:abc-123")
+success = await User.adelete_by_key("User:abc-123")
+```
+
+#### `afind(*expressions)`
+**Type:** `async` class method  
+**Parameters:**
+- `*expressions` (Expression): Optional filter expressions  
+**Returns:** `list of redis models`  
+**Description:** Retrieves all instances of this model class from Redis, optionally filtered by expressions.
+
+**Supported Filter Operators:**
+- `==` - Equal to
+- `!=` - Not equal to  
+- `>` - Greater than
+- `<` - Less than
+- `>=` - Greater than or equal to
+- `<=` - Less than or equal to
+- `&` - Logical AND
+- `|` - Logical OR
+- `~` - Logical NOT
+
+```python
+# Get all users
+all_users = await User.afind()  
+
+# Filter with expressions (requires Index annotation on fields)
+active_users = await User.afind(User.status == "active")
+adult_users = await User.afind(User.age >= 18)
+
+# Complex filters
+filtered = await User.afind(
+    (User.age > 18) & (User.status == "active") | (User.role == "admin")
+)
 ```
 
 #### `afind_keys()`
@@ -150,6 +182,55 @@ success = await User.delete_by_key("User:abc-123")
 
 ```python
 user_keys = await User.afind_keys()  # Returns ["User:123", "User:456", ...]
+```
+
+#### `ainsert(*models)`
+**Type:** `async` class method  
+**Parameters:** 
+- `*models` (Self): Variable number of model instances to insert  
+**Returns:** `None`  
+**Description:** Inserts multiple model instances to Redis in a single atomic transaction. This is significantly more efficient than calling `save()` on each model individually, as it uses Redis pipelining to batch all operations.
+
+**Benefits:**
+- **Transactional**: All models are saved atomically - either all succeed or all fail
+- **Performance**: Uses a single Redis pipeline instead of multiple round trips
+- **Network Efficiency**: Reduces network latency by batching operations
+- **Consistency**: Prevents partial saves if an error occurs during bulk operations
+
+```python
+# Create multiple user instances
+users = [
+    User(name="Alice", email="alice@example.com"),
+    User(name="Bob", email="bob@example.com"),
+    User(name="Charlie", email="charlie@example.com")
+]
+
+# Insert all users atomically
+await User.ainsert(*users)
+
+# Alternative syntax
+await User.ainsert(user1, user2, user3)
+```
+
+#### `adelete_many(*args)`
+**Type:** `async` class method  
+**Parameters:** 
+- `*args` (Self | str): Variable number of model instances or Redis keys to delete   
+**Description:** Deletes multiple model instances from Redis in a single atomic transaction. Accepts both model instances and Redis key strings, making it flexible for different use cases. This is significantly more efficient than calling `delete()` on each model individually, as it uses Redis batch deletion.
+
+```python
+# Delete using model instances
+await User.adelete_many(*users)
+
+# Delete using Redis keys
+await User.adelete_many("User:123", "User:456", "User:789")
+
+# Mix models and keys
+await User.adelete_many(user1, "User:xyz", user2.key, user3)
+
+# Delete all instances of a model
+all_users = await User.afind()
+await User.adelete_many(*all_users)
 ```
 
 #### `class_key_initials()`
@@ -166,7 +247,7 @@ class User(AtomicRedisModel):
 
 ### Context Managers
 
-#### `lock_from_key(key, action="default", save_at_end=False)`
+#### `alock_from_key(key, action="default", save_at_end=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `key` (str): Redis key to lock
@@ -176,12 +257,12 @@ class User(AtomicRedisModel):
 **Description:** Acquires an exclusive lock on the model and yields the loaded instance.
 
 ```python
-async with User.lock_from_key("User:123", "profile_update", save_at_end=True) as user:
+async with User.alock_from_key("User:123", "profile_update", save_at_end=True) as user:
     user.name = "Updated Name"
     # Automatically saved when context exits
 ```
 
-#### `lock(action="default", save_at_end=False)`
+#### `alock(action="default", save_at_end=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `action` (str): Lock action name
@@ -190,11 +271,11 @@ async with User.lock_from_key("User:123", "profile_update", save_at_end=True) as
 **Description:** Acquires an exclusive lock on the current model instance.
 
 ```python
-async with user.lock("settings_update", save_at_end=True) as locked_user:
+async with user.alock("settings_update", save_at_end=True) as locked_user:
     locked_user.settings = {"theme": "dark"}
 ```
 
-#### `pipeline(ignore_if_deleted=False)`
+#### `apipeline(ignore_if_deleted=False)`
 **Type:** `async` context manager  
 **Parameters:**
 - `ignore_if_deleted` (bool): Continue if model was deleted during pipeline  
@@ -202,7 +283,7 @@ async with user.lock("settings_update", save_at_end=True) as locked_user:
 **Description:** Batches all operations into a Redis pipeline for atomic execution.
 
 ```python
-async with user.pipeline() as pipeline_user:
+async with user.apipeline() as pipeline_user:
     user.score += 100
     user.achievements.append("New Achievement")
     # All operations executed atomically
@@ -269,7 +350,7 @@ Raised when attempting to get or load a model that doesn't exist in Redis:
 from rapyer.errors import KeyNotFound
 
 try:
-    user = await User.get("User:nonexistent")
+    user = await User.aget("User:nonexistent")
 except KeyNotFound:
     print("User not found in Redis")
 ```
@@ -280,6 +361,7 @@ except KeyNotFound:
 from rapyer import AtomicRedisModel
 from typing import List, Dict
 
+
 class User(AtomicRedisModel):
     name: str
     email: str
@@ -287,24 +369,25 @@ class User(AtomicRedisModel):
     tags: List[str] = []
     settings: Dict[str, str] = {}
 
+
 # Create and save
 user = User(name="John", email="john@example.com", age=30)
-await user.save()
+await user.asave()
 
 # Retrieve
-retrieved_user = await User.get(user.key)
+retrieved_user = await User.aget(user.key)
 
 # Update atomically
 await user.aupdate(age=31, tags=["python", "redis"])
 
 # Batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.age += 1
     user.tags.append("asyncio")
     user.settings["theme"] = "dark"
 
 # Lock for exclusive access
-async with user.lock("profile_update", save_at_end=True):
+async with user.alock("profile_update", save_at_end=True):
     if user.age >= 25:
         user.tags.append("adult")
         user.settings["account_type"] = "premium"

@@ -115,9 +115,14 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Benchmark
+.benchmarks
+.codspeed
+
 # Dynaconf secrets
 .secrets.*
 future-work
 .claude
 git-flow-plus.config
 CLAUDE.md
+scripts/

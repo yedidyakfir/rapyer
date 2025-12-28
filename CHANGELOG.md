@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.1.1]
+In this version we officaly starting the support for bulk operation on multiple models. In line with our philsophy of atomic operations.
+
+### ✨ Added
+- **Bulk Insert**: We added the ainsert classmethod to AtomicRedisModel to insert multiple models in a single operation. 
+- **Bulk delete**: We added the adelete_many classmethod to AtomicRedisModel to delete many objects in a single operation.
+- **Flexible Bulk Delete**: The adelete_many method now supports both model instances and Redis keys as arguments, allowing for more flexible bulk deletion operations. You can mix and match models and keys in a single call.
+- **RedisFloat Type**: Added support for float Redis types with atomic increment operations and in-place arithmetic operations (+=, -=, *=, /=) within pipeline contexts.
+- **Global ainsert Function**: Added `rapyer.ainsert()` function to insert models of any type in a single operation, enabling bulk inserts of heterogeneous model types.
+- **Filtering in Search**: Added support for filtering in `afind()` method using expressions, allowing you to search for models that match specific criteria with operators like ==, !=, >, <, >=, <= and logical operators (&, |, ~).
+- **RedisDatetimeTimestamp Type**: Added new `RedisDatetimeTimestamp` type that stores datetime values as timestamps (floats) in Redis instead of ISO strings. This provides more efficient storage and better compatibility with external systems that expect timestamp format. Note: timezone information is lost during conversion as timestamps represent UTC moments in time.
+
+### ⚠️ Deprecated
+- **Function Name Migration to Async**: The following functions have been renamed to follow async naming conventions. We moved to a strict convention to support non async models in a future version. Old names are deprecated and will be removed in a future version:
+  - `save()` → `asave()` - Save model instance to Redis
+  - `load()` → `aload()` - Load model data from Redis  
+  - `delete()` → `adelete()` - Delete model instance from Redis
+  - `get()` → `aget()` - Retrieve model instance by key (class method)
+  - `duplicate()` → `aduplicate()` - Create a duplicate of the model
+  - `duplicate_many()` → `aduplicate_many()` - Create multiple duplicates
+  - `delete_by_key()` → `adelete_by_key()` - Delete model by key (class method)
+  - `lock()` → `alock()` - Create lock context manager for model
+  - `lock_from_key()` → `alock_from_key()` - Create lock context manager from key (class method)
+  - `pipeline()` → `apipeline()` - Create pipeline context manager for batched operations 
+
 ## [1.1.0]
 
 ### ✨ Added
@@ -76,7 +101,7 @@ This release introduces **native BaseModel compatibility**, making Redis types w
 
 - **Native Redis Type Integration**: Redis types now work directly with BaseModel - no need to initialize with `""`, `0`, etc.
 - **Direct Field Assignment**: Use simple assignment like `name: RedisStr = ""` instead of `name: RedisStr = ""`
-- **Enhanced Nested Operations**: Support for saving inner fields directly with `model.lst[1].save()`
+- **Enhanced Nested Operations**: Support for saving inner fields directly with `model.lst[1].asave()`
 - **Simplified Type Declarations**: All Redis types (RedisStr, RedisInt, RedisList, RedisDict, RedisBytes) now support native Python value assignment
 
 ### 🔄 Changed

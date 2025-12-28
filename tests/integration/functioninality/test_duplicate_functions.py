@@ -29,10 +29,10 @@ async def test_duplicate_basic_functionality_sanity(redis_client_fixture):
     original = TestRedisModel(
         description="original", items=[1, 2, 3], user_data={"user1": 100, "user2": 200}
     )
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicate = await original.duplicate()
+    duplicate = await original.aduplicate()
 
     # Assert
     assert duplicate.pk != original.pk
@@ -61,10 +61,10 @@ async def test_duplicate_with_nested_models_sanity():
         user_data={"admin": 1000},
         items=[10, 20, 30],
     )
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicate = await original.duplicate()
+    duplicate = await original.aduplicate()
 
     # Assert
     assert duplicate.pk != original.pk
@@ -87,10 +87,10 @@ async def test_duplicate_many_functionality_sanity(redis_client_fixture):
     original = TestRedisModel(
         description="original_for_many", items=[5, 10, 15], user_data={"batch": 999}
     )
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicates = await original.duplicate_many(3)
+    duplicates = await original.aduplicate_many(3)
 
     # Assert
     assert len(duplicates) == 3
@@ -116,10 +116,10 @@ async def test_duplicate_many_functionality_sanity(redis_client_fixture):
 async def test_duplicate_redis_operations_on_duplicated_models_sanity():
     # Arrange
     original = TestRedisModel(items=[1, 2], user_data={"count": 10})
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicate = await original.duplicate()
+    duplicate = await original.aduplicate()
 
     # Perform Redis operations in duplicate
     await duplicate.items.aappend(3)
@@ -127,8 +127,8 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity():
 
     # Assert
     # Original should remain unchanged
-    original.items = await original.items.load()
-    original.user_data = await original.user_data.load()
+    original.items = await original.items.aload()
+    original.user_data = await original.user_data.aload()
     assert original.items == [1, 2]
     assert original.user_data == {"count": 10}
 
@@ -141,10 +141,10 @@ async def test_duplicate_redis_operations_on_duplicated_models_sanity():
 async def test_duplicate_redis_operations_on_nested_models_sanity():
     # Arrange
     original = TestRedisModel()
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicate = await original.duplicate()
+    duplicate = await original.aduplicate()
 
     # Perform Redis operations on nested models in duplicate
     await duplicate.middle_model.tags.aappend("nested_tag")
@@ -153,10 +153,10 @@ async def test_duplicate_redis_operations_on_nested_models_sanity():
 
     # Assert
     # Original should remain unchanged
-    original.middle_model.tags = await original.middle_model.tags.load()
-    original.middle_model.metadata = await original.middle_model.metadata.load()
+    original.middle_model.tags = await original.middle_model.tags.aload()
+    original.middle_model.metadata = await original.middle_model.metadata.aload()
     original.middle_model.inner_model.names = (
-        await original.middle_model.inner_model.names.load()
+        await original.middle_model.inner_model.names.aload()
     )
     assert original.middle_model.tags == []
     assert original.middle_model.metadata == {}
@@ -176,10 +176,10 @@ async def test_duplicate_with_redis_nested_models_sanity():
     )
     container = ContainerModel(inner_redis=inner_redis, description="redis_container")
     original = OuterModelWithRedisNested(container=container, outer_data=[100, 200])
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicate = await original.duplicate()
+    duplicate = await original.aduplicate()
 
     # Assert
     assert duplicate.pk != original.pk
@@ -200,10 +200,10 @@ async def test_duplicate_with_redis_nested_models_sanity():
 async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
     # Arrange
     original = OuterModelWithRedisNested()
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicate = await original.duplicate()
+    duplicate = await original.aduplicate()
 
     # Perform Redis operations on nested Redis models in duplicate
     await duplicate.container.inner_redis.tags.aappend("redis_nested_tag")
@@ -215,12 +215,12 @@ async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
     # Assert
     # Original should remain unchanged
     original.container.inner_redis.tags = (
-        await original.container.inner_redis.tags.load()
+        await original.container.inner_redis.tags.aload()
     )
     original.container.inner_redis.metadata = (
-        await original.container.inner_redis.metadata.load()
+        await original.container.inner_redis.metadata.aload()
     )
-    original.outer_data = await original.outer_data.load()
+    original.outer_data = await original.outer_data.aload()
     assert original.container.inner_redis.tags == []
     assert original.container.inner_redis.metadata == {}
     assert original.outer_data == []
@@ -237,30 +237,30 @@ async def test_duplicate_redis_operations_on_redis_nested_models_sanity():
 async def test_cannot_duplicate_inner_model_edge_case():
     # Arrange
     original = TestRedisModel()
-    await original.save()
+    await original.asave()
 
     # Act & Assert
     # Try to duplicate inner model - should fail
     with pytest.raises(RuntimeError, match="Can only duplicate from top level model"):
-        await original.middle_model.duplicate()
+        await original.middle_model.aduplicate()
 
     with pytest.raises(RuntimeError, match="Can only duplicate from top level model"):
-        await original.middle_model.duplicate_many(2)
+        await original.middle_model.aduplicate_many(2)
 
 
 @pytest.mark.asyncio
 async def test_cannot_duplicate_redis_inner_model_edge_case():
     # Arrange
     original = OuterModelWithRedisNested()
-    await original.save()
+    await original.asave()
 
     # Act & Assert
     # Try to duplicate Redis inner model - should fail
     with pytest.raises(RuntimeError, match="Can only duplicate from top level model"):
-        await original.container.inner_redis.duplicate()
+        await original.container.inner_redis.aduplicate()
 
     with pytest.raises(RuntimeError, match="Can only duplicate from top level model"):
-        await original.container.inner_redis.duplicate_many(2)
+        await original.container.inner_redis.aduplicate_many(2)
 
 
 @pytest.mark.parametrize("num_duplicates", [1, 3, 5])
@@ -270,10 +270,10 @@ async def test_duplicate_many_with_different_counts_sanity(
 ):
     # Arrange
     original = TestRedisModel(description=f"original_for_{num_duplicates}")
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicates = await original.duplicate_many(num_duplicates)
+    duplicates = await original.aduplicate_many(num_duplicates)
 
     # Assert
     assert len(duplicates) == num_duplicates
@@ -304,10 +304,10 @@ async def test_duplicate_preserves_all_redis_types_sanity():
         user_data={"user1": 50, "user2": 75},
         items=[10, 20, 30, 40],
     )
-    await original.save()
+    await original.asave()
 
     # Act
-    duplicate = await original.duplicate()
+    duplicate = await original.aduplicate()
 
     # Assert
     assert duplicate.pk != original.pk

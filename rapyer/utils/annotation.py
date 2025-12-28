@@ -90,3 +90,7 @@ def has_annotation(field: Any, annotation_type: Any) -> bool:
                 return True
 
     return False
+
+
+def field_with_flag(field, flag):
+    return any([isinstance(metadata, flag) for metadata in field.metadata])

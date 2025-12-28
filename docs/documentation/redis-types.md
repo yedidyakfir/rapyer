@@ -8,8 +8,9 @@
 - `dict` → `RedisDict`
 - `str` → `RedisStr`  
 - `int` → `RedisInt`
+- `float` → `RedisFloat`
 - `bytes` → `RedisBytes`
-- `datetime` → `RedisDatetime`
+- `datetime` → `RedisDatetime` (or `RedisDatetimeTimestamp` for timestamp storage)
 - `BaseModel` → `AtomicRedisModel` (nested models)
 
 **This is completely seamless** - since `RedisList` inherits from `list`, `RedisDict` inherits from `dict`, etc., your existing code continues to work exactly as before, but now with atomic Redis operations available.
@@ -52,8 +53,8 @@ class User(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.name.save()` | Save field value to Redis |
-| **load** | `await user.name.load()` | Load field value from Redis (returns value, doesn't update model) |
+| **save** | `await user.name.asave()` | Save field value to Redis |
+| **load** | `await user.name.aload()` | Load field value from Redis (returns value, doesn't update model) |
 
 All standard `str` methods are available (upper, lower, strip, etc.) but operate on the local copy.
 
@@ -62,8 +63,8 @@ All standard `str` methods are available (upper, lower, strip, etc.) but operate
 ## RedisInt
 
 **Inherits from:** `int`, `RedisType`  
-**Redis Storage:** Numeric values with atomic increment support  
-**Use Case:** Counters, IDs, scores, and numeric data requiring atomic updates
+**Redis Storage:** Integer numeric values with atomic increment support  
+**Use Case:** Counters, IDs, scores, and integer numeric data requiring atomic updates
 
 ```python
 from rapyer.types import RedisInt  # Recommended: TypeAlias
@@ -76,14 +77,42 @@ class Counter(AtomicRedisModel):
 
 ### Available Operations
 
-| Operation | Method | Description |
-|-----------|---------|-------------|
-| **save** | `await counter.count.save()` | Save field value to Redis |
-| **load** | `await counter.count.load()` | Load field value from Redis (returns value, doesn't update model) |
-| **increase** | `await counter.count.increase(5)` | Atomically increment by amount (default: 1) |
+| Operation     | Method | Description |
+|---------------|---------|-------------|
+| **save**      | `await counter.count.asave()` | Save field value to Redis |
+| **load**      | `await counter.count.aload()` | Load field value from Redis (returns value, doesn't update model) |
+| **aincrease** | `await counter.count.increase(5)` | Atomically increment by amount (default: 1) |
 
 !!! warning "Non-mutating Operation"
     The `increase()` method returns the new value from Redis but **does not update the local instance**. You need to reload the model or field to see the updated value locally.
+
+---
+
+## RedisFloat
+
+**Inherits from:** `float`, `RedisType`  
+**Redis Storage:** Floating-point numeric values with atomic increment support  
+**Use Case:** Prices, ratings, percentages, and decimal data requiring atomic updates
+
+```python
+from rapyer.types import RedisFloat  # Recommended: TypeAlias
+# from rapyer.types import RedisFloat     # Alternative: Direct class
+
+class Product(AtomicRedisModel):
+    price: RedisFloat = 0.0           # Flexible typing with union support
+    rating: RedisFloat = 5.0          # Accepts both float and RedisFloat
+```
+
+### Available Operations
+
+| Operation     | Method | Description |
+|---------------|---------|-------------|
+| **save**      | `await product.price.asave()` | Save field value to Redis |
+| **load**      | `await product.price.aload()` | Load field value from Redis (returns value, doesn't update model) |
+| **aincrease** | `await product.price.aincrease(1.5)` | Atomically increment by amount (default: 1.0) |
+
+!!! warning "Non-mutating Operation"
+    The `aincrease()` method returns the new value from Redis but **does not update the local instance**. You need to reload the model or field to see the updated value locally.
 
 ---
 
@@ -106,8 +135,8 @@ class UserProfile(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.tags.save()` | Save entire list to Redis |
-| **load** | `await user.tags.load()` | Load entire list from Redis (returns value, doesn't update model) |
+| **save** | `await user.tags.asave()` | Save entire list to Redis |
+| **load** | `await user.tags.aload()` | Load entire list from Redis (returns value, doesn't update model) |
 | **append** | `await user.tags.aappend("python")` | Atomically append single item |
 | **extend** | `await user.tags.aextend(["redis", "async"])` | Atomically append multiple items |
 | **insert** | `await user.tags.ainsert(0, "first")` | Atomically insert at index |
@@ -137,8 +166,8 @@ class UserSettings(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.preferences.save()` | Save entire dict to Redis |
-| **load** | `await user.preferences.load()` | Load entire dict from Redis (returns value, doesn't update model) |
+| **save** | `await user.preferences.asave()` | Save entire dict to Redis |
+| **load** | `await user.preferences.aload()` | Load entire dict from Redis (returns value, doesn't update model) |
 | **update** | `await user.preferences.aupdate(theme="dark")` | Atomically update multiple keys |
 | **set item** | `await user.preferences.aset_item("lang", "en")` | Atomically set single key-value |
 | **delete item** | `await user.preferences.adel_item("old_key")` | Atomically delete key |
@@ -169,8 +198,8 @@ class FileModel(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await file.content.save()` | Save bytes to Redis |
-| **load** | `await file.content.load()` | Load bytes from Redis (returns value, doesn't update model) |
+| **save** | `await file.content.asave()` | Save bytes to Redis |
+| **load** | `await file.content.aload()` | Load bytes from Redis (returns value, doesn't update model) |
 
 All standard `bytes` methods are available but operate on the local copy.
 
@@ -196,11 +225,36 @@ class Event(AtomicRedisModel):
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await event.created_at.save()` | Save datetime to Redis |
-| **load** | `await event.created_at.load()` | Load datetime from Redis (returns value, doesn't update model) |
+| **save** | `await event.created_at.asave()` | Save datetime to Redis |
+| **load** | `await event.created_at.aload()` | Load datetime from Redis (returns value, doesn't update model) |
 
 All standard `datetime` methods are available (strftime, replace, etc.) but operate on the local copy.
 
+---
+
+## RedisDatetimeTimestamp
+A datetime field, but it will be stored in epoch time format
+
+**Redis Storage:** Timestamp values (floats) representing seconds since Unix epoch  
+**Use Case:** Timestamps requiring efficient storage or interoperability with systems expecting Unix timestamps
+
+```python
+from rapyer.types import RedisDatetimeTimestamp  # Recommended: TypeAlias
+from datetime import datetime
+
+class Event(AtomicRedisModel):
+    created_at: RedisDatetimeTimestamp = Field(default_factory=datetime.now)  # Stored as timestamp
+    updated_at: RedisDatetimeTimestamp                                         # Accepts datetime objects
+```
+
+### Important Notes
+
+!!! warning "Timezone Information Loss"
+    When using `RedisDatetimeTimestamp`, **timezone information is lost during storage**. The datetime is converted to a Unix timestamp (float) which represents a moment in UTC time. When loaded back, it becomes a naive datetime in the local timezone.
+
+!!! info "Storage Format Difference"
+    - **RedisDatetime**: Stores as ISO string format (e.g., "2023-01-01T12:00:00")
+    - **RedisDatetimeTimestamp**: Stores as Unix timestamp float (e.g., 1672531200.0)
 ---
 
 ## Nested Models (BaseModel → AtomicRedisModel)
@@ -231,17 +285,17 @@ Nested BaseModel instances support these atomic Redis operations:
 
 | Operation | Method | Description |
 |-----------|---------|-------------|
-| **save** | `await user.address.save()` | Save only this nested model to Redis (other parent fields unchanged) |
-| **load** | `await user.address.load()` | Load nested model from Redis (returns value, doesn't update model) |
+| **save** | `await user.address.asave()` | Save only this nested model to Redis (other parent fields unchanged) |
+| **load** | `await user.address.aload()` | Load nested model from Redis (returns value, doesn't update model) |
 | **aupdate** | `await user.address.aupdate(street="New St")` | Atomically update specific fields in the nested model |
 
 !!! warning "Scoped Save Operation"
-    When you call `await user.address.save()`, **only the `address` nested model is saved to Redis**. Other fields in the parent `user` model remain unchanged in Redis, even if they were modified locally.
+    When you call `await user.address.asave()`, **only the `address` nested model is saved to Redis**. Other fields in the parent `user` model remain unchanged in Redis, even if they were modified locally.
 
 ```python
 # Atomic operations on nested models
 await user.address.aupdate(street="123 New St", city="Boston")  # Update specific fields
-await user.address.save()  # Save entire address model only
+await user.address.asave()  # Save entire address model only
 
 # All fields within nested models support their respective Redis operations
 await user.profile.preferences.aupdate(theme="dark", lang="en")  # Dict operations available

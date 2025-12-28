@@ -1,12 +1,24 @@
 from typing import TypeAlias, TYPE_CHECKING
 
 from rapyer.types.base import RedisType
+from redis.commands.search.field import NumericField
+from typing_extensions import deprecated
 
 
 class RedisInt(int, RedisType):
     original_type = int
 
+    @classmethod
+    def redis_schema(cls, field_name: str):
+        return NumericField(f"$.{field_name}", as_name=field_name)
+
+    @deprecated(
+        f"increase function is deprecated and will become sync function in rapyer 1.2.0, use aincrease() instead"
+    )
     async def increase(self, amount: int = 1):
+        return await self.aincrease(amount)
+
+    async def aincrease(self, amount: int = 1):
         result = await self.client.json().numincrby(self.key, self.json_path, amount)
         return result[0] if isinstance(result, list) and result else result
 

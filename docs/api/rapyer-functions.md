@@ -1,11 +1,99 @@
+from rapyer import AtomicRedisModel
+
 # Rapyer Functions
 
 This page documents the global functions available in the rapyer package for working with Redis models.
 
-## get()
+## ainsert()
 
 ```python
-async def get(redis_key: str) -> AtomicRedisModel
+async def ainsert(*models: AtomicRedisModel) -> list[AtomicRedisModel]
+```
+
+Performs bulk insertion of multiple Redis models in a single transaction, supporting models of different types.
+
+### Description
+
+The `ainsert()` function provides a global way to insert multiple Redis models in a single atomic transaction. Unlike the class-specific `ainsert()` method, this global function can handle models of different types in a single operation.
+
+### Example
+
+```python
+import asyncio
+import rapyer
+from rapyer import AtomicRedisModel
+
+
+class User(AtomicRedisModel):
+    name: str
+    age: int
+    email: str
+
+
+class Product(AtomicRedisModel):
+    name: str
+    price: float
+    in_stock: bool
+
+
+class Order(AtomicRedisModel):
+    user_id: str
+    product_id: str
+    quantity: int
+
+
+async def main():
+    # Create instances of different model types
+    user = User(name="Alice", age=30, email="alice@example.com")
+    product1 = Product(name="Laptop", price=999.99, in_stock=True)
+    product2 = Product(name="Mouse", price=29.99, in_stock=True)
+    order = Order(user_id=user.key, product_id=product1.key, quantity=1)
+    
+    # Insert all models in a single transaction
+    await rapyer.ainsert(user, product1, product2, order)
+    print("All models inserted atomically")
+    
+    # Verify all models were saved
+    saved_user = await User.aget(user.key)
+    saved_product1 = await Product.aget(product1.key)
+    saved_order = await Order.aget(order.key)
+    
+    print(f"User: {saved_user.name}")
+    print(f"Product: {saved_product1.name}")
+    print(f"Order quantity: {saved_order.quantity}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Performance Benefits
+
+The global `ainsert()` function is particularly useful when:
+- You need to insert multiple models of different types
+- You want atomic guarantees across different model types
+- You're initializing related data that spans multiple model classes
+- You need optimal performance for bulk insertions
+
+### Comparison with Class-Specific ainsert()
+
+```python
+async def comparison_example():
+    users = [User(name=f"User{i}", age=20+i, email=f"user{i}@example.com") for i in range(3)]
+    products = [Product(name=f"Product{i}", price=10.0*i, in_stock=True) for i in range(3)]
+    
+    # ❌ Less efficient: Multiple transactions
+    await User.ainsert(*users)
+    await Product.ainsert(*products)
+    
+    # ✅ More efficient: Single transaction for all models
+    await rapyer.ainsert(*users, *products)
+```
+
+## aget()
+
+```python
+async def aget(redis_key: str) -> AtomicRedisModel
 ```
 
 Retrieves a model instance from Redis by its key, automatically determining the correct model class.
@@ -25,11 +113,11 @@ Retrieves a model instance from Redis by its key, automatically determining the 
 
 ### Description
 
-The `get()` function provides a global way to retrieve any model instance from Redis without knowing its specific class beforehand. It works by:
+The `aget()` function provides a global way to retrieve any model instance from Redis without knowing its specific class beforehand. It works by:
 
 1. Extracting the class name from the Redis key format (`ClassName:instance_id`)
 2. Looking up the appropriate model class from the registered Redis models
-3. Calling the class-specific `get()` method to retrieve and deserialize the instance
+3. Calling the class-specific `aget()` method to retrieve and deserialize the instance
 
 This is particularly useful when you have multiple model types and want a unified retrieval mechanism, or when working with keys of unknown model types.
 
@@ -40,34 +128,38 @@ import asyncio
 import rapyer
 from rapyer import AtomicRedisModel
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
     email: str
+
 
 class Product(AtomicRedisModel):
     name: str
     price: float
     in_stock: bool
 
+
 async def main():
     # Create and save different model types
     user = User(name="Alice", age=30, email="alice@example.com")
     product = Product(name="Laptop", price=999.99, in_stock=True)
-    
-    await user.save()
-    await product.save()
-    
-    # Retrieve using global get function
-    retrieved_user = await rapyer.get(user.key)
-    retrieved_product = await rapyer.get(product.key)
-    
+
+    await user.asave()
+    await product.asave()
+
+    # Retrieve using global aget function
+    retrieved_user = await rapyer.aget(user.key)
+    retrieved_product = await rapyer.aget(product.key)
+
     print(f"User: {retrieved_user.name}, Age: {retrieved_user.age}")
     print(f"Product: {retrieved_product.name}, Price: {retrieved_product.price}")
-    
+
     # The function automatically returns the correct model type
     print(f"User type: {type(retrieved_user).__name__}")
     print(f"Product type: {type(retrieved_product).__name__}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -126,15 +218,18 @@ This method is efficient for retrieving multiple instances as it uses Redis's bu
 import asyncio
 from rapyer import AtomicRedisModel
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
     email: str
 
+
 class Product(AtomicRedisModel):
     name: str
     price: float
     in_stock: bool
+
 
 async def main():
     # Create and save multiple users
@@ -143,29 +238,30 @@ async def main():
         User(name="Bob", age=25, email="bob@example.com"),
         User(name="Charlie", age=35, email="charlie@example.com")
     ]
-    
+
     products = [
         Product(name="Laptop", price=999.99, in_stock=True),
         Product(name="Mouse", price=29.99, in_stock=False)
     ]
-    
+
     # Save all instances
     for user in users:
-        await user.save()
+        await user.asave()
     for product in products:
-        await product.save()
-    
+        await product.asave()
+
     # Find all users and products
     all_users = await User.afind()
     all_products = await Product.afind()
-    
+
     print(f"Found {len(all_users)} users:")
     for user in all_users:
         print(f"  - {user.name} ({user.age})")
-    
+
     print(f"Found {len(all_products)} products:")
     for product in all_products:
         print(f"  - {product.name}: ${product.price}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

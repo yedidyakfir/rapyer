@@ -83,17 +83,17 @@ class User(AtomicRedisModel):
     email: str
 
 user = User(name="John", email="john@example.com")
-await user.save()
+await user.asave()
 
 # String operations work normally
 print(user.name.upper())  # "JOHN"
 print(user.name.startswith("J"))  # True
 
 # Save individual field
-await user.name.save()
+await user.name.asave()
 
 # Load latest value
-await user.name.load()
+await user.name.aload()
 ```
 
 ---
@@ -126,13 +126,13 @@ All standard Python `int` methods are available plus:
 
 ```python
 counter = Counter(count=5)
-await counter.save()
+await counter.asave()
 
 # Atomically increment by 1
-new_value = await counter.count.increase()  # Returns 6
+new_value = await counter.count.aincrease()  # Returns 6
 
 # Increment by custom amount
-new_value = await counter.count.increase(10)  # Returns 16
+new_value = await counter.count.aincrease(10)  # Returns 16
 ```
 
 #### `clone()`
@@ -148,7 +148,7 @@ class BlogPost(AtomicRedisModel):
     likes: int = 0
 
 post = BlogPost(title="My Blog Post")
-await post.save()
+await post.asave()
 
 # Atomic increment operations
 await post.views.increase()        # Increment views by 1
@@ -157,6 +157,91 @@ await post.likes.increase(5)       # Increment likes by 5
 # Standard integer operations
 total_engagement = post.views + post.likes
 is_popular = post.views > 1000
+```
+
+---
+
+## RedisFloat
+
+A Redis-backed float type that extends Python's built-in `float` with atomic increment operations.
+
+```python
+from rapyer.types import RedisFloat
+
+class Product(AtomicRedisModel):
+    price: float  # Automatically becomes RedisFloat
+    discount: float = 0.0
+```
+
+### Inherits From
+- `float` - All standard float methods available
+- `RedisType` - All common Redis type functionality
+
+### Methods
+All standard Python `float` methods are available plus:
+
+#### `aincrease(amount=1.0)`
+**Type:** `async` method  
+**Parameters:**
+- `amount` (float): Amount to increment by (default: 1.0)  
+**Returns:** `float` - New value after increment  
+**Description:** Atomically increments the value in Redis.
+
+```python
+product = Product(price=99.99)
+await product.asave()
+
+# Atomically increment by 1.0
+new_price = await product.price.aincrease()  # Returns 100.99
+
+# Increment by custom amount
+new_price = await product.price.aincrease(10.50)  # Returns 111.49
+```
+
+#### In-Place Arithmetic Operations (Pipeline Context)
+RedisFloat supports in-place arithmetic operations that automatically sync with Redis when used within a pipeline:
+
+- `+=` - In-place addition
+- `-=` - In-place subtraction
+- `*=` - In-place multiplication
+- `/=` - In-place division
+
+```python
+async with product.apipeline():
+    product.price += 10.0    # Add 10.0
+    product.price *= 1.1     # Apply 10% increase
+    product.discount -= 5.0  # Reduce discount by 5.0
+    # All operations applied atomically when context exits
+```
+
+#### `clone()`
+**Returns:** `float`  
+**Description:** Returns a native Python float copy.
+
+### Example Usage
+
+```python
+class StockItem(AtomicRedisModel):
+    name: str
+    price: float = 0.0
+    weight: float = 0.0
+    rating: float = 5.0
+
+item = StockItem(name="Widget", price=19.99, weight=2.5)
+await item.asave()
+
+# Atomic increment operations
+await item.price.aincrease(5.0)      # Increase price by 5.0
+await item.rating.aincrease(-0.5)    # Decrease rating by 0.5
+
+# Standard float operations
+average_value = item.price / item.weight
+is_expensive = item.price > 100.0
+
+# Batch operations in pipeline
+async with item.apipeline():
+    item.price *= 0.9      # 10% discount
+    item.weight += 0.1     # Adjust weight
 ```
 
 ---
@@ -214,10 +299,10 @@ These methods work immediately in pipeline contexts and batch operations:
 
 ```python
 user = User(tags=["python"])
-await user.save()
+await user.asave()
 
 # Use in pipeline for atomic batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.tags.append("redis")
     user.tags.extend(["asyncio", "web"])
     user.tags += ["backend"]  # Uses __iadd__
@@ -270,7 +355,7 @@ class Playlist(AtomicRedisModel):
     ratings: List[int] = []
 
 playlist = Playlist(name="My Favorites", songs=["Song 1"])
-await playlist.save()
+await playlist.asave()
 
 # Immediate Redis operations
 await playlist.songs.aappend("Song 2")
@@ -282,7 +367,7 @@ last_song = await playlist.songs.apop()      # Returns "Song 4"
 first_song = await playlist.songs.apop(0)    # Returns "Song 1"
 
 # Batch operations in pipeline
-async with playlist.pipeline():
+async with playlist.apipeline():
     playlist.songs.append("New Song")
     playlist.ratings.extend([5, 4, 5])
     playlist.songs.clear()  # Will be executed last, atomically
@@ -326,10 +411,10 @@ class User(AtomicRedisModel):
 
 ```python
 user = User(settings={"theme": "light"})
-await user.save()
+await user.asave()
 
 # Use in pipeline for atomic batch operations
-async with user.pipeline():
+async with user.apipeline():
     user.settings.update({"theme": "dark", "lang": "en"})
     user.settings["notifications"] = "enabled"
     user.metadata.clear()
@@ -388,7 +473,7 @@ class UserProfile(AtomicRedisModel):
     scores: Dict[str, int] = {}
 
 user = UserProfile(username="john", settings={"theme": "light"})
-await user.save()
+await user.asave()
 
 # Immediate Redis operations
 await user.settings.aset_item("language", "en")
@@ -402,7 +487,7 @@ setting = await user.settings.apopitem()         # Returns ("language", "en")
 await user.settings.adel_item("notifications")
 
 # Batch operations in pipeline
-async with user.pipeline():
+async with user.apipeline():
     user.settings.update({"theme": "blue", "font": "large"})
     user.scores["game1"] = 100
     user.scores["game2"] = 85
@@ -448,10 +533,10 @@ with open("image.png", "rb") as f:
     image_data = f.read()
 
 image = Image(name="profile.png", data=image_data)
-await image.save()  # Automatically serializes bytes data
+await image.asave()  # Automatically serializes bytes data
 
 # Load and work with bytes
-await image.load()
+await image.aload()
 print(len(image.data))  # Works like normal bytes
 ```
 
@@ -499,7 +584,7 @@ post = BlogPost(
     title="My Post", 
     created_at=datetime.now(timezone.utc)
 )
-await post.save()
+await post.asave()
 
 # Datetime operations work normally
 age = datetime.now(timezone.utc) - post.created_at
@@ -507,9 +592,65 @@ is_recent = age.days < 7
 
 # Update timestamp
 post.published_at = datetime.now(timezone.utc)
-await post.save()
+await post.asave()
 ```
 
+---
+
+## RedisDatetimeTimestamp
+
+A Redis-backed datetime type that stores values as Unix timestamps (floats) instead of ISO strings.
+
+```python
+from rapyer.types import RedisDatetimeTimestamp
+from datetime import datetime
+
+class Event(AtomicRedisModel):
+    name: str
+    created_at: RedisDatetimeTimestamp  # Stored as timestamp float
+    updated_at: RedisDatetimeTimestamp = None
+```
+
+### Special Features
+
+#### Timestamp Storage Format
+Stores datetime values as Unix timestamps (float) in Redis instead of ISO strings, providing:
+- **Efficient storage**: Floats are more compact than ISO strings
+- **External compatibility**: Unix timestamps are widely supported
+- **Numeric operations**: Direct timestamp calculations possible
+
+!!! warning "Timezone Information Loss"
+    **Timezone information is lost** when storing as timestamps. Values are converted to Unix timestamps (UTC moments) and restored as naive datetimes in local timezone.
+
+#### Storage Comparison
+- **RedisDatetime**: `"2023-01-01T12:00:00"` (ISO string)
+- **RedisDatetimeTimestamp**: `1672531200.0` (Unix timestamp float)
+
+### Example Usage
+
+```python
+from datetime import datetime, timezone
+
+class Analytics(AtomicRedisModel):
+    event_name: str
+    timestamp: RedisDatetimeTimestamp  # Efficient timestamp storage
+    session_start: RedisDatetimeTimestamp
+    session_end: RedisDatetimeTimestamp = None
+
+# Create with current time
+analytics = Analytics(
+    event_name="user_login",
+    timestamp=datetime.now(),
+    session_start=datetime.now(timezone.utc)  # Timezone will be lost
+)
+await analytics.asave()
+
+# Datetime operations work normally
+duration = analytics.session_end - analytics.session_start if analytics.session_end else None
+
+# Efficient timestamp-based queries and storage
+epoch_time = analytics.timestamp.timestamp()
+```
 ---
 
 ## Type Conversion
@@ -520,23 +661,28 @@ When you define model fields with standard Python types, they are automatically 
 class Example(AtomicRedisModel):
     text: str                    # → RedisStr
     number: int                  # → RedisInt
+    decimal: float               # → RedisFloat
     data: bytes                  # → RedisBytes
-    timestamp: datetime          # → RedisDatetime
+    timestamp: datetime          # → RedisDatetime (ISO string storage)
+    epoch_time: RedisDatetimeTimestamp  # → RedisDatetimeTimestamp (timestamp storage)
     tags: List[str]             # → RedisList[str]
     settings: Dict[str, str]    # → RedisDict[str, str]
     scores: List[int]           # → RedisList[int]
     metadata: Dict[str, Any]    # → RedisDict[str, Any]
 ```
 
+!!! note "Datetime Type Choice"
+    Use `RedisDatetimeTimestamp` explicitly when you need timestamp storage format. Regular `datetime` annotation automatically becomes `RedisDatetime` with ISO string storage.
+
 ## Pipeline Context
 
 All Redis types support pipeline operations for atomic batch execution:
 
 ```python
-async with model.pipeline():
-    model.tags.append("new-tag")          # Batched
-    model.settings["key"] = "value"       # Batched
-    model.counter += 1                    # Batched
+async with model.apipeline():
+    model.tags.append("new-tag")  # Batched
+    model.settings["key"] = "value"  # Batched
+    model.counter += 1  # Batched
     # All operations execute atomically when context exits
 ```
 
@@ -553,7 +699,7 @@ Redis type operations may raise:
 from rapyer.errors import KeyNotFound
 
 try:
-    await redis_list.load()
+    await redis_list.aload()
 except KeyNotFound:
     print("Field not found in Redis")
 ```

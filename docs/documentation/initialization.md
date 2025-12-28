@@ -98,24 +98,27 @@ async def cleanup():
 import asyncio
 from rapyer import init_rapyer, teardown_rapyer, AtomicRedisModel
 
+
 class User(AtomicRedisModel):
     name: str
     age: int
+
 
 async def main():
     try:
         # Initialize at application startup
         await init_rapyer(redis="redis://localhost:6379/0")
-        
+
         # Your application logic
         user = User(name="Alice", age=25)
-        await user.save()
-        
+        await user.asave()
+
         # Application operations...
-        
+
     finally:
         # Always cleanup at application shutdown
         await teardown_rapyer()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

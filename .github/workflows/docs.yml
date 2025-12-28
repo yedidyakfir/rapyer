@@ -9,13 +9,6 @@ on:
       - 'mkdocs.yml'
       - 'README.md'
       - '.github/workflows/docs.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-      - 'mkdocs.yml'
-      - 'README.md'
 
 permissions:
   contents: read
@@ -61,7 +54,6 @@ jobs:
 
   # Deployment job
   deploy:
-    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

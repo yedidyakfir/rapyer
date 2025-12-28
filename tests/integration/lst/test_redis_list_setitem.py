@@ -75,7 +75,7 @@ def sample_nested_config():
 async def test_redis_list_setitem_int_type_checking_sanity(int_list_model_with_items):
     # Arrange
     model = int_list_model_with_items
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[2] = 42
@@ -90,7 +90,7 @@ async def test_redis_list_setitem_int_type_checking_sanity(int_list_model_with_i
 async def test_redis_list_setitem_str_type_checking_sanity(str_list_model_with_items):
     # Arrange
     model = str_list_model_with_items
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[2] = "test_string"
@@ -105,7 +105,7 @@ async def test_redis_list_setitem_str_type_checking_sanity(str_list_model_with_i
 async def test_redis_list_setitem_dict_type_checking_sanity(dict_list_model_with_items):
     # Arrange
     model = dict_list_model_with_items
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[2] = {"key": "value"}
@@ -128,16 +128,16 @@ async def test_redis_list_setitem_dict_type_checking_sanity(dict_list_model_with
 async def test_redis_list_setitem_int_operations_sanity(index, test_value):
     # Arrange
     model = IntListModel(items=[0, 0, 0])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[index] = test_value + 50
-    await model.items[index].save()
+    await model.items[index].asave()
 
     # Assert
     fresh_model = IntListModel()
     fresh_model.pk = model.pk
-    fresh_model.items = await fresh_model.items.load()
+    fresh_model.items = await fresh_model.items.aload()
     # After loading, items are regular Python types, not Redis types
     assert fresh_model.items[index] == test_value + 50
 
@@ -154,16 +154,16 @@ async def test_redis_list_setitem_int_operations_sanity(index, test_value):
 async def test_redis_list_setitem_str_operations_sanity(index, test_value):
     # Arrange
     model = StrListModel(items=["", "", ""])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[index] = test_value + "_modified"
-    await model.items[index].save()
+    await model.items[index].asave()
 
     # Assert
     fresh_model = StrListModel()
     fresh_model.pk = model.pk
-    fresh_model.items = await fresh_model.items.load()
+    fresh_model.items = await fresh_model.items.aload()
     # After loading, items are regular Python types, not Redis types
     assert fresh_model.items[index] == test_value + "_modified"
 
@@ -180,17 +180,17 @@ async def test_redis_list_setitem_str_operations_sanity(index, test_value):
 async def test_redis_list_setitem_dict_operations_sanity(index, test_value):
     # Arrange
     model = DictListModel(items=[{}, {}, {}])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[index] = test_value
-    await model.save()  # Save current state to Redis before update
+    await model.asave()  # Save current state to Redis before update
     await model.items[index].aupdate(**{"new_key": "new_value"})
 
     # Assert
     fresh_model = DictListModel()
     fresh_model.pk = model.pk
-    fresh_model.items = await fresh_model.items.load()
+    fresh_model.items = await fresh_model.items.aload()
     # After loading, items are regular Python types, not Redis types
     expected_dict = {**test_value, "new_key": "new_value"}
     assert fresh_model.items[index] == expected_dict
@@ -200,7 +200,7 @@ async def test_redis_list_setitem_dict_operations_sanity(index, test_value):
 async def test_redis_list_setitem_int_arithmetic_operations_sanity():
     # Arrange
     model = IntListModel(items=[0, 0, 0])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[1] = 50
@@ -216,7 +216,7 @@ async def test_redis_list_setitem_int_arithmetic_operations_sanity():
 async def test_redis_list_setitem_str_operations_edge_case():
     # Arrange
     model = StrListModel(items=["", "", ""])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[0] = "test"
@@ -231,7 +231,7 @@ async def test_redis_list_setitem_str_operations_edge_case():
 async def test_redis_list_setitem_dict_key_access_edge_case():
     # Arrange
     model = DictListModel(items=[{}, {}, {}])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[2] = {"test_key": "test_value", "another_key": "another_value"}
@@ -246,7 +246,7 @@ async def test_redis_list_setitem_dict_key_access_edge_case():
 async def test_redis_list_setitem_redis_field_paths_sanity():
     # Arrange
     model = IntListModel(items=[0, 0, 0])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[1] = 42
@@ -261,7 +261,7 @@ async def test_redis_list_setitem_redis_field_paths_sanity():
 async def test_redis_list_setitem_multiple_indices_sanity():
     # Arrange
     model = IntListModel(items=[0, 0, 0, 0, 0])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items[0] = 10
@@ -280,16 +280,16 @@ async def test_redis_list_setitem_multiple_indices_sanity():
 async def test_redis_list_setitem_persistence_across_instances_edge_case():
     # Arrange
     model1 = IntListModel(items=[1, 2, 3])
-    await model1.save()
+    await model1.asave()
 
     # Act
     model1.items[1] = 99
-    await model1.items[1].save()
+    await model1.items[1].asave()
 
     # Assert
     model2 = IntListModel()
     model2.pk = model1.pk
-    model2.items = await model2.items.load()
+    model2.items = await model2.items.aload()
     # After loading, items are regular Python types, not Redis types
     assert model2.items[1] == 99
 
@@ -300,7 +300,7 @@ async def test_redis_list_setitem_basemodel_products_type_checking_sanity(
 ):
     # Arrange
     model = basemodel_list_model_with_products
-    await model.save()
+    await model.asave()
     test_value = sample_product
 
     # Act
@@ -320,7 +320,7 @@ async def test_redis_list_setitem_basemodel_configs_type_checking_sanity(
 ):
     # Arrange
     model = basemodel_list_model_with_configs
-    await model.save()
+    await model.asave()
     test_value = sample_nested_config
 
     # Act
@@ -338,7 +338,7 @@ async def test_redis_list_setitem_basemodel_redis_operations_sanity():
     # Arrange
     model = BaseModelListModel()
     model.users = [UserProfile(name="Ori", age=2, email="Myemail")]
-    await model.save()
+    await model.asave()
 
     user = UserProfile(name="Alice", age=25, email="alice@example.com")
 
@@ -347,8 +347,6 @@ async def test_redis_list_setitem_basemodel_redis_operations_sanity():
 
     # Assert - the setitem should create a Redis BaseModel
     assert isinstance(model.users[0], AtomicRedisModel)
-    assert hasattr(model.users[0], "save")
-    assert hasattr(model.users[0], "load")
 
     # Check that the data is preserved
     assert model.users[0].name == "Alice"
@@ -369,7 +367,7 @@ async def test_redis_list_setitem_basemodel_field_paths_sanity():
             Product(name="Banan", price=2, in_stock=False),
         ]
     )
-    await model.save()
+    await model.asave()
 
     product = Product(name="Phone", price=699, in_stock=False)
 
@@ -388,7 +386,7 @@ async def test_redis_list_setitem_basemodel_field_paths_sanity():
 async def test_redis_list_setitem_basemodel_nested_operations_sanity():
     # Arrange
     model = BaseModelListModel(configs=[NestedConfig(settings={}, options=[])])
-    await model.save()
+    await model.asave()
 
     config = NestedConfig(
         settings={"theme": "light", "lang": "en"}, options=["auto-save", "backup"]
@@ -421,7 +419,7 @@ async def test_redis_list_setitem_basemodel_multiple_items_sanity():
             UserProfile(name="Temp", age=0, email="asdfa"),
         ]
     )
-    await model.save()
+    await model.asave()
 
     users = [
         UserProfile(name="User1", age=20, email="user1@example.com"),
@@ -452,7 +450,7 @@ async def test_redis_list_setitem_basemodel_field_access_edge_case():
             Product(name="Or2i", price=2, in_stock=True),
         ]
     )
-    await model.save()
+    await model.asave()
 
     product = Product(name="Tablet", price=399, in_stock=True)
 
@@ -481,11 +479,11 @@ async def test_redis_list_setitem_basemodel_field_access_edge_case():
 async def test_redis_list_apop_after_clear_sanity():
     # Arrange
     model = StrListModel(items=["item1", "item2", "item3"])
-    await model.save()
+    await model.asave()
 
     # Act
     model.items = []
-    await model.save()
+    await model.asave()
     await model.items.aappend("new_item")
 
     popped_value = await model.items.apop()
@@ -498,7 +496,7 @@ async def test_redis_list_apop_after_clear_sanity():
 async def test_redis_list__apop_empty_redis__check_default_returned_sanity():
     # Arrange
     model = StrListModel()
-    await model.save()
+    await model.asave()
 
     # Act
     result = await model.items.apop()
@@ -512,7 +510,7 @@ async def test_redis_list__apop_for_models__sanity():
     # Arrange
     user = UserProfile(name="Ori", age=2, email="Myemail")
     model = BaseModelListModel(users=[user])
-    await model.save()
+    await model.asave()
 
     # Act
     result = await model.users.apop()
