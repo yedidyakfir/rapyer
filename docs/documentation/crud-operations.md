@@ -196,6 +196,9 @@ class User(AtomicRedisModel):
 !!! danger "Redis Database Limitation"
     Redis Search indices are currently only supported on database 0 (`db=0`). If you're using a different database number, filtering with expressions will not work. This is a limitation of the Redis Search module.
 
+!!! info "Datetime Indexing and Timezone Information"
+    When indexing `datetime` fields for use with filters, the datetime values are saved in Unix timestamp format (as floats). This means that **all timezone information will be lost** during the conversion. The timestamps represent UTC moments in time, and when retrieved, they will be restored as naive datetime objects in the local timezone. If preserving timezone information is critical for your application, consider storing the timezone separately or using string-based datetime storage without indexing.
+
 #### Using Filter Expressions
 
 Once fields are indexed, you can use them in filter expressions:
