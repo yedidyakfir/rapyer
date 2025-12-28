@@ -27,6 +27,8 @@ jobs:
           wait-interval: 10
 
   coverage:
+    environment:
+      name: coverage
     needs: check-tests
     runs-on: ubuntu-22.04
     
@@ -141,6 +143,8 @@ jobs:
         prerelease: false
 
   publish:
+    environment:
+      name: publish-pip
     needs: create-github-release
     runs-on: ubuntu-22.04
     permissions:
@@ -183,5 +187,4 @@ jobs:
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
         packages-dir: dist/
