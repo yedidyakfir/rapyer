@@ -325,3 +325,47 @@ async def test_afind_with_inheritance_filtering_sanity(redis_client):
     # Cleanup
     await UserIndexModel.adelete_index()
     await ProductIndexModel.adelete_index()
+
+
+# NOTE: Testing datetime filtering with Index[datetime] fields
+@pytest.mark.asyncio
+async def test_afind_with_datetime_filtering_sanity(redis_client):
+    # Arrange
+    await UserIndexModel.acreate_index()
+
+    base_date = datetime(2024, 1, 1, 10, 0, 0)
+    cutoff_date = base_date + timedelta(days=6)
+
+    user1 = UserIndexModel(
+        id="user1",
+        created_at=base_date,  # Before cutoff
+        username="alice",
+        email="alice@test.com",
+    )
+    user2 = UserIndexModel(
+        id="user2",
+        created_at=base_date + timedelta(days=20),  # After cutoff
+        username="bob",
+        email="bob@test.com",
+    )
+    user3 = UserIndexModel(
+        id="user3",
+        created_at=base_date + timedelta(days=5),  # Before cutoff
+        username="charlie",
+        email="charlie@test.com",
+    )
+
+    await UserIndexModel.ainsert(user1, user2, user3)
+
+    # Act
+    UserIndexModel.init_class()
+    found_models = await UserIndexModel.afind(UserIndexModel.created_at < cutoff_date)
+
+    # Assert
+    assert len(found_models) == 2
+    assert user1 in found_models
+    assert user3 in found_models
+    assert user2 not in found_models
+
+    # Cleanup
+    await UserIndexModel.adelete_index()
