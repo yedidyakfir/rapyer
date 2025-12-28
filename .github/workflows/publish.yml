@@ -141,6 +141,8 @@ jobs:
         prerelease: false
 
   publish:
+    environment:
+      name: publish-pip
     needs: create-github-release
     runs-on: ubuntu-22.04
     permissions:
