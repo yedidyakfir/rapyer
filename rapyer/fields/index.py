@@ -20,7 +20,7 @@ class _IndexType(Generic[T]):
 
         # For datetime objects, use RedisDatetimeTimestamp instead of RedisDatetime
         if typ is datetime:
-            item = RedisDatetimeTimestamp
+            typ = RedisDatetimeTimestamp
 
         return Annotated[typ, IndexAnnotation()]
 
