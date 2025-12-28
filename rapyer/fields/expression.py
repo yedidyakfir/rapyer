@@ -1,5 +1,9 @@
 from typing import Any
 
+from pydantic import TypeAdapter
+
+from rapyer.types.base import REDIS_DUMP_FLAG_NAME
+
 
 class Expression:
     def create_filter(self) -> str:
@@ -16,11 +20,17 @@ class Expression:
 
 
 class ExpressionField(Expression):
-    def __init__(self, field_name: str):
+    def __init__(self, field_name: str, field_type: Any = None):
         self.field_name = field_name
+        self._adapter = TypeAdapter(field_type)
 
     def create_filter(self) -> str:
         return f"@{self.field_name}:*"
+
+    def serialize_value(self, value: Any) -> Any:
+        return self._adapter.dump_python(
+            value, mode="json", context={REDIS_DUMP_FLAG_NAME: True}
+        )
 
     def __eq__(self, value: Any) -> "EqExpression":
         return EqExpression(self, value)
@@ -47,6 +57,9 @@ class EqExpression(Expression):
         self.right = right
 
     def create_filter(self) -> str:
+        # Serialize the value using the field's TypeAdapter
+        serialized_value = self.left.serialize_value(self.right)
+
         # For string fields, wrap in quotes if needed
         if isinstance(self.right, str):
             # Escape special characters in the string
@@ -55,7 +68,7 @@ class EqExpression(Expression):
             )
             return f'@{self.left.field_name}:"{escaped_value}"'
         # For numeric fields, use range syntax for exact match
-        return f"@{self.left.field_name}:[{self.right} {self.right}]"
+        return f"@{self.left.field_name}:[{serialized_value} {serialized_value}]"
 
 
 class NeExpression(Expression):
@@ -64,6 +77,9 @@ class NeExpression(Expression):
         self.right = right
 
     def create_filter(self) -> str:
+        # Serialize the value using the field's TypeAdapter
+        serialized_value = self.left.serialize_value(self.right)
+
         # For not equal, we need to use different syntax
         if isinstance(self.right, str):
             escaped_value = (
@@ -71,7 +87,7 @@ class NeExpression(Expression):
             )
             return f'-@{self.left.field_name}:"{escaped_value}"'
         # For numeric fields, use range syntax for exact match
-        return f"-@{self.left.field_name}:[{self.right} {self.right}]"
+        return f"-@{self.left.field_name}:[{serialized_value} {serialized_value}]"
 
 
 class GtExpression(Expression):
@@ -80,7 +96,9 @@ class GtExpression(Expression):
         self.right = right
 
     def create_filter(self) -> str:
-        return f"@{self.left.field_name}:[({self.right} +inf]"
+        # Serialize the value using the field's TypeAdapter
+        serialized_value = self.left.serialize_value(self.right)
+        return f"@{self.left.field_name}:[({serialized_value} +inf]"
 
 
 class LtExpression(Expression):
@@ -89,7 +107,9 @@ class LtExpression(Expression):
         self.right = right
 
     def create_filter(self) -> str:
-        return f"@{self.left.field_name}:[-inf ({self.right}]"
+        # Serialize the value using the field's TypeAdapter
+        serialized_value = self.left.serialize_value(self.right)
+        return f"@{self.left.field_name}:[-inf ({serialized_value}]"
 
 
 class GteExpression(Expression):
@@ -98,7 +118,9 @@ class GteExpression(Expression):
         self.right = right
 
     def create_filter(self) -> str:
-        return f"@{self.left.field_name}:[{self.right} +inf]"
+        # Serialize the value using the field's TypeAdapter
+        serialized_value = self.left.serialize_value(self.right)
+        return f"@{self.left.field_name}:[{serialized_value} +inf]"
 
 
 class LteExpression(Expression):
@@ -107,7 +129,9 @@ class LteExpression(Expression):
         self.right = right
 
     def create_filter(self) -> str:
-        return f"@{self.left.field_name}:[-inf {self.right}]"
+        # Serialize the value using the field's TypeAdapter
+        serialized_value = self.left.serialize_value(self.right)
+        return f"@{self.left.field_name}:[-inf {serialized_value}]"
 
 
 class AndExpression(Expression):

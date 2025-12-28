@@ -225,8 +225,9 @@ class AtomicRedisModel(BaseModel):
 
     @classmethod
     def init_class(cls):
-        for field_name in cls.model_fields:
-            setattr(cls, field_name, ExpressionField(field_name))
+        for field_name, field_info in cls.model_fields.items():
+            field_type = field_info.annotation
+            setattr(cls, field_name, ExpressionField(field_name, field_type))
 
     def is_inner_model(self) -> bool:
         return bool(self.field_name)
