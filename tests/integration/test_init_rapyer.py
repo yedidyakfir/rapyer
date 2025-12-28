@@ -1,7 +1,6 @@
 import pytest
-import redis
-
 import rapyer
+import redis
 from rapyer.base import REDIS_MODELS
 
 
@@ -22,7 +21,7 @@ async def test_init_rapyer_with_url__redis_is_available():
 async def test_init_rapyer_with_client__redis_is_available():
     # Arrange
     created_client = redis.asyncio.from_url(
-        "redis://localhost:6370/1", decode_responses=True
+        "redis://localhost:6370/0", decode_responses=True
     )
 
     # Act

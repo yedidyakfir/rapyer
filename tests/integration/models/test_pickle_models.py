@@ -1,5 +1,3 @@
-from typing import Any
-
 import pytest
 
 from tests.models.pickle_types import ModelWithUnserializableFields

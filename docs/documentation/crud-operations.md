@@ -163,6 +163,97 @@ if __name__ == "__main__":
 
 This is much more efficient than individual get operations when you need to retrieve multiple instances.
 
+### Filtering with Expressions
+
+The `afind()` method also supports filtering using expressions to find models that match specific criteria. To use filtering, your model fields must be marked with the `Index` annotation.
+
+#### Setting Up Index Fields
+
+To make fields searchable for filtering, you need to annotate them with the `Index` annotation:
+
+```python
+from rapyer import AtomicRedisModel, Index
+from typing import Annotated
+
+class User(AtomicRedisModel):
+    # Regular fields (not searchable)
+    internal_id: str
+    
+    # Indexed fields (searchable with afind expressions)
+    name: Annotated[str, Index]
+    age: Annotated[int, Index]
+    email: Annotated[str, Index]
+    status: Annotated[str, Index] = "active"
+    score: Annotated[float, Index] = 0.0
+```
+
+**Important Notes about Index:**
+- Only fields with `Index` annotation can be used in filter expressions
+- Redis automatically creates search indices when the first model is saved
+- Indices are created per model class
+- You can mix indexed and non-indexed fields in the same model
+
+!!! danger "Redis Database Limitation"
+    Redis Search indices are currently only supported on database 0 (`db=0`). If you're using a different database number, filtering with expressions will not work. This is a limitation of the Redis Search module.
+
+!!! info "Datetime Indexing and Timezone Information"
+    When indexing `datetime` fields for use with filters, the datetime values are saved in Unix timestamp format (as floats). This means that **all timezone information will be lost** during the conversion. The timestamps represent UTC moments in time, and when retrieved, they will be restored as naive datetime objects in the local timezone. If preserving timezone information is critical for your application, consider storing the timezone separately or using string-based datetime storage without indexing.
+
+#### Using Filter Expressions
+
+Once fields are indexed, you can use them in filter expressions:
+
+```python
+async def filtering_example():
+    # Create and save multiple users
+    users = [
+        User(name="Alice", age=25, email="alice@example.com", status="active", score=85.5),
+        User(name="Bob", age=30, email="bob@example.com", status="inactive", score=92.0),
+        User(name="Charlie", age=35, email="charlie@example.com", status="active", score=78.3),
+        User(name="Diana", age=28, email="diana@example.com", status="active", score=95.8)
+    ]
+    await User.ainsert(*users)
+    
+    # Find users with age greater than 27
+    older_users = await User.afind(User.age > 27)
+    print(f"Users older than 27: {[u.name for u in older_users]}")  # Bob, Charlie, Diana
+    
+    # Find active users
+    active_users = await User.afind(User.status == "active")
+    print(f"Active users: {[u.name for u in active_users]}")  # Alice, Charlie, Diana
+    
+    # Combine conditions with AND (&)
+    young_active = await User.afind((User.age <= 30) & (User.status == "active"))
+    print(f"Young active users: {[u.name for u in young_active]}")  # Alice, Diana
+    
+    # Combine conditions with OR (|)
+    special_users = await User.afind((User.age < 26) | (User.score > 90))
+    print(f"Young or high-scoring users: {[u.name for u in special_users]}")  # Alice, Bob, Diana
+    
+    # Negate conditions with NOT (~)
+    not_inactive = await User.afind(~(User.status == "inactive"))
+    print(f"Not inactive users: {[u.name for u in not_inactive]}")  # Alice, Charlie, Diana
+    
+    # Complex expressions
+    complex_filter = await User.afind(
+        ((User.age >= 25) & (User.age <= 30)) & 
+        ((User.status == "active") | (User.score >= 85))
+    )
+    print(f"Complex filter results: {[u.name for u in complex_filter]}")
+
+if __name__ == "__main__":
+    asyncio.run(filtering_example())
+```
+
+**Supported Operators:**
+- **Comparison**: `==`, `!=`, `>`, `<`, `>=`, `<=`
+- **Logical**: `&` (AND), `|` (OR), `~` (NOT)
+
+**Important Notes:**
+- Fields must be annotated with `Index` to be searchable
+- Redis will automatically create search indices when the model is first saved
+- Filtering requires Redis Search module to be available
+
 ### Performance Comparison: `afind()` vs Individual `get()` Operations
 
 The `afind()` method provides significant performance improvements over retrieving models individually, especially as the number of models increases. The chart below shows the performance difference:
@@ -304,7 +395,7 @@ if __name__ == "__main__":
 
 ### Bulk Model Deletion - `adelete_many()`
 
-For better performance when deleting multiple models, use the `adelete_many()` classmethod which performs all deletions in a single Redis transaction:
+For better performance when deleting multiple models, use the `adelete_many()` classmethod which performs all deletions in a single Redis transaction. You can pass either model instances or Redis keys directly:
 
 ```python
 async def bulk_delete_example():
@@ -320,9 +411,18 @@ async def bulk_delete_example():
     await User.ainsert(*users)
     print(f"Created {len(users)} users")
     
-    # Bulk delete all users in a single transaction
+    # Method 1: Bulk delete using model instances
     await User.adelete_many(*users)
     print(f"Successfully deleted {len(users)} users in one transaction")
+    
+    # Method 2: Bulk delete using Redis keys
+    user_keys = ["User:123", "User:456", "User:789"]
+    await User.adelete_many(*user_keys)
+    print(f"Successfully deleted users by keys")
+    
+    # Method 3: Mix models and keys
+    await User.adelete_many(users[0], "User:xyz", users[1].key)
+    print(f"Successfully deleted using mixed inputs")
     
     # Verify all users were deleted
     remaining_users = await User.afind()

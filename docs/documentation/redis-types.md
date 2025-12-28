@@ -8,8 +8,9 @@
 - `dict` → `RedisDict`
 - `str` → `RedisStr`  
 - `int` → `RedisInt`
+- `float` → `RedisFloat`
 - `bytes` → `RedisBytes`
-- `datetime` → `RedisDatetime`
+- `datetime` → `RedisDatetime` (or `RedisDatetimeTimestamp` for timestamp storage)
 - `BaseModel` → `AtomicRedisModel` (nested models)
 
 **This is completely seamless** - since `RedisList` inherits from `list`, `RedisDict` inherits from `dict`, etc., your existing code continues to work exactly as before, but now with atomic Redis operations available.
@@ -62,8 +63,8 @@ All standard `str` methods are available (upper, lower, strip, etc.) but operate
 ## RedisInt
 
 **Inherits from:** `int`, `RedisType`  
-**Redis Storage:** Numeric values with atomic increment support  
-**Use Case:** Counters, IDs, scores, and numeric data requiring atomic updates
+**Redis Storage:** Integer numeric values with atomic increment support  
+**Use Case:** Counters, IDs, scores, and integer numeric data requiring atomic updates
 
 ```python
 from rapyer.types import RedisInt  # Recommended: TypeAlias
@@ -76,14 +77,42 @@ class Counter(AtomicRedisModel):
 
 ### Available Operations
 
-| Operation | Method | Description |
-|-----------|---------|-------------|
-| **save** | `await counter.count.asave()` | Save field value to Redis |
-| **load** | `await counter.count.aload()` | Load field value from Redis (returns value, doesn't update model) |
-| **increase** | `await counter.count.increase(5)` | Atomically increment by amount (default: 1) |
+| Operation     | Method | Description |
+|---------------|---------|-------------|
+| **save**      | `await counter.count.asave()` | Save field value to Redis |
+| **load**      | `await counter.count.aload()` | Load field value from Redis (returns value, doesn't update model) |
+| **aincrease** | `await counter.count.increase(5)` | Atomically increment by amount (default: 1) |
 
 !!! warning "Non-mutating Operation"
     The `increase()` method returns the new value from Redis but **does not update the local instance**. You need to reload the model or field to see the updated value locally.
+
+---
+
+## RedisFloat
+
+**Inherits from:** `float`, `RedisType`  
+**Redis Storage:** Floating-point numeric values with atomic increment support  
+**Use Case:** Prices, ratings, percentages, and decimal data requiring atomic updates
+
+```python
+from rapyer.types import RedisFloat  # Recommended: TypeAlias
+# from rapyer.types import RedisFloat     # Alternative: Direct class
+
+class Product(AtomicRedisModel):
+    price: RedisFloat = 0.0           # Flexible typing with union support
+    rating: RedisFloat = 5.0          # Accepts both float and RedisFloat
+```
+
+### Available Operations
+
+| Operation     | Method | Description |
+|---------------|---------|-------------|
+| **save**      | `await product.price.asave()` | Save field value to Redis |
+| **load**      | `await product.price.aload()` | Load field value from Redis (returns value, doesn't update model) |
+| **aincrease** | `await product.price.aincrease(1.5)` | Atomically increment by amount (default: 1.0) |
+
+!!! warning "Non-mutating Operation"
+    The `aincrease()` method returns the new value from Redis but **does not update the local instance**. You need to reload the model or field to see the updated value locally.
 
 ---
 
@@ -201,6 +230,31 @@ class Event(AtomicRedisModel):
 
 All standard `datetime` methods are available (strftime, replace, etc.) but operate on the local copy.
 
+---
+
+## RedisDatetimeTimestamp
+A datetime field, but it will be stored in epoch time format
+
+**Redis Storage:** Timestamp values (floats) representing seconds since Unix epoch  
+**Use Case:** Timestamps requiring efficient storage or interoperability with systems expecting Unix timestamps
+
+```python
+from rapyer.types import RedisDatetimeTimestamp  # Recommended: TypeAlias
+from datetime import datetime
+
+class Event(AtomicRedisModel):
+    created_at: RedisDatetimeTimestamp = Field(default_factory=datetime.now)  # Stored as timestamp
+    updated_at: RedisDatetimeTimestamp                                         # Accepts datetime objects
+```
+
+### Important Notes
+
+!!! warning "Timezone Information Loss"
+    When using `RedisDatetimeTimestamp`, **timezone information is lost during storage**. The datetime is converted to a Unix timestamp (float) which represents a moment in UTC time. When loaded back, it becomes a naive datetime in the local timezone.
+
+!!! info "Storage Format Difference"
+    - **RedisDatetime**: Stores as ISO string format (e.g., "2023-01-01T12:00:00")
+    - **RedisDatetimeTimestamp**: Stores as Unix timestamp float (e.g., 1672531200.0)
 ---
 
 ## Nested Models (BaseModel → AtomicRedisModel)

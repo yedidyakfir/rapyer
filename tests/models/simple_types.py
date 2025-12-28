@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from pydantic import Field
-
 from rapyer.base import AtomicRedisModel, RedisConfig
+from rapyer.types import RedisFloat, RedisDatetimeTimestamp
 from tests.models.common import TaskStatus, Priority
 
 
@@ -14,6 +14,11 @@ class StrModel(AtomicRedisModel):
 class IntModel(AtomicRedisModel):
     count: int = 0
     score: int = 100
+
+
+class FloatModel(AtomicRedisModel):
+    value: RedisFloat = 0.0
+    temperature: float = 20.5
 
 
 class BoolModel(AtomicRedisModel):
@@ -29,6 +34,11 @@ class BytesModel(AtomicRedisModel):
 class DatetimeModel(AtomicRedisModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class DatetimeTimestampModel(AtomicRedisModel):
+    created_at: RedisDatetimeTimestamp = Field(default_factory=datetime.now)
+    updated_at: RedisDatetimeTimestamp = Field(default_factory=datetime.now)
 
 
 class DatetimeListModel(AtomicRedisModel):

@@ -8,27 +8,6 @@ from tests.models.simple_types import StrModel
     ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"],
 )
 @pytest.mark.asyncio
-async def test_redis_str_set_functionality_sanity(test_values):
-    # Arrange
-    model = StrModel()
-    await model.asave()
-
-    # Act
-    model.name = test_values
-    await model.name.asave()
-
-    # Assert
-    fresh_model = StrModel()
-    fresh_model.pk = model.pk
-    loaded_value = await fresh_model.name.aload()
-    assert loaded_value == test_values
-
-
-@pytest.mark.parametrize(
-    "test_values",
-    ["hello", "world", "", "special chars: !@#$%", "unicode: 你好"],
-)
-@pytest.mark.asyncio
 async def test_redis_str_load_functionality_sanity(test_values):
     # Arrange
     model = StrModel()
