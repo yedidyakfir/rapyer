@@ -4,7 +4,6 @@
 We yanked the 1.1.1 release due to a bug in the pipeline context manager.
 This is the fixed version.
 
-
 ## [1.1.1]
 In this version we officaly starting the support for bulk operation on multiple models. In line with our philsophy of atomic operations.
 
