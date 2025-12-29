@@ -243,3 +243,13 @@ async def test_rapyer_get_functionality_sanity(model_instance):
 
     # Assert
     assert retrieved_model == model_instance
+
+
+@pytest.mark.asyncio
+async def test_rapyer_aget_with_key_without_class_name_edge_case():
+    # Arrange
+    key_without_class = "12345"  # No class name prefix
+
+    # Act & Assert
+    with pytest.raises(Exception) as exc_info:
+        await rapyer.aget(key_without_class)
