@@ -459,7 +459,7 @@ class AtomicRedisModel(BaseModel):
     @deprecated(
         "pipeline function is deprecated and will be removed in rapyer 1.2.0, use apipeline instead"
     )
-    async def apipeline(
+    async def pipeline(
         self, ignore_if_deleted: bool = False
     ) -> AsyncGenerator[Self, None]:
         async with self.apipeline(ignore_if_deleted=ignore_if_deleted) as redis_model:
