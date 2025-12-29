@@ -33,10 +33,15 @@ users = await User.bulk_get(["user:1", "user:2", "user:3"])
 **Goal**: Enable complex field-based queries using Python comparison operators
 
 ### Tasks
-- [ ] **Field Comparisons**: Support `>`, `<`, `>=`, `<=`, `==`, `!=` operators on model fields
-- [ ] **Logical Operators**: Support `&` (and), `|` (or), `~` (not) for complex queries
-- [ ] **Query Builder**: Build Redis search queries from Python expressions
-- [ ] **Index Management**: Automatic field indexing for query performance
+- [X] **Field Comparisons**: Support `>`, `<`, `>=`, `<=`, `==`, `!=` operators on model fields
+- [X] **Logical Operators**: Support `&` (and), `|` (or), `~` (not) for complex queries
+- [X] **Query Builder**: Build Redis search queries from Python expressions
+- [X] **Index Management**: Automatic field indexing for query performance
+
+- [ ] **afind keys**: Support search by keys with afind
+- [ ] **afind keywords**: Support search with afind with keywords (afind(field1="text"))
+- [ ] **Delete Filter**: Support delete with filters
+- [ ] **Add filters**: Create additional filters like contains etc (also check if we want to support TAG in redis)
 
 ### Example Usage
 ```python
@@ -258,3 +263,33 @@ tags = user.tags.sync_get_all()
 ```
 
 **Benefits**: Support for synchronous codebases, easier integration with existing sync applications, consistent API patterns between async and sync operations
+
+## Multi-Environment Support
+
+**Goal**: Enable separate database environments with easy switching and context management
+
+### Tasks
+- [ ] **Environment Configuration**: Configure multiple environments (dev, staging, production) with separate connections
+- [ ] **Global Environment Management**: Set/get default environment for entire session
+- [ ] **Context Manager Switching**: Stack-based temporary environment switching with `with` statements
+- [ ] **Decorator Support**: Function-level environment specification via decorators
+- [ ] **Cross-Environment Search**: Search across all or selected environments
+- [ ] **Thread-Safe Stack**: Maintain per-thread environment stacks for concurrent operations
+
+### Example Usage
+```python
+# Set default environment
+rapyer.set_environment("production")
+
+# Temporary switching with context manager (stack-based)
+with rapyer.use_environment("staging"):
+    model.save()  # Saves to staging
+    with rapyer.use_environment("dev"):
+        results = rapyer.search("query")  # Searches in dev
+    # Back to staging here
+
+# Search across environments
+results = rapyer.search_all_environments("query")  # Returns dict by environment
+```
+
+**Benefits**: Clean environment separation, intuitive context switching, thread-safe operations, familiar API patterns from SQLAlchemy/Django
