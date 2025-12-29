@@ -4,6 +4,7 @@ import contextlib
 import functools
 import pickle
 import uuid
+from contextlib import AbstractAsyncContextManager
 from typing import ClassVar, Any, AsyncGenerator
 
 from pydantic import (
@@ -552,9 +553,10 @@ async def ainsert(*models: Unpack[AtomicRedisModel]) -> list[AtomicRedisModel]:
     return models
 
 
+@contextlib.asynccontextmanager
 async def alock_from_key(
     key: str, action: str = "default", save_at_end: bool = False
-) -> AsyncGenerator[AtomicRedisModel, None]:
+) -> AbstractAsyncContextManager[AtomicRedisModel, None]:
     async with acquire_lock(AtomicRedisModel.Meta.redis, f"{key}/{action}"):
         try:
             redis_model = await aget(key)
