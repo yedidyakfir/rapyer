@@ -71,7 +71,8 @@ async def test_alock_from_key_with_nonexistent_key_edge_case(redis_client):
     # Act & Assert
     async with rapyer.alock_from_key(nonexistent_key, save_at_end=True) as locked_model:
         assert locked_model is None
-    assert nonexistent_key not in redis_client.keys()
+    keys = await redis_client.keys()
+    assert nonexistent_key not in keys
 
 
 @pytest.mark.asyncio
