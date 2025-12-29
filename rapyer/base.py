@@ -550,3 +550,16 @@ async def ainsert(*models: Unpack[AtomicRedisModel]) -> list[AtomicRedisModel]:
             pipe.json().set(model.key, model.json_path, model.redis_dump())
         await pipe.execute()
     return models
+
+
+async def alock_from_key(
+    key: str, action: str = "default", save_at_end: bool = False
+) -> AsyncGenerator[AtomicRedisModel, None]:
+    async with acquire_lock(AtomicRedisModel.Meta.redis, f"{key}/{action}"):
+        try:
+            redis_model = await aget(key)
+        except KeyNotFound:
+            redis_model = None
+        yield redis_model
+        if save_at_end and redis_model is not None:
+            await redis_model.asave()
