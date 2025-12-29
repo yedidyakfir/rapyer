@@ -538,6 +538,8 @@ async def aget(redis_key: str) -> AtomicRedisModel:
     redis_model_mapping = {klass.__name__: klass for klass in REDIS_MODELS}
     class_name = redis_key.split(":")[0]
     klass = redis_model_mapping.get(class_name)
+    if klass is None:
+        raise KeyNotFound(f"{redis_key} is missing in redis")
     return await klass.aget(redis_key)
 
 
