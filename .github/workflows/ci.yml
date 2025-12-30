@@ -62,9 +62,9 @@ jobs:
       matrix:
         # For PRs: test minimal matrix (boundaries)
         # For main/tags: test full matrix
-        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.10", "3.13"]') || fromJSON('["3.10", "3.11", "3.12", "3.13"]') }}
-        redis-version: ${{ github.event_name == 'pull_request' && fromJSON('["6.0", "6.4"]') || fromJSON('["6.0", "6.1", "6.2", "6.3", "6.4"]') }}
-        pydantic-version: ${{ github.event_name == 'pull_request' && fromJSON('["2.11", "2.12"]') || fromJSON('["2.11", "2.12"]') }}
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        redis-version: ["6.0", "6.1", "6.2", "6.3", "6.4"]
+        pydantic-version: ["2.11", "2.12"]
     
     services:
       redis:
