@@ -1,0 +1,74 @@
+name: New Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-github-release:
+    environment:
+      name: create-release
+    if: github.event.base_ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write  # Required for creating releases
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Extract version from pyproject.toml
+      id: version
+      run: |
+        VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        TAG=${GITHUB_REF#refs/tags/}
+        RELEASE_DATE=$(date +%Y-%m-%d)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "release_date=$RELEASE_DATE" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION from pyproject.toml"
+        echo "Git tag: $TAG"
+        echo "Release date: $RELEASE_DATE"
+
+    - name: Extract release notes
+      id: release_notes
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        
+        # Check if changelog exists
+        if [ ! -f "CHANGELOG.md" ]; then
+          echo "Error: CHANGELOG.md not found"
+          exit 1
+        fi
+        
+        # Extract release notes for this version
+        RELEASE_NOTES=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+        
+        # Check if release notes were found
+        if [ -z "$RELEASE_NOTES" ]; then
+          echo "Error: No release notes found for version $VERSION in CHANGELOG.md"
+          echo "Please add release notes for version $VERSION before creating a release"
+          exit 1
+        fi
+        
+        # Save release notes to file and output
+        echo "$RELEASE_NOTES" > release_notes.md
+        echo "Release notes extracted for version $VERSION"
+        
+        # Create multiline output
+        {
+          echo 'notes<<EOF'
+          echo "$RELEASE_NOTES"
+          echo EOF
+        } >> $GITHUB_OUTPUT
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        release_name: ${{ steps.version.outputs.version }} - ${{ steps.version.outputs.release_date }}
+        body: ${{ steps.release_notes.outputs.notes }}
+        draft: false
+        prerelease: false
