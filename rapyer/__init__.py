@@ -8,6 +8,7 @@ __all__ = [
     "init_rapyer",
     "teardown_rapyer",
     "aget",
+    "get",
     "find_redis_models",
     "ainsert",
 ]
