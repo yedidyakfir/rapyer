@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4]
+- Fix a bug in the rapyer.get() function.
+
+## [1.1.3]
+Reupload of 1.1.2 
+
 ## [1.1.2]
 We yanked the 1.1.1 release due to a bug in the pipeline context manager.
 This is the fixed version.
