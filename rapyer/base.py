@@ -4,7 +4,8 @@ import contextlib
 import functools
 import pickle
 import uuid
-from typing import ClassVar, Any, AsyncGenerator
+from contextlib import AbstractAsyncContextManager
+from typing import ClassVar, Any
 
 from pydantic import (
     BaseModel,
@@ -419,7 +420,7 @@ class AtomicRedisModel(BaseModel):
     )
     async def lock_from_key(
         cls, key: str, action: str = "default", save_at_end: bool = False
-    ) -> AsyncGenerator[Self, None]:
+    ) -> AbstractAsyncContextManager[Self]:
         async with cls.alock_from_key(key, action, save_at_end) as redis_model:
             yield redis_model
 
@@ -427,7 +428,7 @@ class AtomicRedisModel(BaseModel):
     @contextlib.asynccontextmanager
     async def alock_from_key(
         cls, key: str, action: str = "default", save_at_end: bool = False
-    ) -> AsyncGenerator[Self, None]:
+    ) -> AbstractAsyncContextManager[Self]:
         async with acquire_lock(cls.Meta.redis, f"{key}/{action}"):
             redis_model = await cls.aget(key)
             yield redis_model
@@ -440,14 +441,14 @@ class AtomicRedisModel(BaseModel):
     )
     async def lock(
         self, action: str = "default", save_at_end: bool = False
-    ) -> AsyncGenerator[Self, None]:
+    ) -> AbstractAsyncContextManager[Self]:
         async with self.alock_from_key(self.key, action, save_at_end) as redis_model:
             yield redis_model
 
     @contextlib.asynccontextmanager
     async def alock(
         self, action: str = "default", save_at_end: bool = False
-    ) -> AsyncGenerator[Self, None]:
+    ) -> AbstractAsyncContextManager[Self]:
         async with self.alock_from_key(self.key, action, save_at_end) as redis_model:
             unset_fields = {
                 k: redis_model.__dict__[k] for k in redis_model.model_fields_set
@@ -461,14 +462,14 @@ class AtomicRedisModel(BaseModel):
     )
     async def pipeline(
         self, ignore_if_deleted: bool = False
-    ) -> AsyncGenerator[Self, None]:
+    ) -> AbstractAsyncContextManager[Self]:
         async with self.apipeline(ignore_if_deleted=ignore_if_deleted) as redis_model:
             yield redis_model
 
     @contextlib.asynccontextmanager
     async def apipeline(
         self, ignore_if_deleted: bool = False
-    ) -> AsyncGenerator[Self, None]:
+    ) -> AbstractAsyncContextManager[Self]:
         async with self.Meta.redis.pipeline() as pipe:
             try:
                 redis_model = await self.__class__.aget(self.key)
@@ -537,6 +538,8 @@ async def aget(redis_key: str) -> AtomicRedisModel:
     redis_model_mapping = {klass.__name__: klass for klass in REDIS_MODELS}
     class_name = redis_key.split(":")[0]
     klass = redis_model_mapping.get(class_name)
+    if klass is None:
+        raise KeyNotFound(f"{redis_key} is missing in redis")
     return await klass.aget(redis_key)
 
 
@@ -550,3 +553,17 @@ async def ainsert(*models: Unpack[AtomicRedisModel]) -> list[AtomicRedisModel]:
             pipe.json().set(model.key, model.json_path, model.redis_dump())
         await pipe.execute()
     return models
+
+
+@contextlib.asynccontextmanager
+async def alock_from_key(
+    key: str, action: str = "default", save_at_end: bool = False
+) -> AbstractAsyncContextManager[AtomicRedisModel]:
+    async with acquire_lock(AtomicRedisModel.Meta.redis, f"{key}/{action}"):
+        try:
+            redis_model = await aget(key)
+        except KeyNotFound:
+            redis_model = None
+        yield redis_model
+        if save_at_end and redis_model is not None:
+            await redis_model.asave()

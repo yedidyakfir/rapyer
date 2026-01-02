@@ -1,7 +1,15 @@
 # Changelog
 
 ## [1.1.4]
-- Fix a bug in the rapyer.get() function.
+### ✨ Added
+- **Global alock_from_key Function**: Added `rapyer.alock_from_key()` function to create locks without needing a model instance. This allows locking by key directly for operations that don't require the model class.
+
+### 🔧 Improved
+- **Redis Locking Mechanism**: Now using formal Redis lock for more persistent and reliable locking mechanism.
+
+### 🐛 Fixed
+- **rapyer.get**: Fix a bug in the rapyer.get() function.
+- **Context Manager Annotations**: Fixed type annotations for context managers to properly reflect their return types.
 
 ## [1.1.3]
 Reupload of 1.1.2 
